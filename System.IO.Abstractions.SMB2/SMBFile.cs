@@ -178,7 +178,8 @@ namespace System.IO.Abstractions.SMB
             {
                 return base.Create(path);
             }
-            throw new NotImplementedException();
+
+            return Open(path, FileMode.Create, FileAccess.ReadWrite);
         }
 
         public override Stream Create(string path, int bufferSize)
@@ -187,7 +188,8 @@ namespace System.IO.Abstractions.SMB
             {
                 return base.Create(path, bufferSize);
             }
-            throw new NotImplementedException();
+
+            return new BufferedStream(Open(path, FileMode.Create, FileAccess.ReadWrite), bufferSize);
         }
 
         public override Stream Create(string path, int bufferSize, FileOptions options)
@@ -196,7 +198,8 @@ namespace System.IO.Abstractions.SMB
             {
                 return base.Create(path, bufferSize, options);
             }
-            throw new NotImplementedException();
+
+            return Create(path, bufferSize, options);
         }
 
         public override StreamWriter CreateText(string path)
@@ -205,7 +208,8 @@ namespace System.IO.Abstractions.SMB
             {
                 return base.CreateText(path);
             }
-            throw new NotImplementedException();
+
+            return new StreamWriter(OpenWrite(path));
         }
 
         public override void Delete(string path)
@@ -215,7 +219,34 @@ namespace System.IO.Abstractions.SMB
                 base.Delete(path);
                 return;
             }
-            throw new NotImplementedException();
+
+            Uri uri = new Uri(path);
+            var hostEntry = Dns.GetHostEntry(uri.Host);
+            ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
+
+            NTStatus status = NTStatus.STATUS_SUCCESS;
+
+            if (_smbClient.Connect(ipAddress, transport))
+            {
+                var credential = _credentialProvider.GetSMBCredential(path);
+                status = _smbClient.Login(credential.GetDomain(), credential.GetUserName(), credential.GetPassword());
+
+                var shareName = uri.Segments[1].Replace(Path.DirectorySeparatorChar.ToString(), "");
+                var newPath = uri.AbsolutePath.Replace(uri.Segments[1], "").Remove(0, 1);
+                var directoryPath = Path.GetDirectoryName(newPath);
+
+                ISMBFileStore fileStore = _smbClient.TreeConnect(shareName, out status);
+
+                status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, newPath, AccessMask.DELETE, 0, ShareAccess.Read,
+                    CreateDisposition.FILE_OPEN, CreateOptions.FILE_DELETE_ON_CLOSE, null);
+                if (status != NTStatus.STATUS_SUCCESS)
+                {
+                    throw new IOException($"Unable to connect to smbShare. Status = {status}");
+                }
+
+                // There should be a seperate option to delete, but it doesn't seem to exsist in the library we are using, so this should work for now. Really hacky though.
+                fileStore.CloseFile(handle);
+            }
         }
 
         public override bool Exists(string path)
@@ -376,6 +407,11 @@ namespace System.IO.Abstractions.SMB
 
         public override Stream Open(string path, FileMode mode, FileAccess access, FileShare share)
         {
+            return Open(path, mode, access, share, FileOptions.None);
+        }
+
+        private Stream Open(string path, FileMode mode, FileAccess access, FileShare share, FileOptions fileOptions)
+        {
             if (!IsSMBPath(path))
             {
                 return base.Open(path, mode, access, share);
@@ -390,6 +426,29 @@ namespace System.IO.Abstractions.SMB
             AccessMask accessMask = AccessMask.MAXIMUM_ALLOWED;
             ShareAccess shareAccess = ShareAccess.None;
             CreateDisposition disposition = CreateDisposition.FILE_OPEN;
+            CreateOptions createOptions;
+
+            switch (fileOptions)
+            {
+                case FileOptions.DeleteOnClose:
+                    createOptions = CreateOptions.FILE_DELETE_ON_CLOSE;
+                    break;
+                case FileOptions.RandomAccess:
+                    createOptions = CreateOptions.FILE_RANDOM_ACCESS;
+                    break;
+                case FileOptions.SequentialScan:
+                    createOptions = CreateOptions.FILE_SEQUENTIAL_ONLY;
+                    break;
+                case FileOptions.WriteThrough:
+                    createOptions = CreateOptions.FILE_WRITE_THROUGH;
+                    break;
+                case FileOptions.None:
+                case FileOptions.Encrypted:     // These two are not suported unless I am missing something 
+                case FileOptions.Asynchronous:  //
+                default:
+                    createOptions = CreateOptions.FILE_NON_DIRECTORY_FILE;
+                    break;
+            }
 
             switch(access)
             {
@@ -410,6 +469,10 @@ namespace System.IO.Abstractions.SMB
             if (_smbClient.Connect(ipAddress, transport))
             {
                 var credential = _credentialProvider.GetSMBCredential(path);
+                if(credential == null)
+                {
+                    throw new Exception($"Unable to find credential for path: {path}");
+                }
                 status = _smbClient.Login(credential.GetDomain(), credential.GetUserName(), credential.GetPassword());
 
                 var shareName = uri.Segments[1].Replace(Path.DirectorySeparatorChar.ToString(), "");
@@ -435,7 +498,7 @@ namespace System.IO.Abstractions.SMB
                 }
 
                 status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, newPath, accessMask, 0, shareAccess,
-                    disposition, CreateOptions.FILE_NON_DIRECTORY_FILE, null);
+                    disposition, createOptions, null);
                 if(status != NTStatus.STATUS_SUCCESS)
                 {
                     throw new IOException($"Unable to connect to smbShare. Status = {status}");
