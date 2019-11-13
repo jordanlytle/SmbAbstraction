@@ -6,7 +6,7 @@ namespace System.IO.Abstractions.SMB
 {
     public class SMBCredentialProvider : ISMBCredentialProvider
     {
-        List<Tuple<string, ISMBCredential>> credentials = new List<Tuple<string, ISMBCredential>>();
+        List<ISMBCredential> credentials = new List<ISMBCredential>();
 
         public SMBCredentialProvider()
         {
@@ -14,10 +14,10 @@ namespace System.IO.Abstractions.SMB
 
         public ISMBCredential GetSMBCredential(string path)
         {
-            var credential = credentials.Where(q => q.Item1 == path).FirstOrDefault();
+            var credential = credentials.Where(q => q.GetPath() == path).FirstOrDefault();
             if(credential != null)
             {
-                return credential.Item2;
+                return credential;
             }
             else
             {
@@ -25,18 +25,10 @@ namespace System.IO.Abstractions.SMB
             }
         }
 
-        public void RemoveSMBCredential(string path, ISMBCredential credential)
+        public void AddSMBCredential(ISMBCredential credential)
         {
-            var credentialToRemove = credentials.Where(q => q.Item2.GetUID() == credential.GetUID() && q.Item1 == path).FirstOrDefault();
-            if(credentialToRemove != null)
-            {
-                credentials.Remove(credentialToRemove);
-            }
-        }
-
-        public void SetSMBCredential(string path, ISMBCredential credential)
-        {
-            credentials.Add(new Tuple<string, ISMBCredential>(path, credential));
+            credential.SetParentList(credentials);
+            credentials.Add(credential);
         }
     }
 }

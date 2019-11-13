@@ -5,15 +5,9 @@ namespace System.IO.Abstractions.SMB
 {
     public class SMBFileSystem : IFileSystem
     {
-        private string _loginDomainName;
-        private string _loginUserName;
-        private string _loginPassword;
-        private ISMBCredentialProvider _credentialProvider;
-
         public SMBFileSystem(ISMBClient iSMBClient, ISMBCredentialProvider credentialProvider)
         {
-            _credentialProvider = credentialProvider;
-            Directory = new SMBDirectory();
+            Directory = new SMBDirectory(iSMBClient, credentialProvider);
             File = new SMBFile(iSMBClient, credentialProvider);
             FileInfo = new SMBFileInfoFactory();
             FileStream = new SMBFileStreamFactory();

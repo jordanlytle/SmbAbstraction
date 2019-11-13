@@ -10,17 +10,18 @@ namespace System.IO.Abstractions.Console
         {
             string testUsername = "<test user>";
             string testPassword = "<test password>";
-            string testDomain = "";
-            string testPath1 = "<test path one>";
-            string testPath2 = "<test path two>";
+            string testDomain = "<test domain name>";
+            string testPath1 = "<test file>";
+            string testPath2 = "<second test file>";
+            string testPath3 = "<test share root>";
+            string testPath4 = "<folder in test share>";
 
-            ISMBCredential credential = new SMBCredential(testDomain, testUsername, testPassword);
             ISMBCredentialProvider credentialProvider = new SMBCredentialProvider();
 
             IFileSystem fileSystem = new SMBFileSystem(new SMB2Client(), credentialProvider);
 
-            credentialProvider.SetSMBCredential(testPath1, credential);
-            credentialProvider.SetSMBCredential(testPath2, credential);
+            using ISMBCredential credential1 = new SMBCredential(testDomain, testUsername, testPassword, testPath1, credentialProvider);
+            using ISMBCredential credential2 = new SMBCredential(testDomain, testUsername, testPassword, testPath2, credentialProvider);
 
             using (StreamWriter sr = new StreamWriter(fileSystem.File.OpenWrite(testPath1)))
             {
@@ -47,6 +48,47 @@ namespace System.IO.Abstractions.Console
             {
                 System.Console.WriteLine(sr.ReadToEnd());
             }
+
+            System.Console.WriteLine("Attempting to create and then read a file with the same stream.");
+
+
+            var tempFileName = $"{testPath1}_{DateTime.Now.Millisecond}.txt";
+            using (var tempCred = new SMBCredential(testDomain, testUsername, testPassword, tempFileName, credentialProvider))
+            {
+                using (Stream s = fileSystem.File.Create(tempFileName, 8))
+                {
+                    StreamWriter sw = new StreamWriter(s);
+                    sw.WriteLine($"This was written to a temp file at {DateTime.Now}");
+                    sw.Flush();
+
+                    s.Seek(0, SeekOrigin.Begin);
+                    StreamReader sr = new StreamReader(s);
+                    System.Console.Write(sr.ReadToEnd());
+
+                    sw.Close();
+                    sr.Close();
+                }
+            }
+
+            System.Console.WriteLine("Enumerating share files");
+            using var credential3 = new SMBCredential(testDomain, testUsername, testPassword, testPath3, credentialProvider);
+
+            foreach (var file in fileSystem.Directory.EnumerateFiles(testPath3, "*"))
+            {
+                System.Console.WriteLine(file);
+            }
+
+            System.Console.WriteLine("Enumerating directory files");
+            using var credential4 = new SMBCredential(testDomain, testUsername, testPassword, testPath4, credentialProvider);
+            foreach (var file in fileSystem.Directory.EnumerateFiles(testPath4))
+            {
+                System.Console.WriteLine(file);
+            }
+
+            System.Console.WriteLine("Deleting file.");
+            using var credential5 = new SMBCredential(testDomain, testUsername, testPassword, tempFileName);
+            credentialProvider.AddSMBCredential(credential5);
+            fileSystem.File.Delete(tempFileName);
         }
     }
 }
