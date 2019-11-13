@@ -61,7 +61,7 @@ namespace System.IO.Abstractions.SMB
                 return EnumerateDirectories(path);
             }
 
-            throw new NotImplementedException();
+            return EnumerateDirectories(path, "*");
         }
 
         public override IEnumerable<string> EnumerateDirectories(string path, string searchPattern)
@@ -71,17 +71,72 @@ namespace System.IO.Abstractions.SMB
                 return EnumerateDirectories(path, searchPattern);
             }
 
-            throw new NotImplementedException();
+            return EnumerateDirectories(path, searchPattern, SearchOption.TopDirectoryOnly);
         }
 
         public override IEnumerable<string> EnumerateDirectories(string path, string searchPattern, SearchOption searchOption)
         {
-            if(!IsSMBPath(path))
+            if (!IsSMBPath(path))
             {
                 return EnumerateDirectories(path, searchPattern, searchOption);
             }
 
-            throw new NotImplementedException();
+            if (searchOption == SearchOption.AllDirectories)
+            {
+                throw new NotSupportedException();
+            }
+
+            Uri uri = new Uri(path);
+            var hostEntry = Dns.GetHostEntry(uri.Host);
+            ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
+
+            NTStatus status = NTStatus.STATUS_SUCCESS;
+
+            if (_smbClient.Connect(ipAddress, transport))
+            {
+                var credential = _credentialProvider.GetSMBCredential(path);
+                status = _smbClient.Login(credential.GetDomain(), credential.GetUserName(), credential.GetPassword());
+
+                var shareName = uri.Segments[1].Replace(Path.DirectorySeparatorChar.ToString(), "");
+                var newPath = uri.AbsolutePath.Replace(uri.Segments[1], "").Remove(0, 1);
+
+                ISMBFileStore fileStore = _smbClient.TreeConnect(shareName, out status);
+
+                status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, newPath, AccessMask.GENERIC_READ, 0, ShareAccess.Read,
+                    CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
+                if (status != NTStatus.STATUS_SUCCESS)
+                {
+                    throw new IOException($"Unable to connect to smbShare. Status = {status}");
+                }
+
+                fileStore.QueryDirectory(out List<QueryDirectoryFileInformation> queryDirectoryFileInformation, handle, searchPattern, FileInformationClass.FileDirectoryInformation);
+
+
+                List<string> files = new List<string>();
+
+                foreach (var file in queryDirectoryFileInformation)
+                {
+                    if (file.FileInformationClass == FileInformationClass.FileDirectoryInformation)
+                    {
+                        FileDirectoryInformation fileDirectoryInformation = (FileDirectoryInformation)file;
+
+                        if (fileDirectoryInformation.FileName == "." || fileDirectoryInformation.FileName == "..")
+                        {
+                            continue;
+                        }
+
+                        if (fileDirectoryInformation.FileAttributes.HasFlag(SmbLibraryStd.FileAttributes.Directory))
+                        {
+                            files.Add(Path.Combine(path, fileDirectoryInformation.FileName));
+                        }
+                    }
+                }
+                fileStore.CloseFile(handle);
+
+                return files;
+            }
+
+            return new List<string>();
         }
 
         public override IEnumerable<string> EnumerateFiles(string path)
@@ -149,7 +204,9 @@ namespace System.IO.Abstractions.SMB
                     if (file.FileInformationClass == FileInformationClass.FileDirectoryInformation)
                     {
                         FileDirectoryInformation fileDirectoryInformation = (FileDirectoryInformation)file;
-                        if (fileDirectoryInformation.FileName == "." || fileDirectoryInformation.FileName == "..")
+                        if (fileDirectoryInformation.FileName == "."
+                            || fileDirectoryInformation.FileName == ".."
+                            || fileDirectoryInformation.FileAttributes.HasFlag(SmbLibraryStd.FileAttributes.Directory))
                         {
                             continue;
                         }
@@ -172,7 +229,7 @@ namespace System.IO.Abstractions.SMB
                 return EnumerateFileSystemEntries(path);
             }
 
-            throw new NotImplementedException();
+            return EnumerateFileSystemEntries(path, "*");
         }
 
         public override IEnumerable<string> EnumerateFileSystemEntries(string path, string searchPattern)
@@ -182,7 +239,7 @@ namespace System.IO.Abstractions.SMB
                 return EnumerateFileSystemEntries(path, searchPattern);
             }
 
-            throw new NotImplementedException();
+            return EnumerateFileSystemEntries(path, searchPattern, SearchOption.TopDirectoryOnly);
         }
 
         public override IEnumerable<string> EnumerateFileSystemEntries(string path, string searchPattern, SearchOption searchOption)
@@ -192,7 +249,58 @@ namespace System.IO.Abstractions.SMB
                 return EnumerateFileSystemEntries(path, searchPattern, searchOption);
             }
 
-            throw new NotImplementedException();
+            if (searchOption == SearchOption.AllDirectories)
+            {
+                throw new NotSupportedException();
+            }
+
+            Uri uri = new Uri(path);
+            var hostEntry = Dns.GetHostEntry(uri.Host);
+            ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
+
+            NTStatus status = NTStatus.STATUS_SUCCESS;
+
+            if (_smbClient.Connect(ipAddress, transport))
+            {
+                var credential = _credentialProvider.GetSMBCredential(path);
+                status = _smbClient.Login(credential.GetDomain(), credential.GetUserName(), credential.GetPassword());
+
+                var shareName = uri.Segments[1].Replace(Path.DirectorySeparatorChar.ToString(), "");
+                var newPath = uri.AbsolutePath.Replace(uri.Segments[1], "").Remove(0, 1);
+
+                ISMBFileStore fileStore = _smbClient.TreeConnect(shareName, out status);
+
+                status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, newPath, AccessMask.GENERIC_READ, 0, ShareAccess.Read,
+                    CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
+                if (status != NTStatus.STATUS_SUCCESS)
+                {
+                    throw new IOException($"Unable to connect to smbShare. Status = {status}");
+                }
+
+                fileStore.QueryDirectory(out List<QueryDirectoryFileInformation> queryDirectoryFileInformation, handle, searchPattern, FileInformationClass.FileDirectoryInformation);
+
+
+                List<string> files = new List<string>();
+
+                foreach (var file in queryDirectoryFileInformation)
+                {
+                    if (file.FileInformationClass == FileInformationClass.FileDirectoryInformation)
+                    {
+                        FileDirectoryInformation fileDirectoryInformation = (FileDirectoryInformation)file;
+                        if (fileDirectoryInformation.FileName == "." || fileDirectoryInformation.FileName == "..")
+                        {
+                            continue;
+                        }
+
+                        files.Add(Path.Combine(path, fileDirectoryInformation.FileName));
+                    }
+                }
+                fileStore.CloseFile(handle);
+
+                return files;
+            }
+
+            return new List<string>();
         }
 
         public override bool Exists(string path)
@@ -257,7 +365,7 @@ namespace System.IO.Abstractions.SMB
                 return GetDirectories(path);
             }
 
-            throw new NotImplementedException();
+            return GetDirectories(path, "*");
         }
 
         public override string[] GetDirectories(string path, string searchPattern)
@@ -267,7 +375,7 @@ namespace System.IO.Abstractions.SMB
                 return GetDirectories(path, searchPattern);
             }
 
-            throw new NotImplementedException();
+            return GetDirectories(path, searchPattern, SearchOption.TopDirectoryOnly);
         }
 
         public override string[] GetDirectories(string path, string searchPattern, SearchOption searchOption)
@@ -277,7 +385,7 @@ namespace System.IO.Abstractions.SMB
                 return GetDirectories(path, searchPattern, searchOption);
             }
 
-            throw new NotImplementedException();
+            return EnumerateDirectories(path, searchPattern, searchOption).ToArray();
         }
 
         public override string GetDirectoryRoot(string path)
@@ -297,7 +405,7 @@ namespace System.IO.Abstractions.SMB
                 return GetFiles(path);
             }
 
-            throw new NotImplementedException();
+            return GetFiles(path, "*");
         }
 
         public override string[] GetFiles(string path, string searchPattern)
@@ -307,7 +415,7 @@ namespace System.IO.Abstractions.SMB
                 return GetFiles(path, searchPattern);
             }
 
-            throw new NotImplementedException();
+            return GetFiles(path, searchPattern, SearchOption.TopDirectoryOnly);
         }
 
         public override string[] GetFiles(string path, string searchPattern, SearchOption searchOption)
@@ -317,7 +425,7 @@ namespace System.IO.Abstractions.SMB
                 return GetFiles(path, searchPattern, searchOption);
             }
 
-            throw new NotImplementedException();
+            return EnumerateFiles(path, searchPattern, searchOption).ToArray();
         }
 
         public override string[] GetFileSystemEntries(string path)
@@ -327,7 +435,7 @@ namespace System.IO.Abstractions.SMB
                 return GetFileSystemEntries(path);
             }
 
-            throw new NotImplementedException();
+            return GetFileSystemEntries(path, "*");
         }
 
         public override string[] GetFileSystemEntries(string path, string searchPattern)
@@ -337,7 +445,7 @@ namespace System.IO.Abstractions.SMB
                 return GetFileSystemEntries(path, searchPattern);
             }
 
-            throw new NotImplementedException();
+            return EnumerateFileSystemEntries(path, searchPattern).ToArray();
         }
 
         public override DateTime GetLastAccessTime(string path)
