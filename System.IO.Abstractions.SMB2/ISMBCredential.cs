@@ -5,10 +5,10 @@ namespace System.IO.Abstractions.SMB
 {
     public interface ISMBCredential : IDisposable
     {
-        string GetDomain();
-        string GetUserName();
-        string GetPassword();
-        string GetPath();
+        string Domain { get; }
+        string UserName { get; }
+        string Password { get; }
+        string Path { get; }
         void SetParentList(List<ISMBCredential> parentList);
     }
 }

@@ -4,28 +4,24 @@ namespace System.IO.Abstractions.SMB
 {
     public class SMBStream : Stream
     {
-        private ISMBFileStore _fileStore { get; set; }
-
-        private long _length { get; set; }
-
-        private long _position { get; set; }
-
-        private object _fileHandle { get; set; }
+        private readonly ISMBFileStore _fileStore;
+        private readonly object _fileHandle;
+        private readonly SMBConnection _connection;
 
         public override bool CanRead => true;
-
         public override bool CanSeek => true;
-
         public override bool CanWrite => true;
-
+        private long _length { get; set; }
+        private long _position { get; set; }
         public override long Length => _length;
-
         public override long Position { get { return _position; } set { _position = value; } }
 
-        public SMBStream(ISMBFileStore fileStore, object fileHandle)
+
+        public SMBStream(ISMBFileStore fileStore, object fileHandle, SMBConnection connection)
         {
             _fileStore = fileStore;
             _fileHandle = fileHandle;
+            _connection = connection;
         }
 
         public override void Flush()
@@ -104,6 +100,7 @@ namespace System.IO.Abstractions.SMB
         public override void Close()
         {
             _fileStore.CloseFile(_fileHandle);
+            _connection.Dispose();
             base.Close();
         }
     }

@@ -16,5 +16,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="SMBPath.cs" />
+    <Compile Remove="SMBSession.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove=".SMBDirectory.cs.un~" />
   </ItemGroup>
 </Project>

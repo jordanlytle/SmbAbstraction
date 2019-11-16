@@ -14,7 +14,7 @@ namespace System.IO.Abstractions.SMB
 
         public ISMBCredential GetSMBCredential(string path)
         {
-            var credential = credentials.Where(q => q.GetPath() == path).FirstOrDefault();
+            var credential = credentials.Where(q => q.Path == path).FirstOrDefault();
             if(credential != null)
             {
                 return credential;

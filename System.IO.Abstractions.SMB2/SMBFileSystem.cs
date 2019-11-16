@@ -5,10 +5,10 @@ namespace System.IO.Abstractions.SMB
 {
     public class SMBFileSystem : IFileSystem
     {
-        public SMBFileSystem(ISMBClient iSMBClient, ISMBCredentialProvider credentialProvider)
+        public SMBFileSystem(ISMBClientFactory ismbClientfactory, ISMBCredentialProvider credentialProvider)
         {
-            Directory = new SMBDirectory(iSMBClient, credentialProvider);
-            File = new SMBFile(iSMBClient, credentialProvider);
+            Directory = new SMBDirectory(ismbClientfactory, credentialProvider, this);
+            File = new SMBFile(ismbClientfactory, credentialProvider);
             FileInfo = new SMBFileInfoFactory();
             FileStream = new SMBFileStreamFactory();
             Path = new PathWrapper(this);

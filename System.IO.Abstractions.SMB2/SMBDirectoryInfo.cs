@@ -1,71 +1,85 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security.AccessControl;
 
 namespace System.IO.Abstractions.SMB
 {
     public class SMBDirectoryInfo : IDirectoryInfo
     {
-        public SMBDirectoryInfo()
+        private readonly SMBDirectory _smbDirctory;
+
+        public SMBDirectoryInfo(string fileName, SMBDirectory smbDirectory)
         {
+            _fullName = fileName;
+            _smbDirctory = smbDirectory;
         }
 
-        public IDirectoryInfo Parent => throw new NotImplementedException();
+        private readonly string _fullName;
 
-        public IDirectoryInfo Root => throw new NotImplementedException();
+        public IDirectoryInfo Parent { get; set; }
 
-        public IFileSystem FileSystem => throw new NotImplementedException();
+        public IDirectoryInfo Root { get; set; }
 
-        public FileAttributes Attributes { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public DateTime CreationTime { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public DateTime CreationTimeUtc { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public IFileSystem FileSystem { get; set; }
 
-        public bool Exists => throw new NotImplementedException();
+        public FileAttributes Attributes { get; set; }
+        public DateTime CreationTime { get; set; }
+        public DateTime CreationTimeUtc { get; set; }
 
-        public string Extension => throw new NotImplementedException();
+        public bool Exists => FileSystem.Directory.Exists(FullName);
 
-        public string FullName => throw new NotImplementedException();
+        public string Extension => FileSystem.Path.GetExtension(_fullName);
 
-        public DateTime LastAccessTime { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public DateTime LastAccessTimeUtc { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public DateTime LastWriteTime { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public DateTime LastWriteTimeUtc { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string FullName => _fullName;
 
-        public string Name => throw new NotImplementedException();
+        public DateTime LastAccessTime { get; set; }
+        public DateTime LastAccessTimeUtc { get; set; }
+        public DateTime LastWriteTime { get; set; }
+        public DateTime LastWriteTimeUtc { get; set; }
+
+        public string Name => Path.GetFileName(_fullName);
 
         public void Create()
         {
-            throw new NotImplementedException();
+            _smbDirctory.CreateDirectory(FullName);
         }
 
         public IDirectoryInfo CreateSubdirectory(string path)
         {
-            throw new NotImplementedException();
+            return _smbDirctory.CreateDirectory(Path.Combine(FullName, path));
         }
 
         public void Delete(bool recursive)
         {
-            throw new NotImplementedException();
+            _smbDirctory.Delete(FullName, recursive);
         }
 
         public void Delete()
         {
-            throw new NotImplementedException();
+            _smbDirctory.Delete(FullName);
         }
 
         public IEnumerable<IDirectoryInfo> EnumerateDirectories()
         {
-            throw new NotImplementedException();
+            return EnumerateDirectories("*");
         }
 
         public IEnumerable<IDirectoryInfo> EnumerateDirectories(string searchPattern)
         {
-            throw new NotImplementedException();
+            return EnumerateDirectories(searchPattern, SearchOption.TopDirectoryOnly);
         }
 
         public IEnumerable<IDirectoryInfo> EnumerateDirectories(string searchPattern, SearchOption searchOption)
         {
-            throw new NotImplementedException();
+            var paths = _smbDirctory.EnumerateDirectories(FullName, searchPattern, searchOption);
+            List<IDirectoryInfo> directoryInfos = new List<IDirectoryInfo>();
+            foreach (var path in paths)
+            {
+                directoryInfos.Add(_smbDirctory.GetDirectoryInfo(path));
+            }
+
+            return directoryInfos;
         }
 
         public IEnumerable<IFileInfo> EnumerateFiles()
@@ -100,57 +114,57 @@ namespace System.IO.Abstractions.SMB
 
         public DirectorySecurity GetAccessControl()
         {
-            throw new NotImplementedException();
+            return _smbDirctory.GetAccessControl(FullName);
         }
 
         public DirectorySecurity GetAccessControl(AccessControlSections includeSections)
         {
-            throw new NotImplementedException();
+            return _smbDirctory.GetAccessControl(FullName, includeSections);
         }
 
         public IDirectoryInfo[] GetDirectories()
         {
-            throw new NotImplementedException();
+            return EnumerateDirectories().ToArray();
         }
 
         public IDirectoryInfo[] GetDirectories(string searchPattern)
         {
-            throw new NotImplementedException();
+            return EnumerateDirectories(searchPattern).ToArray();
         }
 
         public IDirectoryInfo[] GetDirectories(string searchPattern, SearchOption searchOption)
         {
-            throw new NotImplementedException();
+            return EnumerateDirectories(searchPattern, searchOption).ToArray();
         }
 
         public IFileInfo[] GetFiles()
         {
-            throw new NotImplementedException();
+            return EnumerateFiles().ToArray();
         }
 
         public IFileInfo[] GetFiles(string searchPattern)
         {
-            throw new NotImplementedException();
+            return EnumerateFiles(searchPattern).ToArray();
         }
 
         public IFileInfo[] GetFiles(string searchPattern, SearchOption searchOption)
         {
-            throw new NotImplementedException();
+            return EnumerateFiles(searchPattern, searchOption).ToArray();
         }
 
         public IFileSystemInfo[] GetFileSystemInfos()
         {
-            throw new NotImplementedException();
+            return EnumerateFileSystemInfos().ToArray();
         }
 
         public IFileSystemInfo[] GetFileSystemInfos(string searchPattern)
         {
-            throw new NotImplementedException();
+            return EnumerateFileSystemInfos(searchPattern).ToArray();
         }
 
         public IFileSystemInfo[] GetFileSystemInfos(string searchPattern, SearchOption searchOption)
         {
-            throw new NotImplementedException();
+            return EnumerateFileSystemInfos(searchPattern, searchOption).ToArray();
         }
 
         public void MoveTo(string destDirName)
@@ -160,7 +174,17 @@ namespace System.IO.Abstractions.SMB
 
         public void Refresh()
         {
-            throw new NotImplementedException();
+            var info = _smbDirctory.GetDirectoryInfo(FullName);
+            Parent = info.Parent;
+            Root = info.Root;
+            FileSystem = info.FileSystem;
+            Attributes = info.Attributes;
+            CreationTime = info.CreationTime;
+            CreationTimeUtc = info.CreationTimeUtc;
+            LastAccessTime = info.LastAccessTime;
+            LastAccessTimeUtc = info.LastAccessTimeUtc;
+            LastWriteTime = info.LastWriteTime;
+            LastWriteTimeUtc = info.LastWriteTimeUtc;
         }
 
         public void SetAccessControl(DirectorySecurity directorySecurity)

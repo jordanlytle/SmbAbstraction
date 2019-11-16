@@ -12,17 +12,17 @@ using System.Linq;
 
 namespace System.IO.Abstractions.SMB
 {
-    public class SMBFile : FileWrapper, IFile, IDisposable
+    public class SMBFile : FileWrapper, IFile
     {
-        private ISMBClient _smbClient;
+        private ISMBClientFactory _smbClientFactory;
         private ISMBCredentialProvider _credentialProvider;
 
         public IPAddress ipAddress { get; set; }
         public SMBTransportType transport { get; set; }
 
-        public SMBFile(ISMBClient smbclient, ISMBCredentialProvider credentialProvider) : base(new FileSystem())
+        public SMBFile(ISMBClientFactory smbclientFactory, ISMBCredentialProvider credentialProvider) : base(new FileSystem())
         {
-            _smbClient = smbclient;
+            _smbClientFactory = smbclientFactory;
             _credentialProvider = credentialProvider;
             transport = SMBTransportType.DirectTCPTransport;
         }
@@ -158,13 +158,13 @@ namespace System.IO.Abstractions.SMB
                 using (Stream destStream = OpenWrite(destFileName))
                 {
                     sourceStream.CopyTo(destStream);
-                }    
+                }
             }
         }
 
         public override void Copy(string sourceFileName, string destFileName, bool overwrite)
         {
-            if(!overwrite && Exists(destFileName))
+            if (!overwrite && Exists(destFileName))
             {
                 return;
             }
@@ -226,16 +226,15 @@ namespace System.IO.Abstractions.SMB
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
 
-            if (_smbClient.Connect(ipAddress, transport))
-            {
-                var credential = _credentialProvider.GetSMBCredential(path);
-                status = _smbClient.Login(credential.GetDomain(), credential.GetUserName(), credential.GetPassword());
+            var credential = _credentialProvider.GetSMBCredential(path);
 
+            using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential))
+            {
                 var shareName = uri.Segments[1].Replace(Path.DirectorySeparatorChar.ToString(), "");
-                var newPath = uri.AbsolutePath.Replace(uri.Segments[1], "").Remove(0, 1);
+                var newPath = uri.AbsolutePath.Replace(uri.Segments[1], "").Remove(0, 1).Replace('/', '\\');
                 var directoryPath = Path.GetDirectoryName(newPath);
 
-                ISMBFileStore fileStore = _smbClient.TreeConnect(shareName, out status);
+                ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
                 status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, newPath, AccessMask.DELETE, 0, ShareAccess.Read,
                     CreateDisposition.FILE_OPEN, CreateOptions.FILE_DELETE_ON_CLOSE, null);
@@ -262,16 +261,15 @@ namespace System.IO.Abstractions.SMB
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
 
-            if (_smbClient.Connect(ipAddress, transport))
-            {
-                var credential = _credentialProvider.GetSMBCredential(path);
-                status = _smbClient.Login(credential.GetDomain(), credential.GetUserName(), credential.GetPassword());
+            var credential = _credentialProvider.GetSMBCredential(path);
 
+            using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential))
+            {
                 var shareName = uri.Segments[1].Replace(Path.DirectorySeparatorChar.ToString(), "");
-                var newPath = uri.AbsolutePath.Replace(uri.Segments[1], "").Remove(0, 1);
+                var newPath = uri.AbsolutePath.Replace(uri.Segments[1], "").Remove(0, 1).Replace('/', '\\');
                 var directoryPath = Path.GetDirectoryName(newPath);
 
-                ISMBFileStore fileStore = _smbClient.TreeConnect(shareName, out status);
+                ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
                 status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, directoryPath, AccessMask.GENERIC_READ, 0, ShareAccess.Read,
                     CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
@@ -282,12 +280,12 @@ namespace System.IO.Abstractions.SMB
 
                 fileStore.QueryDirectory(out List<QueryDirectoryFileInformation> queryDirectoryFileInformation, handle, string.IsNullOrEmpty(directoryPath) ? "*" : directoryPath, FileInformationClass.FileDirectoryInformation);
 
-                foreach(var file in queryDirectoryFileInformation)
+                foreach (var file in queryDirectoryFileInformation)
                 {
-                    if(file.FileInformationClass == FileInformationClass.FileDirectoryInformation)
+                    if (file.FileInformationClass == FileInformationClass.FileDirectoryInformation)
                     {
                         FileDirectoryInformation fileDirectoryInformation = (FileDirectoryInformation)file;
-                        if(fileDirectoryInformation.FileName == Path.GetFileName(newPath))
+                        if (fileDirectoryInformation.FileName == Path.GetFileName(newPath))
                         {
                             fileStore.CloseFile(handle);
                             return true;
@@ -450,7 +448,7 @@ namespace System.IO.Abstractions.SMB
                     break;
             }
 
-            switch(access)
+            switch (access)
             {
                 case FileAccess.Read:
                     accessMask = AccessMask.GENERIC_READ;
@@ -466,57 +464,50 @@ namespace System.IO.Abstractions.SMB
                     break;
             }
 
-            if (_smbClient.Connect(ipAddress, transport))
+            var credential = _credentialProvider.GetSMBCredential(path);
+            if (credential == null)
             {
-                var credential = _credentialProvider.GetSMBCredential(path);
-                if(credential == null)
-                {
-                    throw new Exception($"Unable to find credential for path: {path}");
-                }
-                status = _smbClient.Login(credential.GetDomain(), credential.GetUserName(), credential.GetPassword());
-
-                var shareName = uri.Segments[1].Replace(Path.DirectorySeparatorChar.ToString(), "");
-                var newPath = uri.AbsolutePath.Replace(uri.Segments[1], "").Remove(0, 1);
-
-                ISMBFileStore fileStore = _smbClient.TreeConnect(shareName, out status);
-
-
-                switch (mode)
-                {
-                    case FileMode.Create:
-                        disposition = CreateDisposition.FILE_CREATE;
-                        break;
-                    case FileMode.CreateNew:
-                        disposition = CreateDisposition.FILE_OVERWRITE;
-                        break;
-                    case FileMode.Open:
-                        disposition = CreateDisposition.FILE_OPEN;
-                        break;
-                    case FileMode.OpenOrCreate:
-                        disposition = Exists(path) ? CreateDisposition.FILE_OPEN : CreateDisposition.FILE_CREATE;
-                        break;
-                }
-
-                status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, newPath, accessMask, 0, shareAccess,
-                    disposition, createOptions, null);
-                if(status != NTStatus.STATUS_SUCCESS)
-                {
-                    throw new IOException($"Unable to connect to smbShare. Status = {status}");
-                }
-
-                Stream s = new SMBStream(fileStore, handle);
-
-                if(mode == FileMode.Append)
-                {
-                    s.Seek(0, SeekOrigin.End);
-                }
-
-                return s;
+                throw new Exception($"Unable to find credential for path: {path}");
             }
-            else
+
+            var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential);
+
+            var shareName = uri.Segments[1].Replace(Path.DirectorySeparatorChar.ToString(), "");
+            var newPath = uri.AbsolutePath.Replace(uri.Segments[1], "").Remove(0, 1).Replace('/', '\\');
+
+            ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
+
+            switch (mode)
+            {
+                case FileMode.Create:
+                    disposition = CreateDisposition.FILE_CREATE;
+                    break;
+                case FileMode.CreateNew:
+                    disposition = CreateDisposition.FILE_OVERWRITE;
+                    break;
+                case FileMode.Open:
+                    disposition = CreateDisposition.FILE_OPEN;
+                    break;
+                case FileMode.OpenOrCreate:
+                    disposition = Exists(path) ? CreateDisposition.FILE_OPEN : CreateDisposition.FILE_CREATE;
+                    break;
+            }
+
+            status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, newPath, accessMask, 0, shareAccess,
+                disposition, createOptions, null);
+            if (status != NTStatus.STATUS_SUCCESS)
             {
                 throw new IOException($"Unable to connect to smbShare. Status = {status}");
             }
+
+            Stream s = new SMBStream(fileStore, handle, connection);
+
+            if (mode == FileMode.Append)
+            {
+                s.Seek(0, SeekOrigin.End);
+            }
+
+            return s;
         }
 
         public override Stream OpenRead(string path)
@@ -948,12 +939,6 @@ namespace System.IO.Abstractions.SMB
             }
 
             return new Task(() => WriteAllText(path, contents, encoding), cancellationToken);
-        }
-
-        public void Dispose()
-        {
-            _smbClient.Logoff();
-            _smbClient.Disconnect();
         }
 
         private bool IsSMBPath(string path)

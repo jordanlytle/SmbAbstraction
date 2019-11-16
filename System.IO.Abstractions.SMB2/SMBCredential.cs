@@ -5,6 +5,11 @@ namespace System.IO.Abstractions.SMB
 {
     public class SMBCredential : ISMBCredential
     {
+        public string Domain => _domain;
+        public string UserName => _userName;
+        public string Password => _password;
+        public string Path => _path;
+
         private string _domain;
         private string _userName;
         private string _password;
@@ -23,26 +28,6 @@ namespace System.IO.Abstractions.SMB
             : this(domain, userName, password, path)
         {
             provider.AddSMBCredential(this);
-        }
-
-        public string GetDomain()
-        {
-            return _domain;
-        }
-
-        public string GetPassword()
-        {
-            return _password;
-        }
-
-        public string GetUserName()
-        {
-            return _userName;
-        }
-
-        public string GetPath()
-        {
-            return _path;
         }
 
         public void Dispose()
