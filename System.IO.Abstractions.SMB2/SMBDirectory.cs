@@ -123,7 +123,7 @@ namespace System.IO.Abstractions.SMB
                 throw new Exception($"Unable to find credential for path: {path}");
             }
 
-            var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential);
+            using var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential);
 
             var shareName = uri.Segments[1].Replace(Path.DirectorySeparatorChar.ToString(), "");
             var newPath = uri.AbsolutePath.Replace(uri.Segments[1], "").Remove(0, 1).Replace('/', '\\');
@@ -164,22 +164,17 @@ namespace System.IO.Abstractions.SMB
 
                 ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
-                // TODO this open should be working but isn't for some reason
-                status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, newPath, AccessMask.MAXIMUM_ALLOWED, 0, ShareAccess.None,
-                    CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
+                status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, newPath, AccessMask.DELETE, 0, ShareAccess.None,
+                    CreateDisposition.FILE_OPEN, CreateOptions.FILE_DELETE_ON_CLOSE, null);
 
                 if (status != NTStatus.STATUS_SUCCESS)
                 {
                     throw new IOException($"Unable to connect to smbShare. Status = {status}");
                 }
 
-                fileStore.SetFileInformation(handle, new FileDispositionInformation());
-
-                if (status != NTStatus.STATUS_SUCCESS)
-                {
-                    throw new IOException($"Unable to delete folder. Status = {status}");
-                }
-
+                // This is the correct delete command, but it doesn't work for some reason. You have to use FILE_DELETE_ON_CLOSE
+                // fileStore.SetFileInformation(handle, new FileDispositionInformation());
+                
                 fileStore.CloseFile(handle);
             }
         }
@@ -452,7 +447,48 @@ namespace System.IO.Abstractions.SMB
                 return base.Exists(path);
             }
 
-            throw new NotImplementedException();
+            Uri uri = new Uri(path);
+            var hostEntry = Dns.GetHostEntry(uri.Host);
+            ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
+
+            NTStatus status = NTStatus.STATUS_SUCCESS;
+
+            var credential = _credentialProvider.GetSMBCredential(path);
+
+            using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential))
+            {
+                var shareName = uri.Segments[1].Replace(Path.DirectorySeparatorChar.ToString(), "");
+                var newPath = uri.AbsolutePath.Replace(uri.Segments[1], "").Remove(0, 1).Replace('/', '\\');
+                var directoryPath = Path.GetDirectoryName(newPath);
+
+                ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
+
+                status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, directoryPath, AccessMask.GENERIC_READ, 0, ShareAccess.Read,
+                    CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
+                if (status != NTStatus.STATUS_SUCCESS)
+                {
+                    throw new IOException($"Unable to connect to smbShare. Status = {status}");
+                }
+
+                fileStore.QueryDirectory(out List<QueryDirectoryFileInformation> queryDirectoryFileInformation, handle, string.IsNullOrEmpty(directoryPath) ? "*" : directoryPath, FileInformationClass.FileDirectoryInformation);
+
+                foreach (var file in queryDirectoryFileInformation)
+                {
+                    if (file.FileInformationClass == FileInformationClass.FileDirectoryInformation)
+                    {
+                        FileDirectoryInformation fileDirectoryInformation = (FileDirectoryInformation)file;
+                        if (fileDirectoryInformation.FileName == Path.GetFileName(newPath))
+                        {
+                            fileStore.CloseFile(handle);
+                            return true;
+                        }
+                    }
+                }
+
+                fileStore.CloseFile(handle);
+            }
+
+            return false;
         }
 
         public override DirectorySecurity GetAccessControl(string path)
