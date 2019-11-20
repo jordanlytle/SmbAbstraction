@@ -104,7 +104,7 @@ namespace System.IO.Abstractions.SMB
 
         private IDirectoryInfo CreateDirectory(string path, ISMBCredential credential)
         {
-            if (!IsSMBPath(path))
+            if (!path.IsSmbPath())
             {
                 return base.CreateDirectory(path);
             }
@@ -191,7 +191,7 @@ namespace System.IO.Abstractions.SMB
 
         public void Delete(string path, bool recursive, ISMBCredential credential)
         {
-            if (!IsSMBPath(path))
+            if (!path.IsSmbPath())
             {
                 base.Delete(path, recursive);
             }
@@ -280,7 +280,7 @@ namespace System.IO.Abstractions.SMB
 
         private IEnumerable<string> EnumerateDirectories(string path, string searchPattern, SearchOption searchOption, ISMBCredential credential)
         {
-            if (!IsSMBPath(path))
+            if (!path.IsSmbPath())
             {
                 return base.EnumerateDirectories(path, searchPattern, searchOption);
             }
@@ -369,7 +369,7 @@ namespace System.IO.Abstractions.SMB
 
         private IEnumerable<string> EnumerateFiles(string path, string searchPattern, SearchOption searchOption, ISMBCredential credential)
         {
-            if (!IsSMBPath(path))
+            if (!path.IsSmbPath())
             {
                 return base.EnumerateFiles(path, searchPattern, searchOption);
             }
@@ -464,7 +464,7 @@ namespace System.IO.Abstractions.SMB
 
         private IEnumerable<string> EnumerateFileSystemEntries(string path, string searchPattern, SearchOption searchOption, ISMBCredential credential)
         {
-            if (!IsSMBPath(path))
+            if (!path.IsSmbPath())
             {
                 return base.EnumerateFileSystemEntries(path, searchPattern, searchOption);
             }

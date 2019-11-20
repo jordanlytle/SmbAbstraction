@@ -401,7 +401,7 @@ namespace System.IO.Abstractions.SMB
 
         private Stream Open(string path, FileMode mode, ISMBCredential credential)
         {
-            if (!IsSMBPath(path))
+            if (!path.IsSmbPath())
             {
                 return base.Open(path, mode);
             }
@@ -416,7 +416,7 @@ namespace System.IO.Abstractions.SMB
 
         private Stream Open(string path, FileMode mode, FileAccess access, ISMBCredential credential)
         {
-            if (!IsSMBPath(path))
+            if (!path.IsSmbPath())
             {
                 return base.Open(path, mode, access);
             }
@@ -547,7 +547,7 @@ namespace System.IO.Abstractions.SMB
 
         private Stream OpenRead(string path, ISMBCredential credential)
         {
-            if (!IsSMBPath(path))
+            if (!path.IsSmbPath())
             {
                 return base.OpenRead(path);
             }
@@ -572,7 +572,7 @@ namespace System.IO.Abstractions.SMB
 
         private Stream OpenWrite(string path, ISMBCredential credential)
         {
-            if (!IsSMBPath(path))
+            if (!path.IsSmbPath())
             {
                 return base.OpenWrite(path);
             }
