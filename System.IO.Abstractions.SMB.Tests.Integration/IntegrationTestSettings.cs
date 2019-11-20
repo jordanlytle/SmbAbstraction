@@ -33,7 +33,6 @@ namespace System.IO.Abstractions.SMB.Tests.Integration
         {
             var configuration = new ConfigurationBuilder()
                                       .AddJsonFile("testsettings.json", optional: false)
-                                      .AddJsonFile("testsettings.development.json", optional: true)
                                       .Build();
 
             configuration.GetSection("IntegrationTestSettings").Bind(settings);
