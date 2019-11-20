@@ -7,12 +7,12 @@ namespace System.IO.Abstractions.SMB
     {
         public SMBFileSystem(ISMBClientFactory ismbClientfactory, ISMBCredentialProvider credentialProvider)
         {
+            File = new SMBFile(ismbClientfactory, credentialProvider, this);
             Directory = new SMBDirectory(ismbClientfactory, credentialProvider, this);
-            File = new SMBFile(ismbClientfactory, credentialProvider);
-            FileInfo = new SMBFileInfoFactory();
+            DirectoryInfo = new SMBDirectoryInfoFactory(this, credentialProvider, ismbClientfactory);
+            FileInfo = new SMBFileInfoFactory(this, credentialProvider, ismbClientfactory);
             FileStream = new SMBFileStreamFactory();
             Path = new PathWrapper(this);
-            DirectoryInfo = new SMBDirectoryInfoFactory();
             DriveInfo = new SMBDriveInfoFactory();
         }
 

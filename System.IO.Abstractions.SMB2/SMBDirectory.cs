@@ -14,8 +14,8 @@ namespace System.IO.Abstractions.SMB
         private readonly ISMBClientFactory _smbClientFactory;
         private readonly IFileSystem _fileSystem;
         private readonly ISMBCredentialProvider _credentialProvider;
+        private SMBDirectoryInfoFactory _directoryInfoFactory => _fileSystem.DirectoryInfo as SMBDirectoryInfoFactory;
 
-        public IPAddress ipAddress { get; set; }
         public SMBTransportType transport { get; set; }
 
         public SMBDirectory(ISMBClientFactory smbclientFactory, ISMBCredentialProvider credentialProvider, IFileSystem fileSystem) : base(new FileSystem())
@@ -24,79 +24,6 @@ namespace System.IO.Abstractions.SMB
             _credentialProvider = credentialProvider;
             _fileSystem = fileSystem;
             transport = SMBTransportType.DirectTCPTransport;
-        }
-
-        public IDirectoryInfo GetDirectoryInfo(string path, ISMBCredential credential = null)
-        {
-            Uri uri = new Uri(path);
-
-            if(uri.Segments.Length < 2)
-            {
-                return null;
-            }
-
-            var hostEntry = Dns.GetHostEntry(uri.Host);
-            ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
-
-            NTStatus status = NTStatus.STATUS_SUCCESS;
-
-            if (credential == null)
-            {
-                credential = _credentialProvider.GetSMBCredential(path);
-            }
-
-            if (credential == null)
-            {
-                throw new Exception($"Unable to find credential for path: {path}");
-            }
-
-            using var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential);
-
-            var shareName = uri.Segments[1].Replace(Path.DirectorySeparatorChar.ToString(), "");
-            var newPath = uri.AbsolutePath.Replace(uri.Segments[1], "").Remove(0, 1).Replace('/', '\\');
-
-            ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
-
-            status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, newPath, AccessMask.GENERIC_READ, 0, ShareAccess.Read,
-                    CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
-            if (status != NTStatus.STATUS_SUCCESS)
-            {
-                return null;
-            }
-
-            SMBDirectoryInfo directoryInfo = new SMBDirectoryInfo(path, this);
-
-            status = fileStore.GetFileInformation(out FileInformation fileInfo, handle, FileInformationClass.FileBasicInformation); // If you call this with any other FileInformationClass value
-                                                                                                                                    // it doesn't work for some reason
-            if(status != NTStatus.STATUS_SUCCESS)
-            {
-                return null;
-            }
-
-            FileBasicInformation fileDirectoryInformation = (FileBasicInformation)fileInfo;
-            if (fileDirectoryInformation.CreationTime.Time.HasValue)
-            {
-                directoryInfo.CreationTime =  fileDirectoryInformation.CreationTime.Time.Value;
-                directoryInfo.CreationTimeUtc = directoryInfo.CreationTime.ToUniversalTime();
-            }
-            directoryInfo.FileSystem = _fileSystem;
-            if (fileDirectoryInformation.LastAccessTime.Time.HasValue)
-            {
-                directoryInfo.LastAccessTime = fileDirectoryInformation.LastAccessTime.Time.Value;
-                directoryInfo.LastAccessTimeUtc = directoryInfo.LastAccessTime.ToUniversalTime();
-            }
-            if (fileDirectoryInformation.LastWriteTime.Time.HasValue)
-            {
-                directoryInfo.LastWriteTime = fileDirectoryInformation.LastWriteTime.Time.Value;
-                directoryInfo.LastWriteTimeUtc = directoryInfo.LastWriteTime.ToUniversalTime();
-            }
-            directoryInfo.Parent = GetParent(path, credential);
-            var pathRoot = Path.GetPathRoot(path);
-            if (pathRoot != string.Empty)
-            {
-                directoryInfo.Root = GetDirectoryInfo(pathRoot, credential);
-            }
-            return directoryInfo;
         }
 
         public override IDirectoryInfo CreateDirectory(string path)
@@ -113,7 +40,7 @@ namespace System.IO.Abstractions.SMB
 
             Uri uri = new Uri(path);
             var hostEntry = Dns.GetHostEntry(uri.Host);
-            ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
+            var ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
 
@@ -147,7 +74,7 @@ namespace System.IO.Abstractions.SMB
             }
             fileStore.CloseFile(handle);
 
-            return GetDirectoryInfo(path, credential);
+            return _directoryInfoFactory.FromDirectoryName(path, credential);
         }
 
         public override void Delete(string path)
@@ -159,7 +86,7 @@ namespace System.IO.Abstractions.SMB
 
             Uri uri = new Uri(path);
             var hostEntry = Dns.GetHostEntry(uri.Host);
-            ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
+            var ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
 
@@ -204,7 +131,7 @@ namespace System.IO.Abstractions.SMB
             {
                 Uri uri = new Uri(path);
                 var hostEntry = Dns.GetHostEntry(uri.Host);
-                ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
+                var ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
 
                 NTStatus status = NTStatus.STATUS_SUCCESS;
 
@@ -291,7 +218,7 @@ namespace System.IO.Abstractions.SMB
 
             Uri uri = new Uri(path);
             var hostEntry = Dns.GetHostEntry(uri.Host);
-            ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
+            var ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
 
@@ -380,7 +307,7 @@ namespace System.IO.Abstractions.SMB
 
             Uri uri = new Uri(path);
             var hostEntry = Dns.GetHostEntry(uri.Host);
-            ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
+            var ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
 
@@ -474,7 +401,7 @@ namespace System.IO.Abstractions.SMB
 
             Uri uri = new Uri(path);
             var hostEntry = Dns.GetHostEntry(uri.Host);
-            ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
+            var ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
 
@@ -539,7 +466,7 @@ namespace System.IO.Abstractions.SMB
 
             Uri uri = new Uri(path);
             var hostEntry = Dns.GetHostEntry(uri.Host);
-            ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
+            var ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
 
@@ -608,7 +535,7 @@ namespace System.IO.Abstractions.SMB
                 return base.GetCreationTime(path);
             }
 
-            return GetDirectoryInfo(path).CreationTime;
+            return _directoryInfoFactory.FromDirectoryName(path).CreationTime;
         }
 
         public override DateTime GetCreationTimeUtc(string path)
@@ -618,7 +545,7 @@ namespace System.IO.Abstractions.SMB
                 return base.GetCreationTimeUtc(path);
             }
 
-            return GetDirectoryInfo(path).CreationTimeUtc;
+            return _directoryInfoFactory.FromDirectoryName(path).CreationTimeUtc;
         }
 
         public override string GetCurrentDirectory()
@@ -723,7 +650,7 @@ namespace System.IO.Abstractions.SMB
                 return base.GetLastAccessTime(path);
             }
 
-            return GetDirectoryInfo(path).LastAccessTime;
+            return _directoryInfoFactory.FromDirectoryName(path).LastAccessTime;
         }
 
         public override DateTime GetLastAccessTimeUtc(string path)
@@ -733,7 +660,7 @@ namespace System.IO.Abstractions.SMB
                 return base.GetLastAccessTimeUtc(path);
             }
 
-            return GetDirectoryInfo(path).LastAccessTimeUtc;
+            return _directoryInfoFactory.FromDirectoryName(path).LastAccessTimeUtc;
         }
 
         public override DateTime GetLastWriteTime(string path)
@@ -743,7 +670,7 @@ namespace System.IO.Abstractions.SMB
                 return base.GetLastWriteTime(path);
             }
 
-            return GetDirectoryInfo(path).LastWriteTime;
+            return _directoryInfoFactory.FromDirectoryName(path).LastWriteTime;
         }
 
         public override DateTime GetLastWriteTimeUtc(string path)
@@ -753,7 +680,7 @@ namespace System.IO.Abstractions.SMB
                 return base.GetLastWriteTimeUtc(path);
             }
 
-            return GetDirectoryInfo(path).LastWriteTimeUtc;
+            return _directoryInfoFactory.FromDirectoryName(path).LastWriteTimeUtc;
         }
 
         public override IDirectoryInfo GetParent(string path)
@@ -763,13 +690,10 @@ namespace System.IO.Abstractions.SMB
                 return base.GetParent(path);
             }
 
-            var pathUri = new Uri(path);
-            var parentUri = new Uri(pathUri, ".");
-
-            return GetDirectoryInfo(parentUri.AbsoluteUri);
+            return GetParent(path, null);
         }
 
-        private IDirectoryInfo GetParent(string path, ISMBCredential credential)
+        internal IDirectoryInfo GetParent(string path, ISMBCredential credential)
         {
             if (!IsSMBPath(path))
             {
@@ -779,7 +703,7 @@ namespace System.IO.Abstractions.SMB
             var pathUri = new Uri(path);
             var parentUri = pathUri.AbsoluteUri.EndsWith('/') ? new Uri(pathUri, "..") : new Uri(pathUri, ".");
 
-            return GetDirectoryInfo(parentUri.AbsoluteUri, credential);
+            return _directoryInfoFactory.FromDirectoryName(parentUri.AbsoluteUri, credential);
         }
 
         public override void Move(string sourceDirName, string destDirName)

@@ -14,13 +14,12 @@ namespace System.IO.Abstractions.SMB
 {
     public class SMBFile : FileWrapper, IFile
     {
-        private ISMBClientFactory _smbClientFactory;
-        private ISMBCredentialProvider _credentialProvider;
+        private readonly ISMBClientFactory _smbClientFactory;
+        private readonly ISMBCredentialProvider _credentialProvider;
 
-        public IPAddress ipAddress { get; set; }
         public SMBTransportType transport { get; set; }
 
-        public SMBFile(ISMBClientFactory smbclientFactory, ISMBCredentialProvider credentialProvider) : base(new FileSystem())
+        public SMBFile(ISMBClientFactory smbclientFactory, ISMBCredentialProvider credentialProvider, IFileSystem fileSystem) : base(new FileSystem())
         {
             _smbClientFactory = smbclientFactory;
             _credentialProvider = credentialProvider;
@@ -222,7 +221,7 @@ namespace System.IO.Abstractions.SMB
 
             Uri uri = new Uri(path);
             var hostEntry = Dns.GetHostEntry(uri.Host);
-            ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
+            var ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
 
@@ -257,7 +256,7 @@ namespace System.IO.Abstractions.SMB
 
             Uri uri = new Uri(path);
             var hostEntry = Dns.GetHostEntry(uri.Host);
-            ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
+            var ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
 
@@ -445,7 +444,7 @@ namespace System.IO.Abstractions.SMB
         {
             Uri uri = new Uri(path);
             var hostEntry = Dns.GetHostEntry(uri.Host);
-            ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
+            var ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
 

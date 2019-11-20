@@ -5,120 +5,158 @@ namespace System.IO.Abstractions.SMB
 {
     public class SMBFileInfo : IFileInfo
     {
-        public SMBFileInfo()
+        private SMBFile _file => FileSystem.File as SMBFile;
+        private SMBFileInfoFactory _fileInfoFactory => FileSystem.FileInfo as SMBFileInfoFactory;
+
+        public SMBFileInfo(string path, IFileSystem fileSystem)
         {
+            FullName = path;
+            FileSystem = fileSystem;
         }
 
-        public IDirectoryInfo Directory => throw new NotImplementedException();
+        public IDirectoryInfo Directory { get; set; }
 
-        public string DirectoryName => throw new NotImplementedException();
+        public string DirectoryName { get; internal set; }
 
-        public bool IsReadOnly { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public bool IsReadOnly { get; set; }
 
-        public long Length => throw new NotImplementedException();
+        public long Length { get; internal set; }
 
-        public IFileSystem FileSystem => throw new NotImplementedException();
+        public IFileSystem FileSystem { get; }
 
-        public FileAttributes Attributes { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public DateTime CreationTime { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public DateTime CreationTimeUtc { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public FileAttributes Attributes { get; set; }
+        public DateTime CreationTime { get; set; }
+        public DateTime CreationTimeUtc { get; set; }
 
-        public bool Exists => throw new NotImplementedException();
+        public bool Exists { get; internal set; }
 
-        public string Extension => throw new NotImplementedException();
+        public string Extension => Path.GetExtension(FullName);
 
-        public string FullName => throw new NotImplementedException();
+        public string FullName { get; private set; }
 
-        public DateTime LastAccessTime { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public DateTime LastAccessTimeUtc { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public DateTime LastWriteTime { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public DateTime LastWriteTimeUtc { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public DateTime LastAccessTime { get; set; }
+        public DateTime LastAccessTimeUtc { get; set; }
+        public DateTime LastWriteTime { get; set; }
+        public DateTime LastWriteTimeUtc { get; set; }
 
-        public string Name => throw new NotImplementedException();
+        public string Name => Path.GetFileName(FullName);
 
         public StreamWriter AppendText()
         {
-            throw new NotImplementedException();
+            return _file.AppendText(FullName);
         }
 
         public IFileInfo CopyTo(string destFileName)
         {
-            throw new NotImplementedException();
+            _file.Copy(FullName, destFileName);
+            return _fileInfoFactory.FromFileName(destFileName);
         }
 
         public IFileInfo CopyTo(string destFileName, bool overwrite)
         {
-            throw new NotImplementedException();
+            _file.Copy(FullName, destFileName, overwrite);
+            return _fileInfoFactory.FromFileName(destFileName);
         }
 
         public Stream Create()
         {
-            throw new NotImplementedException();
+            var stream = _file.Create(FullName);
+            Exists = true;
+            return stream;
         }
 
         public StreamWriter CreateText()
         {
-            throw new NotImplementedException();
+            var streamWriter =  _file.CreateText(FullName);
+            Exists = true;
+            return streamWriter;
         }
 
         public void Delete()
         {
-            throw new NotImplementedException();
+            _file.Delete(FullName);
+            Exists = false;
         }
 
         public FileSecurity GetAccessControl()
         {
-            throw new NotImplementedException();
+            return _file.GetAccessControl(FullName);
         }
 
         public FileSecurity GetAccessControl(AccessControlSections includeSections)
         {
-            throw new NotImplementedException();
+            return _file.GetAccessControl(FullName, includeSections);
         }
 
         public void MoveTo(string destFileName)
         {
-            throw new NotImplementedException();
+            _file.Move(FullName, destFileName);
         }
 
         public Stream Open(FileMode mode)
         {
-            throw new NotImplementedException();
+            var stream = _file.Open(FullName, mode);
+            Exists = true;
+            return stream;
         }
 
         public Stream Open(FileMode mode, FileAccess access)
         {
-            throw new NotImplementedException();
+            var stream =  _file.Open(FullName, mode, access);
+            Exists = true;
+            return stream;
         }
 
         public Stream Open(FileMode mode, FileAccess access, FileShare share)
         {
-            throw new NotImplementedException();
+            var stream = _file.Open(FullName, mode, access, share);
+            Exists = true;
+            return stream;
         }
 
         public Stream OpenRead()
         {
-            throw new NotImplementedException();
+            var stream =  _file.OpenRead(FullName);
+            Exists = true;
+            return stream;
         }
 
         public StreamReader OpenText()
         {
-            throw new NotImplementedException();
+            var streamReader = _file.OpenText(FullName);
+            Exists = true;
+            return streamReader;
         }
 
         public Stream OpenWrite()
         {
-            throw new NotImplementedException();
+            var stream = _file.OpenWrite(FullName);
+            Exists = true;
+            return stream;
         }
 
         public void Refresh()
         {
-            throw new NotImplementedException();
+            var fileInfo = _fileInfoFactory.FromFileName(FullName);
+
+            Directory = fileInfo.Directory;
+            DirectoryName = fileInfo.DirectoryName;
+            IsReadOnly = fileInfo.IsReadOnly;
+            Length = fileInfo.Length;
+            Attributes = fileInfo.Attributes;
+            CreationTime = fileInfo.CreationTime;
+            CreationTimeUtc = fileInfo.CreationTimeUtc;
+            Exists = fileInfo.Exists;
+            FullName = fileInfo.FullName;
+            LastAccessTime = fileInfo.LastAccessTime;
+            LastAccessTimeUtc = fileInfo.LastAccessTimeUtc;
+            LastWriteTime = fileInfo.LastWriteTime;
+            LastWriteTimeUtc = fileInfo.LastWriteTimeUtc;
         }
 
         public void SetAccessControl(FileSecurity fileSecurity)
         {
-            throw new NotImplementedException();
+            _file.SetAccessControl(FullName, fileSecurity);
         }
     }
 }
