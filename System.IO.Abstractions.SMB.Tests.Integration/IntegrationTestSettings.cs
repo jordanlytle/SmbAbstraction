@@ -7,7 +7,7 @@ namespace System.IO.Abstractions.SMB.Tests.Integration
 {
     public class IntegrationTestSettings
     {
-        public ShareCredentials ShareCredentials {get; set;}
+        public ShareCredentials ShareCredentials { get; set; }
 
         public List<Share> Shares { get; set; }
     }
@@ -21,12 +21,30 @@ namespace System.IO.Abstractions.SMB.Tests.Integration
 
     public class Share
     {
-        public string RootUncPath { get; set; }
-        public string RootSmbUri { get; set; }
+        public string HostName { get; set; }
+        public string ShareName { get; set; }
+
+        public string RootUncPath
+        {
+            get
+            {
+                var s = Path.DirectorySeparatorChar;
+                return $"{s}{s}{HostName}{s}{ShareName}";
+            }
+        }
+
+        public string RootSmbUri
+        {
+            get
+            {
+                return $@"smb://{HostName}/{ShareName}";
+            }
+        }
 
         public List<string> Files { get; set; }
         public List<string> Directories { get; set; }
     }
+
     public static class IntegrationTestSettingsExtensions
     {
         public static void Initialize(this IntegrationTestSettings settings)

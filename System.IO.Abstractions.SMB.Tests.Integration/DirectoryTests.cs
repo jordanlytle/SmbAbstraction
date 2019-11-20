@@ -6,33 +6,45 @@ using System.Linq;
 
 namespace System.IO.Abstractions.SMB.Tests.Integration
 {
-    public class DirectoryTests
+    public class DirectoryTests : TestBase
     {
-        private static readonly IntegrationTestSettings _settings = new IntegrationTestSettings();
+        private string createdTestDirectoryPath;
 
-        private readonly ISMBCredentialProvider _credentialProvider;
-        private readonly ISMBClientFactory _clientFactory;
-        private readonly IFileSystem _fileSystem;
-
-        public DirectoryTests()
+        public DirectoryTests() : base()
         {
-            _settings.Initialize();
 
-            _credentialProvider = new SMBCredentialProvider();
-            _clientFactory = new SMB2ClientFactory();
-            _fileSystem = new SMBFileSystem(_clientFactory, _credentialProvider);
+        }
+
+        public override void Dispose()
+        {
+        }
+
+        [Fact]
+        public void CanCreateDirectoryInUncRootDirectory()
+        {
+            var testCredentials = TestSettings.ShareCredentials;
+            var testShare = TestSettings.Shares.First();
+            var testRootUncPath = Path.Combine(testShare.RootUncPath);
+
+            createdTestDirectoryPath = Path.Combine(testShare.RootUncPath, $"test_directory-{DateTime.Now.ToFileTimeUtc()}");
+
+            using var credential = new SMBCredential(testCredentials.Domain, testCredentials.Username, testCredentials.Password, createdTestDirectoryPath, SMBCredentialProvider);
+
+            var directoryInfo = FileSystem.Directory.CreateDirectory(createdTestDirectoryPath);
+
+            Assert.True(FileSystem.Directory.Exists(createdTestDirectoryPath));
         }
 
         [Fact]
         public void CanEnumerateFilesUncRootDirectory()
         {
-            var testCredentials = _settings.ShareCredentials;
-            var testShare = _settings.Shares.First();
+            var testCredentials = TestSettings.ShareCredentials;
+            var testShare = TestSettings.Shares.First();
             var testRootUncPath = Path.Combine(testShare.RootUncPath);
 
-            using var credential = new SMBCredential(testCredentials.Domain, testCredentials.Username, testCredentials.Password, testRootUncPath, _credentialProvider);
+            using var credential = new SMBCredential(testCredentials.Domain, testCredentials.Username, testCredentials.Password, testRootUncPath, SMBCredentialProvider);
 
-            var files = _fileSystem.Directory.EnumerateFiles(testRootUncPath, "*").ToList();
+            var files = FileSystem.Directory.EnumerateFiles(testRootUncPath, "*").ToList();
 
             Assert.True(files.Count >= 0); //Include 0 in case directory is empty. If an exception is thrown, the test will fail.
         }
@@ -40,13 +52,13 @@ namespace System.IO.Abstractions.SMB.Tests.Integration
         [Fact]
         public void CanEnumerateFilesSmbRootDirectory()
         {
-            var testCredentials = _settings.ShareCredentials;
-            var testShare = _settings.Shares.First();
+            var testCredentials = TestSettings.ShareCredentials;
+            var testShare = TestSettings.Shares.First();
             var testRootSmbUri = Path.Combine(testShare.RootSmbUri);
 
-            using var credential = new SMBCredential(testCredentials.Domain, testCredentials.Username, testCredentials.Password, testRootSmbUri, _credentialProvider);
+            using var credential = new SMBCredential(testCredentials.Domain, testCredentials.Username, testCredentials.Password, testRootSmbUri, SMBCredentialProvider);
 
-            var files = _fileSystem.Directory.EnumerateFiles(testRootSmbUri, "*").ToList();
+            var files = FileSystem.Directory.EnumerateFiles(testRootSmbUri, "*").ToList();
 
             Assert.True(files.Count >= 0); //Include 0 in case directory is empty. If an exception is thrown, the test will fail.
         }

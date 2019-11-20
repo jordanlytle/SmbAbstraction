@@ -112,7 +112,7 @@ namespace System.IO.Abstractions.SMB.Tests.Path
             foreach (var property in _smbUriTestData.GetType().GetProperties())
             {
                 var path = (string)property.GetValue(_smbUriTestData);
-                var relative = ReplacePathSeperators(path.Replace(_smbUriTestData.Root, ""), @"\");
+                var relative = RemoveLeadingSeperator(ReplacePathSeperators(path.Replace(_smbUriTestData.Root, ""), @"\"));
                 var relativeSharePath = path.RelativeSharePath();
 
                 Assert.Equal(relative, relativeSharePath);
@@ -139,6 +139,21 @@ namespace System.IO.Abstractions.SMB.Tests.Path
             foreach (var pathSeperator in pathSeperators)
             {
                 input = input.Replace(pathSeperator, newValue);
+            }
+
+            return input;
+        }
+
+        private string RemoveLeadingSeperator(string input)
+        {
+            string[] pathSeperators = { @"\", @"/" };
+
+            foreach (var pathSeperator in pathSeperators)
+            {
+                if (input.StartsWith(pathSeperator))
+                {
+                    input = input.Remove(0, 1);
+                }
             }
 
             return input;
