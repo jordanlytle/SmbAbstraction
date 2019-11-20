@@ -7,12 +7,18 @@ namespace System.IO.Abstractions.SMB
 {
     public class SMBDirectoryInfo : IDirectoryInfo
     {
-        private readonly SMBDirectory _smbDirctory;
+        private readonly SMBDirectory _smbDirectory;
+        private readonly SMBFile _smbFile;
+        private readonly SMBDirectoryInfoFactory _directoryInfoFactory;
+        private readonly SMBFileInfoFactory _fileInfoFactory;
 
-        public SMBDirectoryInfo(string fileName, SMBDirectory smbDirectory)
+        public SMBDirectoryInfo(string fileName, SMBDirectory smbDirectory, SMBFile smbFile, SMBDirectoryInfoFactory directoryInfoFactory, SMBFileInfoFactory fileInfoFactory)
         {
             _fullName = fileName;
-            _smbDirctory = smbDirectory;
+            _smbDirectory = smbDirectory;
+            _smbFile = smbFile;
+            _directoryInfoFactory = directoryInfoFactory;
+            _fileInfoFactory = fileInfoFactory;
         }
 
         private readonly string _fullName;
@@ -42,22 +48,22 @@ namespace System.IO.Abstractions.SMB
 
         public void Create()
         {
-            _smbDirctory.CreateDirectory(FullName);
+            _smbDirectory.CreateDirectory(FullName);
         }
 
         public IDirectoryInfo CreateSubdirectory(string path)
         {
-            return _smbDirctory.CreateDirectory(Path.Combine(FullName, path));
+            return _smbDirectory.CreateDirectory(Path.Combine(FullName, path));
         }
 
         public void Delete(bool recursive)
         {
-            _smbDirctory.Delete(FullName, recursive);
+            _smbDirectory.Delete(FullName, recursive);
         }
 
         public void Delete()
         {
-            _smbDirctory.Delete(FullName);
+            _smbDirectory.Delete(FullName);
         }
 
         public IEnumerable<IDirectoryInfo> EnumerateDirectories()
@@ -72,11 +78,11 @@ namespace System.IO.Abstractions.SMB
 
         public IEnumerable<IDirectoryInfo> EnumerateDirectories(string searchPattern, SearchOption searchOption)
         {
-            var paths = _smbDirctory.EnumerateDirectories(FullName, searchPattern, searchOption);
+            var paths = _smbDirectory.EnumerateDirectories(FullName, searchPattern, searchOption);
             List<IDirectoryInfo> directoryInfos = new List<IDirectoryInfo>();
             foreach (var path in paths)
             {
-                directoryInfos.Add(_smbDirctory.GetDirectoryInfo(path));
+                directoryInfos.Add(_directoryInfoFactory.FromDirectoryName(path));
             }
 
             return directoryInfos;
@@ -84,17 +90,24 @@ namespace System.IO.Abstractions.SMB
 
         public IEnumerable<IFileInfo> EnumerateFiles()
         {
-            throw new NotImplementedException();
+            return EnumerateFiles("*");
         }
 
         public IEnumerable<IFileInfo> EnumerateFiles(string searchPattern)
         {
-            throw new NotImplementedException();
+            return EnumerateFiles(searchPattern, SearchOption.TopDirectoryOnly);
         }
 
         public IEnumerable<IFileInfo> EnumerateFiles(string searchPattern, SearchOption searchOption)
         {
-            throw new NotImplementedException();
+            var paths = _smbDirectory.EnumerateFiles(FullName, searchPattern, searchOption);
+            List<IFileInfo> fileInfos = new List<IFileInfo>();
+            foreach (var path in paths)
+            {
+                fileInfos.Add(_fileInfoFactory.FromFileName(path));
+            }
+
+            return fileInfos;
         }
 
         public IEnumerable<IFileSystemInfo> EnumerateFileSystemInfos()
@@ -114,12 +127,12 @@ namespace System.IO.Abstractions.SMB
 
         public DirectorySecurity GetAccessControl()
         {
-            return _smbDirctory.GetAccessControl(FullName);
+            return _smbDirectory.GetAccessControl(FullName);
         }
 
         public DirectorySecurity GetAccessControl(AccessControlSections includeSections)
         {
-            return _smbDirctory.GetAccessControl(FullName, includeSections);
+            return _smbDirectory.GetAccessControl(FullName, includeSections);
         }
 
         public IDirectoryInfo[] GetDirectories()
@@ -169,12 +182,12 @@ namespace System.IO.Abstractions.SMB
 
         public void MoveTo(string destDirName)
         {
-            throw new NotImplementedException();
+            _smbDirectory.Move(_fullName, destDirName);
         }
 
         public void Refresh()
         {
-            var info = _smbDirctory.GetDirectoryInfo(FullName);
+            var info = _directoryInfoFactory.FromDirectoryName(FullName);
             Parent = info.Parent;
             Root = info.Root;
             FileSystem = info.FileSystem;
@@ -189,7 +202,7 @@ namespace System.IO.Abstractions.SMB
 
         public void SetAccessControl(DirectorySecurity directorySecurity)
         {
-            throw new NotImplementedException();
+            _smbDirectory.SetAccessControl(_fullName, directorySecurity);
         }
     }
 }
