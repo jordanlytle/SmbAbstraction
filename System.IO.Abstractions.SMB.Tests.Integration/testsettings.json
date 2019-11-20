@@ -7,8 +7,8 @@
     },
     "Shares": [
       {
-        "RootUncPath": "\\\\host\\share",
-        "RootSmbUri": "smb://host/share",
+        "HostName": "",
+        "ShareName": "",
         "Files": [
           "file.txt"
         ],
