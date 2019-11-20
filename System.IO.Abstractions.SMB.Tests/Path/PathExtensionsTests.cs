@@ -42,7 +42,7 @@ namespace System.IO.Abstractions.SMB.Tests.Path
             foreach (var property in _smbUriTestData.GetType().GetProperties())
             {
                 var path = (string)property.GetValue(_smbUriTestData);
-                var hostName = path.GetHostName();
+                var hostName = path.HostName();
 
                 Assert.Equal("host", hostName);
             }
@@ -54,7 +54,7 @@ namespace System.IO.Abstractions.SMB.Tests.Path
             foreach (var property in _uncPathTestData.GetType().GetProperties())
             {
                 var path = (string)property.GetValue(_uncPathTestData);
-                var hostName = path.GetHostName();
+                var hostName = path.HostName();
 
                 Assert.Equal("host", hostName);
             }
@@ -66,7 +66,7 @@ namespace System.IO.Abstractions.SMB.Tests.Path
             foreach (var property in _smbUriTestData.GetType().GetProperties())
             {
                 var path = (string)property.GetValue(_smbUriTestData);
-                var sharePath = path.GetSharePath();
+                var sharePath = path.SharePath();
                 Assert.Equal(_smbUriTestData.Root, sharePath);
             }
         }
@@ -77,7 +77,7 @@ namespace System.IO.Abstractions.SMB.Tests.Path
             foreach (var property in _uncPathTestData.GetType().GetProperties())
             {
                 var path = (string)property.GetValue(_uncPathTestData);
-                var sharePath = path.GetSharePath();
+                var sharePath = path.SharePath();
                 Assert.Equal(_uncPathTestData.Root, sharePath);
             }
         }
@@ -88,7 +88,7 @@ namespace System.IO.Abstractions.SMB.Tests.Path
             foreach (var property in _smbUriTestData.GetType().GetProperties())
             {
                 var path = (string)property.GetValue(_smbUriTestData);
-                var shareName = path.GetShareName();
+                var shareName = path.ShareName();
 
                 Assert.Equal("share", shareName);
             }
@@ -100,7 +100,7 @@ namespace System.IO.Abstractions.SMB.Tests.Path
             foreach (var property in _uncPathTestData.GetType().GetProperties())
             {
                 var path = (string)property.GetValue(_uncPathTestData);
-                var shareName = path.GetShareName();
+                var shareName = path.ShareName();
 
                 Assert.Equal("share", shareName);
             }
@@ -113,7 +113,7 @@ namespace System.IO.Abstractions.SMB.Tests.Path
             {
                 var path = (string)property.GetValue(_smbUriTestData);
                 var relative = ReplacePathSeperators(path.Replace(_smbUriTestData.Root, ""), @"\");
-                var relativeSharePath = path.GetRelativeSharePath();
+                var relativeSharePath = path.RelativeSharePath();
 
                 Assert.Equal(relative, relativeSharePath);
             }
@@ -126,7 +126,7 @@ namespace System.IO.Abstractions.SMB.Tests.Path
             {
                 var path = (string)property.GetValue(_uncPathTestData);
                 var relative = ReplacePathSeperators(path.Replace(_uncPathTestData.Root, ""), @"\");
-                var relativeSharePath = path.GetRelativeSharePath();
+                var relativeSharePath = path.RelativeSharePath();
 
                 Assert.Equal(relative, relativeSharePath);
             }

@@ -22,13 +22,13 @@ namespace System.IO.Abstractions.SMB
             return uri.Scheme.Equals("smb") || uri.IsUnc;
         }
 
-        public static string GetHostName(this string path)
+        public static string HostName(this string path)
         {
             var uri = new Uri(path);
             return uri.Host;
         }
 
-        public static string GetShareName(this string path)
+        public static string ShareName(this string path)
         {
             var uri = new Uri(path);
             var shareName = uri.Segments[1].RemoveAnySeperators();
@@ -36,7 +36,7 @@ namespace System.IO.Abstractions.SMB
             return shareName;
         }
 
-        public static string GetSharePath(this string path)
+        public static string SharePath(this string path)
         {
             var uri = new Uri(path);
 
@@ -49,9 +49,9 @@ namespace System.IO.Abstractions.SMB
             return sharePath;
         }
 
-        public static string GetRelativeSharePath(this string path)
+        public static string RelativeSharePath(this string path)
         {
-            var sharePath = path.GetSharePath();
+            var sharePath = path.SharePath();
 
             var relativePath = path.Replace(sharePath, "", StringComparison.InvariantCultureIgnoreCase).Replace("/", @"\");
 

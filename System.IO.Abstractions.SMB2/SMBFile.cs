@@ -220,7 +220,7 @@ namespace System.IO.Abstractions.SMB
                 return;
             }
 
-            var hostEntry = Dns.GetHostEntry(path.GetHostName());
+            var hostEntry = Dns.GetHostEntry(path.HostName());
             ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
@@ -229,8 +229,8 @@ namespace System.IO.Abstractions.SMB
 
             using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential))
             {
-                var shareName = path.GetShareName();
-                var newPath = path.GetRelativeSharePath();
+                var shareName = path.ShareName();
+                var newPath = path.RelativeSharePath();
                 var directoryPath = Path.GetDirectoryName(newPath);
 
                 ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
@@ -254,7 +254,7 @@ namespace System.IO.Abstractions.SMB
                 return base.Exists(path);
             }
 
-            var hostEntry = Dns.GetHostEntry(path.GetHostName());
+            var hostEntry = Dns.GetHostEntry(path.HostName());
             ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
@@ -263,8 +263,8 @@ namespace System.IO.Abstractions.SMB
 
             using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential))
             {
-                var shareName = path.GetShareName();
-                var newPath = path.GetRelativeSharePath();
+                var shareName = path.ShareName();
+                var newPath = path.RelativeSharePath();
                 var directoryPath = Path.GetDirectoryName(newPath);
 
                 ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
@@ -502,8 +502,8 @@ namespace System.IO.Abstractions.SMB
 
             var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential);
 
-            var shareName = path.GetShareName();
-            var newPath = path.GetRelativeSharePath();
+            var shareName = path.ShareName();
+            var newPath = path.RelativeSharePath();
 
             ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
