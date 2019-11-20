@@ -17,8 +17,9 @@ namespace System.IO.Abstractions.Console
             string testPath4 = "<folder in test share>";
 
             ISMBCredentialProvider credentialProvider = new SMBCredentialProvider();
+            ISMBClientFactory clientFactory = new SMB2ClientFactory();
 
-            IFileSystem fileSystem = new SMBFileSystem(new SMB2Client(), credentialProvider);
+            IFileSystem fileSystem = new SMBFileSystem(clientFactory, credentialProvider);
 
             using ISMBCredential credential1 = new SMBCredential(testDomain, testUsername, testPassword, testPath1, credentialProvider);
             using ISMBCredential credential2 = new SMBCredential(testDomain, testUsername, testPassword, testPath2, credentialProvider);

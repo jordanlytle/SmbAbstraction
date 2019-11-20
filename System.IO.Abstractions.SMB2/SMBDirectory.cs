@@ -28,14 +28,12 @@ namespace System.IO.Abstractions.SMB
 
         public IDirectoryInfo GetDirectoryInfo(string path, ISMBCredential credential = null)
         {
-            Uri uri = new Uri(path);
-
-            if(uri.Segments.Length < 2)
+            if(path.IsValidSharePath())
             {
                 return null;
             }
 
-            var hostEntry = Dns.GetHostEntry(uri.Host);
+            var hostEntry = Dns.GetHostEntry(path.HostName());
             ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
@@ -52,8 +50,8 @@ namespace System.IO.Abstractions.SMB
 
             using var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential);
 
-            var shareName = uri.Segments[1].Replace(Path.DirectorySeparatorChar.ToString(), "");
-            var newPath = uri.AbsolutePath.Replace(uri.Segments[1], "").Remove(0, 1).Replace('/', '\\');
+            var shareName = path.ShareName();
+            var newPath = path.RelativeSharePath();
 
             ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
@@ -106,13 +104,12 @@ namespace System.IO.Abstractions.SMB
 
         private IDirectoryInfo CreateDirectory(string path, ISMBCredential credential)
         {
-            if (!IsSMBPath(path))
+            if (!path.IsSmbPath())
             {
                 return base.CreateDirectory(path);
             }
 
-            Uri uri = new Uri(path);
-            var hostEntry = Dns.GetHostEntry(uri.Host);
+            var hostEntry = Dns.GetHostEntry(path.HostName());
             ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
@@ -134,8 +131,8 @@ namespace System.IO.Abstractions.SMB
 
             using var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential);
 
-            var shareName = uri.Segments[1].Replace(Path.DirectorySeparatorChar.ToString(), "");
-            var newPath = uri.AbsolutePath.Replace(uri.Segments[1], "").Remove(0, 1).Replace('/', '\\');
+            var shareName = path.ShareName();
+            var newPath = path.RelativeSharePath();
 
             ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
@@ -152,13 +149,12 @@ namespace System.IO.Abstractions.SMB
 
         public override void Delete(string path)
         {
-            if (!IsSMBPath(path))
+            if (!path.IsSmbPath())
             {
                 base.Delete(path);
             }
 
-            Uri uri = new Uri(path);
-            var hostEntry = Dns.GetHostEntry(uri.Host);
+            var hostEntry = Dns.GetHostEntry(path.HostName());
             ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
@@ -167,9 +163,9 @@ namespace System.IO.Abstractions.SMB
 
             using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential))
             {
-                var shareName = uri.Segments[1].Replace(Path.DirectorySeparatorChar.ToString(), "");
-                var newPath = uri.AbsolutePath.Replace(uri.Segments[1], "").Remove(0, 1).Replace('/', '\\');
-                var directoryPath = Path.GetDirectoryName(newPath);
+                var shareName = path.ShareName();
+                var newPath = path.RelativeSharePath();
+                //var directoryPath = Path.GetDirectoryName(path.GetRelativeSharePath());
 
                 ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
@@ -195,7 +191,7 @@ namespace System.IO.Abstractions.SMB
 
         public void Delete(string path, bool recursive, ISMBCredential credential)
         {
-            if (!IsSMBPath(path))
+            if (!path.IsSmbPath())
             {
                 base.Delete(path, recursive);
             }
@@ -259,7 +255,7 @@ namespace System.IO.Abstractions.SMB
 
         public override IEnumerable<string> EnumerateDirectories(string path)
         {
-            if (!IsSMBPath(path))
+            if (!path.IsSmbPath())
             {
                 return base.EnumerateDirectories(path);
             }
@@ -269,7 +265,7 @@ namespace System.IO.Abstractions.SMB
 
         public override IEnumerable<string> EnumerateDirectories(string path, string searchPattern)
         {
-            if (!IsSMBPath(path))
+            if (!path.IsSmbPath())
             {
                 return base.EnumerateDirectories(path, searchPattern);
             }
@@ -284,7 +280,7 @@ namespace System.IO.Abstractions.SMB
 
         private IEnumerable<string> EnumerateDirectories(string path, string searchPattern, SearchOption searchOption, ISMBCredential credential)
         {
-            if (!IsSMBPath(path))
+            if (!path.IsSmbPath())
             {
                 return base.EnumerateDirectories(path, searchPattern, searchOption);
             }
@@ -302,8 +298,8 @@ namespace System.IO.Abstractions.SMB
 
             using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential))
             {
-                var shareName = uri.Segments[1].Replace(Path.DirectorySeparatorChar.ToString(), "");
-                var newPath = uri.AbsolutePath.Replace(uri.Segments[1], "").Remove(0, 1).Replace('/', '\\');
+                var shareName = path.ShareName();
+                var newPath = path.RelativeSharePath();
 
                 ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
@@ -348,7 +344,7 @@ namespace System.IO.Abstractions.SMB
 
         public override IEnumerable<string> EnumerateFiles(string path)
         {
-            if (!IsSMBPath(path))
+            if (!path.IsSmbPath())
             {
                 return base.EnumerateFiles(path);
             }
@@ -358,7 +354,7 @@ namespace System.IO.Abstractions.SMB
 
         public override IEnumerable<string> EnumerateFiles(string path, string searchPattern)
         {
-            if (!IsSMBPath(path))
+            if (!path.IsSmbPath())
             {
                 return base.EnumerateFiles(path, searchPattern);
             }
@@ -373,7 +369,7 @@ namespace System.IO.Abstractions.SMB
 
         private IEnumerable<string> EnumerateFiles(string path, string searchPattern, SearchOption searchOption, ISMBCredential credential)
         {
-            if (!IsSMBPath(path))
+            if (!path.IsSmbPath())
             {
                 return base.EnumerateFiles(path, searchPattern, searchOption);
             }
@@ -391,13 +387,14 @@ namespace System.IO.Abstractions.SMB
 
             using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential))
             {
-                var shareName = uri.Segments[1].Replace(Path.DirectorySeparatorChar.ToString(), "");
-                var newPath = uri.AbsolutePath.Replace(uri.Segments[1], "").Remove(0, 1).Replace('/', '\\');
+                var shareName = path.ShareName();
+                var newPath = path.RelativeSharePath();
 
                 ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
                 status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, newPath, AccessMask.GENERIC_READ, 0, ShareAccess.Read,
                     CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
+
                 if (status != NTStatus.STATUS_SUCCESS)
                 {
                     throw new IOException($"Unable to connect to smbShare. Status = {status}");
@@ -441,7 +438,7 @@ namespace System.IO.Abstractions.SMB
 
         public override IEnumerable<string> EnumerateFileSystemEntries(string path)
         {
-            if (!IsSMBPath(path))
+            if (!path.IsSmbPath())
             {
                 return base.EnumerateFileSystemEntries(path);
             }
@@ -451,7 +448,7 @@ namespace System.IO.Abstractions.SMB
 
         public override IEnumerable<string> EnumerateFileSystemEntries(string path, string searchPattern)
         {
-            if (!IsSMBPath(path))
+            if (!path.IsSmbPath())
             {
                 return base.EnumerateFileSystemEntries(path, searchPattern);
             }
@@ -467,7 +464,7 @@ namespace System.IO.Abstractions.SMB
 
         private IEnumerable<string> EnumerateFileSystemEntries(string path, string searchPattern, SearchOption searchOption, ISMBCredential credential)
         {
-            if (!IsSMBPath(path))
+            if (!path.IsSmbPath())
             {
                 return base.EnumerateFileSystemEntries(path, searchPattern, searchOption);
             }
@@ -485,8 +482,8 @@ namespace System.IO.Abstractions.SMB
 
             using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential))
             {
-                var shareName = uri.Segments[1].Replace(Path.DirectorySeparatorChar.ToString(), "");
-                var newPath = uri.AbsolutePath.Replace(uri.Segments[1], "").Remove(0, 1).Replace('/', '\\');
+                var shareName = path.ShareName();
+                var newPath = path.RelativeSharePath();
 
                 ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
@@ -532,13 +529,12 @@ namespace System.IO.Abstractions.SMB
 
         public override bool Exists(string path)
         {
-            if (!IsSMBPath(path))
+            if (!path.IsSmbPath())
             {
                 return base.Exists(path);
             }
 
-            Uri uri = new Uri(path);
-            var hostEntry = Dns.GetHostEntry(uri.Host);
+            var hostEntry = Dns.GetHostEntry(path.HostName());
             ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
@@ -547,8 +543,8 @@ namespace System.IO.Abstractions.SMB
 
             using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential))
             {
-                var shareName = uri.Segments[1].Replace(Path.DirectorySeparatorChar.ToString(), "");
-                var newPath = uri.AbsolutePath.Replace(uri.Segments[1], "").Remove(0, 1).Replace('/', '\\');
+                var shareName = path.ShareName();
+                var newPath = path.RelativeSharePath();
                 var directoryPath = Path.GetDirectoryName(newPath);
 
                 ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
@@ -583,7 +579,7 @@ namespace System.IO.Abstractions.SMB
 
         public override DirectorySecurity GetAccessControl(string path)
         {
-            if (!IsSMBPath(path))
+            if (!path.IsSmbPath())
             {
                 return base.GetAccessControl(path);
             }
@@ -593,7 +589,7 @@ namespace System.IO.Abstractions.SMB
 
         public override DirectorySecurity GetAccessControl(string path, AccessControlSections includeSections)
         {
-            if (!IsSMBPath(path))
+            if (!path.IsSmbPath())
             {
                 return base.GetAccessControl(path, includeSections);
             }
@@ -603,7 +599,7 @@ namespace System.IO.Abstractions.SMB
 
         public override DateTime GetCreationTime(string path)
         {
-            if (!IsSMBPath(path))
+            if (!path.IsSmbPath())
             {
                 return base.GetCreationTime(path);
             }
@@ -613,7 +609,7 @@ namespace System.IO.Abstractions.SMB
 
         public override DateTime GetCreationTimeUtc(string path)
         {
-            if (!IsSMBPath(path))
+            if (!path.IsSmbPath())
             {
                 return base.GetCreationTimeUtc(path);
             }
@@ -628,7 +624,7 @@ namespace System.IO.Abstractions.SMB
 
         public override string[] GetDirectories(string path)
         {
-            if (!IsSMBPath(path))
+            if (!path.IsSmbPath())
             {
                 return base.GetDirectories(path);
             }
@@ -638,7 +634,7 @@ namespace System.IO.Abstractions.SMB
 
         public override string[] GetDirectories(string path, string searchPattern)
         {
-            if (!IsSMBPath(path))
+            if (!path.IsSmbPath())
             {
                 return base.GetDirectories(path, searchPattern);
             }
@@ -648,7 +644,7 @@ namespace System.IO.Abstractions.SMB
 
         public override string[] GetDirectories(string path, string searchPattern, SearchOption searchOption)
         {
-            if (!IsSMBPath(path))
+            if (!path.IsSmbPath())
             {
                 return base.GetDirectories(path, searchPattern, searchOption);
             }
@@ -658,7 +654,7 @@ namespace System.IO.Abstractions.SMB
 
         public override string GetDirectoryRoot(string path)
         {
-            if (!IsSMBPath(path))
+            if (!path.IsSmbPath())
             {
                 return base.GetDirectoryRoot(path);
             }
@@ -668,7 +664,7 @@ namespace System.IO.Abstractions.SMB
 
         public override string[] GetFiles(string path)
         {
-            if (!IsSMBPath(path))
+            if (!path.IsSmbPath())
             {
                 return base.GetFiles(path);
             }
@@ -678,7 +674,7 @@ namespace System.IO.Abstractions.SMB
 
         public override string[] GetFiles(string path, string searchPattern)
         {
-            if (!IsSMBPath(path))
+            if (!path.IsSmbPath())
             {
                 return base.GetFiles(path, searchPattern);
             }
@@ -688,7 +684,7 @@ namespace System.IO.Abstractions.SMB
 
         public override string[] GetFiles(string path, string searchPattern, SearchOption searchOption)
         {
-            if (!IsSMBPath(path))
+            if (!path.IsSmbPath())
             {
                 return base.GetFiles(path, searchPattern, searchOption);
             }
@@ -698,7 +694,7 @@ namespace System.IO.Abstractions.SMB
 
         public override string[] GetFileSystemEntries(string path)
         {
-            if (!IsSMBPath(path))
+            if (!path.IsSmbPath())
             {
                 return base.GetFileSystemEntries(path);
             }
@@ -708,7 +704,7 @@ namespace System.IO.Abstractions.SMB
 
         public override string[] GetFileSystemEntries(string path, string searchPattern)
         {
-            if (!IsSMBPath(path))
+            if (!path.IsSmbPath())
             {
                 return base.GetFileSystemEntries(path, searchPattern);
             }
@@ -718,7 +714,7 @@ namespace System.IO.Abstractions.SMB
 
         public override DateTime GetLastAccessTime(string path)
         {
-            if (!IsSMBPath(path))
+            if (!path.IsSmbPath())
             {
                 return base.GetLastAccessTime(path);
             }
@@ -728,7 +724,7 @@ namespace System.IO.Abstractions.SMB
 
         public override DateTime GetLastAccessTimeUtc(string path)
         {
-            if (!IsSMBPath(path))
+            if (!path.IsSmbPath())
             {
                 return base.GetLastAccessTimeUtc(path);
             }
@@ -738,7 +734,7 @@ namespace System.IO.Abstractions.SMB
 
         public override DateTime GetLastWriteTime(string path)
         {
-            if (!IsSMBPath(path))
+            if (!path.IsSmbPath())
             {
                 return base.GetLastWriteTime(path);
             }
@@ -748,7 +744,7 @@ namespace System.IO.Abstractions.SMB
 
         public override DateTime GetLastWriteTimeUtc(string path)
         {
-            if (!IsSMBPath(path))
+            if (!path.IsSmbPath())
             {
                 return base.GetLastWriteTimeUtc(path);
             }
@@ -758,7 +754,7 @@ namespace System.IO.Abstractions.SMB
 
         public override IDirectoryInfo GetParent(string path)
         {
-            if (!IsSMBPath(path))
+            if (!path.IsSmbPath())
             {
                 return base.GetParent(path);
             }
@@ -771,7 +767,7 @@ namespace System.IO.Abstractions.SMB
 
         private IDirectoryInfo GetParent(string path, ISMBCredential credential)
         {
-            if (!IsSMBPath(path))
+            if (!path.IsSmbPath())
             {
                 return base.GetParent(path);
             }
@@ -821,7 +817,7 @@ namespace System.IO.Abstractions.SMB
 
         public override void SetAccessControl(string path, DirectorySecurity directorySecurity)
         {
-            if (!IsSMBPath(path))
+            if (!path.IsSmbPath())
             {
                 base.SetAccessControl(path, directorySecurity);
             }
@@ -831,7 +827,7 @@ namespace System.IO.Abstractions.SMB
 
         public override void SetCreationTime(string path, DateTime creationTime)
         {
-            if (!IsSMBPath(path))
+            if (!path.IsSmbPath())
             {
                 base.SetCreationTime(path, creationTime);
             }
@@ -841,7 +837,7 @@ namespace System.IO.Abstractions.SMB
 
         public override void SetCreationTimeUtc(string path, DateTime creationTimeUtc)
         {
-            if (!IsSMBPath(path))
+            if (!path.IsSmbPath())
             {
                 base.SetCreationTimeUtc(path, creationTimeUtc);
             }
@@ -851,7 +847,7 @@ namespace System.IO.Abstractions.SMB
 
         public override void SetCurrentDirectory(string path)
         {
-            if (!IsSMBPath(path))
+            if (!path.IsSmbPath())
             {
                 base.SetCurrentDirectory(path);
             }
@@ -861,7 +857,7 @@ namespace System.IO.Abstractions.SMB
 
         public override void SetLastAccessTime(string path, DateTime lastAccessTime)
         {
-            if (!IsSMBPath(path))
+            if (!path.IsSmbPath())
             {
                 base.SetLastAccessTime(path, lastAccessTime);
             }
@@ -871,7 +867,7 @@ namespace System.IO.Abstractions.SMB
 
         public override void SetLastAccessTimeUtc(string path, DateTime lastAccessTimeUtc)
         {
-            if (!IsSMBPath(path))
+            if (!path.IsSmbPath())
             {
                 base.SetLastAccessTimeUtc(path, lastAccessTimeUtc);
             }
@@ -881,7 +877,7 @@ namespace System.IO.Abstractions.SMB
 
         public override void SetLastWriteTime(string path, DateTime lastWriteTime)
         {
-            if (!IsSMBPath(path))
+            if (!path.IsSmbPath())
             {
                 base.SetLastWriteTime(path, lastWriteTime);
             }
@@ -891,17 +887,12 @@ namespace System.IO.Abstractions.SMB
 
         public override void SetLastWriteTimeUtc(string path, DateTime lastWriteTimeUtc)
         {
-            if (!IsSMBPath(path))
+            if (!path.IsSmbPath())
             {
                 base.SetLastWriteTimeUtc(path, lastWriteTimeUtc);
             }
 
             throw new NotImplementedException();
-        }
-
-        private bool IsSMBPath(string path)
-        {
-            return new Uri(path).IsUnc || path.StartsWith("smb://");
         }
     }
 }

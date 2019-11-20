@@ -1,0 +1,21 @@
+{
+  "IntegrationTestSettings": {
+    "ShareCredentials": {
+      "Domain": "",
+      "Username": "",
+      "Password": ""
+    },
+    "Shares": [
+      {
+        "RootUncPath": "\\\\host\\share",
+        "RootSmbUri": "smb://host/share",
+        "Files": [
+          "file.txt"
+        ],
+        "Directories": [
+          "Dir"
+        ]
+      }
+    ]
+  }
+}
