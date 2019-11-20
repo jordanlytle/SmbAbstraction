@@ -55,11 +55,11 @@ namespace System.IO.Abstractions.SMB
             using var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential);
 
             var shareName = path.ShareName();
-            var newPath = path.RelativeSharePath();
+            var relativePath = path.RelativeSharePath();
 
             ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
-            status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, newPath, AccessMask.GENERIC_READ, 0, ShareAccess.Read,
+            status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativePath, AccessMask.GENERIC_READ, 0, ShareAccess.Read,
                     CreateDisposition.FILE_OPEN, CreateOptions.FILE_NON_DIRECTORY_FILE, null);
             if (status != NTStatus.STATUS_SUCCESS)
             {

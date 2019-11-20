@@ -61,11 +61,11 @@ namespace System.IO.Abstractions.SMB
             using var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential);
 
             var shareName = path.ShareName();
-            var newPath = path.RelativeSharePath();
+            var relativePath = path.RelativeSharePath();
 
             ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
-            status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, newPath, accessMask, 0, shareAccess,
+            status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativePath, accessMask, 0, shareAccess,
                 disposition, createOptions, null);
             if (status != NTStatus.STATUS_SUCCESS)
             {
@@ -93,12 +93,11 @@ namespace System.IO.Abstractions.SMB
             using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential))
             {
                 var shareName = path.ShareName();
-                var newPath = path.RelativeSharePath();
-                //var directoryPath = Path.GetDirectoryName(path.GetRelativeSharePath());
+                var relativePath = path.RelativeSharePath();
 
                 ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
-                status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, newPath, AccessMask.DELETE, 0, ShareAccess.None,
+                status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativePath, AccessMask.DELETE, 0, ShareAccess.None,
                     CreateDisposition.FILE_OPEN, CreateOptions.FILE_DELETE_ON_CLOSE, null);
 
                 if (status != NTStatus.STATUS_SUCCESS)
@@ -127,8 +126,7 @@ namespace System.IO.Abstractions.SMB
 
             if (recursive)
             {
-                Uri uri = new Uri(path);
-                var hostEntry = Dns.GetHostEntry(uri.Host);
+                var hostEntry = Dns.GetHostEntry(path.HostName());
                 var ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
 
                 NTStatus status = NTStatus.STATUS_SUCCESS;
@@ -140,12 +138,12 @@ namespace System.IO.Abstractions.SMB
 
                 using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential))
                 {
-                    var shareName = uri.Segments[1].Replace(Path.DirectorySeparatorChar.ToString(), "");
-                    var newPath = uri.AbsolutePath.Replace(uri.Segments[1], "").Remove(0, 1).Replace('/', '\\');
+                    var shareName = path.ShareName();
+                    var relativePath = path.RelativeSharePath();
 
                     ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
-                    status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, newPath, AccessMask.GENERIC_READ, 0, ShareAccess.Delete,
+                    status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativePath, AccessMask.GENERIC_READ, 0, ShareAccess.Delete,
                         CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
                     if (status != NTStatus.STATUS_SUCCESS)
                     {
@@ -214,8 +212,7 @@ namespace System.IO.Abstractions.SMB
                 return base.EnumerateDirectories(path, searchPattern, searchOption);
             }
 
-            Uri uri = new Uri(path);
-            var hostEntry = Dns.GetHostEntry(uri.Host);
+            var hostEntry = Dns.GetHostEntry(path.HostName());
             var ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
@@ -228,11 +225,11 @@ namespace System.IO.Abstractions.SMB
             using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential))
             {
                 var shareName = path.ShareName();
-                var newPath = path.RelativeSharePath();
+                var relativePath = path.RelativeSharePath();
 
                 ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
-                status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, newPath, AccessMask.GENERIC_READ, 0, ShareAccess.Read,
+                status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativePath, AccessMask.GENERIC_READ, 0, ShareAccess.Read,
                     CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
                 if (status != NTStatus.STATUS_SUCCESS)
                 {
@@ -303,8 +300,7 @@ namespace System.IO.Abstractions.SMB
                 return base.EnumerateFiles(path, searchPattern, searchOption);
             }
 
-            Uri uri = new Uri(path);
-            var hostEntry = Dns.GetHostEntry(uri.Host);
+            var hostEntry = Dns.GetHostEntry(path.HostName());
             var ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
@@ -317,11 +313,11 @@ namespace System.IO.Abstractions.SMB
             using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential))
             {
                 var shareName = path.ShareName();
-                var newPath = path.RelativeSharePath();
+                var relativePath = path.RelativeSharePath();
 
                 ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
-                status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, newPath, AccessMask.GENERIC_READ, 0, ShareAccess.Read,
+                status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativePath, AccessMask.GENERIC_READ, 0, ShareAccess.Read,
                     CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
 
                 if (status != NTStatus.STATUS_SUCCESS)
@@ -398,8 +394,7 @@ namespace System.IO.Abstractions.SMB
                 return base.EnumerateFileSystemEntries(path, searchPattern, searchOption);
             }
 
-            Uri uri = new Uri(path);
-            var hostEntry = Dns.GetHostEntry(uri.Host);
+            var hostEntry = Dns.GetHostEntry(path.HostName());
             var ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
@@ -412,11 +407,11 @@ namespace System.IO.Abstractions.SMB
             using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential))
             {
                 var shareName = path.ShareName();
-                var newPath = path.RelativeSharePath();
+                var relativePath = path.RelativeSharePath();
 
                 ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
-                status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, newPath, AccessMask.GENERIC_READ, 0, ShareAccess.Read,
+                status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativePath, AccessMask.GENERIC_READ, 0, ShareAccess.Read,
                     CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
                 if (status != NTStatus.STATUS_SUCCESS)
                 {
@@ -473,8 +468,8 @@ namespace System.IO.Abstractions.SMB
             using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential))
             {
                 var shareName = path.ShareName();
-                var newPath = path.RelativeSharePath();
-                var directoryPath = Path.GetDirectoryName(newPath);
+                var relativePath = path.RelativeSharePath();
+                var directoryPath = Path.GetDirectoryName(relativePath);
 
                 ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
@@ -492,7 +487,7 @@ namespace System.IO.Abstractions.SMB
                     if (file.FileInformationClass == FileInformationClass.FileDirectoryInformation)
                     {
                         FileDirectoryInformation fileDirectoryInformation = (FileDirectoryInformation)file;
-                        if (fileDirectoryInformation.FileName == Path.GetFileName(newPath))
+                        if (fileDirectoryInformation.FileName == Path.GetFileName(relativePath))
                         {
                             fileStore.CloseFile(handle);
                             return true;
