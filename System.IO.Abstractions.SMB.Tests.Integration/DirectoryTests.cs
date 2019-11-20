@@ -34,7 +34,7 @@ namespace System.IO.Abstractions.SMB.Tests.Integration
 
             var files = _fileSystem.Directory.EnumerateFiles(testRootUncPath, "*").ToList();
 
-            Assert.True(files.Count > 0);
+            Assert.True(files.Count >= 0); //Include 0 in case directory is empty. If an exception is thrown, the test will fail.
         }
 
         [Fact]
@@ -48,7 +48,7 @@ namespace System.IO.Abstractions.SMB.Tests.Integration
 
             var files = _fileSystem.Directory.EnumerateFiles(testRootSmbUri, "*").ToList();
 
-            Assert.True(files.Count > 0);
+            Assert.True(files.Count >= 0); //Include 0 in case directory is empty. If an exception is thrown, the test will fail.
         }
     }
 }

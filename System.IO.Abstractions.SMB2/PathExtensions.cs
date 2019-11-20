@@ -6,8 +6,7 @@ namespace System.IO.Abstractions.SMB
 {
     public static class PathExtensions
     {
-        static readonly string[] slashieThings = { @"\", @"/", @"\\", @"//" };
-        static readonly string[] pathSeperators = { @"\", @"/" };
+        static readonly string[] pathSeperators = { @"\", "/" };
 
         public static bool IsValidSharePath(this string path)
         {
@@ -32,7 +31,7 @@ namespace System.IO.Abstractions.SMB
         public static string GetShareName(this string path)
         {
             var uri = new Uri(path);
-            var shareName = uri.Segments[1].RemoveAnySlashes();
+            var shareName = uri.Segments[1].RemoveAnySeperators();
 
             return shareName;
         }
@@ -40,12 +39,12 @@ namespace System.IO.Abstractions.SMB
         public static string GetSharePath(this string path)
         {
             var uri = new Uri(path);
-            var sharePath = uri.Scheme + "://" + uri.Host + "/" +  uri.Segments[1].RemoveAnySlashes();
-            
-            if(!path.IsSmbPath())
-            {
-                sharePath = new Uri(sharePath).LocalPath;
-            }
+
+            string sharePath = "";
+            if (uri.Scheme.Equals("smb"))
+                sharePath = $"{uri.Scheme}://{uri.Host}/{uri.Segments[1].RemoveAnySeperators()}";
+            else if (uri.IsUnc)
+                sharePath = $@"\\{uri.Host}\{uri.Segments[1].RemoveAnySeperators()}";
 
             return sharePath;
         }
@@ -54,26 +53,16 @@ namespace System.IO.Abstractions.SMB
         {
             var sharePath = path.GetSharePath();
 
-            var relativePath = path.Replace(sharePath, "").RemoveAnySlashes();
+            var relativePath = path.Replace(sharePath, "", StringComparison.InvariantCultureIgnoreCase).Replace("/", @"\");
 
             return relativePath;
         }
 
-        private static string RemoveAnySlashes(this string input)
+        private static string RemoveAnySeperators(this string input)
         {
-            foreach(var slash in slashieThings)
+            foreach (var pathSeperator in pathSeperators)
             {
-                input = input.Replace(slash, "");
-            }
-
-            return input;
-        }
-
-        private static string ReplacePathSeperators(this string input, string newValue)
-        {
-            foreach(var pathSeperator in pathSeperators)
-            {
-                input = input.Replace(pathSeperator, newValue);
+                input = input.Replace(pathSeperator, "");
             }
 
             return input;

@@ -26,13 +26,13 @@ namespace System.IO.Abstractions.SMB.Tests.Path
         }
 
         [Fact]
-        public void IsSmbReturnsFalseForUncPath()
+        public void IsSmbReturnsTrueForUncPath()
         {
             foreach (var property in _uncPathTestData.GetType().GetProperties())
             {
                 var path = (string)property.GetValue(_uncPathTestData);
 
-                Assert.False(path.IsSmbPath());
+                Assert.True(path.IsSmbPath());
             }
         }
 
