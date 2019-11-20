@@ -407,12 +407,19 @@ namespace System.IO.Abstractions.SMB
                             || fileDirectoryInformation.FileName == "..")
                         {
                             continue;
-                        } else if (fileDirectoryInformation.FileAttributes.HasFlag(SmbLibraryStd.FileAttributes.Directory))
-                        {
-                            files.AddRange(EnumerateFiles(Path.Combine(path, fileDirectoryInformation.FileName), searchPattern, searchOption, credential));
                         }
 
-                        files.Add(Path.Combine(path, fileDirectoryInformation.FileName));
+                        if (fileDirectoryInformation.FileAttributes.HasFlag(SmbLibraryStd.FileAttributes.Directory))
+                        {
+                            if (searchOption == SearchOption.AllDirectories)
+                            {
+                                files.AddRange(EnumerateFiles(Path.Combine(path, fileDirectoryInformation.FileName), searchPattern, searchOption, credential));
+                            }
+                        }
+                        else
+                        {
+                            files.Add(Path.Combine(path, fileDirectoryInformation.FileName));
+                        }
                     }
                 }
                 fileStore.CloseFile(handle);
@@ -441,6 +448,7 @@ namespace System.IO.Abstractions.SMB
             return EnumerateFileSystemEntries(path, searchPattern, SearchOption.TopDirectoryOnly);
         }
 
+
         public override IEnumerable<string> EnumerateFileSystemEntries(string path, string searchPattern, SearchOption searchOption)
         {
             if (!IsSMBPath(path))
@@ -448,9 +456,14 @@ namespace System.IO.Abstractions.SMB
                 return base.EnumerateFileSystemEntries(path, searchPattern, searchOption);
             }
 
-            if (searchOption == SearchOption.AllDirectories)
+            return EnumerateFileSystemEntries(path, searchPattern, searchOption, null);
+        }
+
+        private IEnumerable<string> EnumerateFileSystemEntries(string path, string searchPattern, SearchOption searchOption, ISMBCredential credential)
+        {
+            if (!IsSMBPath(path))
             {
-                throw new NotSupportedException();
+                return base.EnumerateFileSystemEntries(path, searchPattern, searchOption);
             }
 
             Uri uri = new Uri(path);
@@ -458,7 +471,11 @@ namespace System.IO.Abstractions.SMB
             ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
-            var credential = _credentialProvider.GetSMBCredential(path);
+
+            if (credential == null)
+            {
+                credential = _credentialProvider.GetSMBCredential(path);
+            }
 
             using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential))
             {
@@ -487,6 +504,15 @@ namespace System.IO.Abstractions.SMB
                         if (fileDirectoryInformation.FileName == "." || fileDirectoryInformation.FileName == "..")
                         {
                             continue;
+                        }
+
+
+                        if (fileDirectoryInformation.FileAttributes.HasFlag(SmbLibraryStd.FileAttributes.Directory))
+                        {
+                            if (searchOption == SearchOption.AllDirectories)
+                            {
+                                files.AddRange(EnumerateFileSystemEntries(Path.Combine(path, fileDirectoryInformation.FileName), searchPattern, searchOption, credential));
+                            }
                         }
 
                         files.Add(Path.Combine(path, fileDirectoryInformation.FileName));
