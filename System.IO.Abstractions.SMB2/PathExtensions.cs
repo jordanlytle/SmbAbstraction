@@ -51,9 +51,7 @@ namespace System.IO.Abstractions.SMB
 
         public static string RelativeSharePath(this string path)
         {
-            var sharePath = path.SharePath();
-
-            var relativePath = path.Replace(sharePath, "", StringComparison.InvariantCultureIgnoreCase).Replace("/", @"\");
+            var relativePath = path.RemoveShareNameFromPath().RemoveLeadingSeperators().Replace("/", @"\");
 
             return relativePath;
         }
@@ -63,6 +61,28 @@ namespace System.IO.Abstractions.SMB
             foreach (var pathSeperator in pathSeperators)
             {
                 input = input.Replace(pathSeperator, "");
+            }
+
+            return input;
+        }
+
+        private static string RemoveShareNameFromPath(this string input)
+        {
+            var sharePath = input.SharePath();
+
+            input = input.Replace(sharePath, "", StringComparison.InvariantCultureIgnoreCase);
+
+            return input;
+        }
+
+        private static string RemoveLeadingSeperators(this string input)
+        {
+            foreach (var pathSeperator in pathSeperators)
+            {
+                if(input.StartsWith(pathSeperator))
+                {
+                    input = input.Remove(0,1);
+                }
             }
 
             return input;
