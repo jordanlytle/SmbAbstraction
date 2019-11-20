@@ -382,39 +382,67 @@ namespace System.IO.Abstractions.SMB
 
         public override void Move(string sourceFileName, string destFileName)
         {
-            throw new NotImplementedException();
+            Move(sourceFileName, destFileName, null, null);
+        }
+
+        internal void Move(string sourceFileName, string destFileName, ISMBCredential sourceCredential, ISMBCredential destinationCredential)
+        {
+            using (Stream sourceStream = OpenRead(sourceFileName, sourceCredential))
+            {
+                using (Stream destStream = OpenWrite(destFileName, destinationCredential))
+                {
+                    sourceStream.CopyTo(destStream);
+                }
+            }
         }
 
         public override Stream Open(string path, FileMode mode)
+        {
+            return Open(path, mode, null);
+        }
+
+        private Stream Open(string path, FileMode mode, ISMBCredential credential)
         {
             if (!IsSMBPath(path))
             {
                 return base.Open(path, mode);
             }
-            return Open(path, mode, FileAccess.ReadWrite);
+
+            return Open(path, mode, FileAccess.ReadWrite, credential);
         }
 
         public override Stream Open(string path, FileMode mode, FileAccess access)
+        {
+            return Open(path, mode, access, null);
+        }
+
+        private Stream Open(string path, FileMode mode, FileAccess access, ISMBCredential credential)
         {
             if (!IsSMBPath(path))
             {
                 return base.Open(path, mode, access);
             }
-            return Open(path, mode, access, FileShare.Read);
+
+            return Open(path, mode, access, FileShare.Read, credential);
         }
 
         public override Stream Open(string path, FileMode mode, FileAccess access, FileShare share)
         {
-            return Open(path, mode, access, share, FileOptions.None);
+            return Open(path, mode, access, share, null);
         }
 
-        private Stream Open(string path, FileMode mode, FileAccess access, FileShare share, FileOptions fileOptions)
+        private Stream Open(string path, FileMode mode, FileAccess access, FileShare share, ISMBCredential credential)
         {
             if (!IsSMBPath(path))
             {
                 return base.Open(path, mode, access, share);
             }
 
+            return Open(path, mode, access, share, FileOptions.None, credential);
+        }
+
+        private Stream Open(string path, FileMode mode, FileAccess access, FileShare share, FileOptions fileOptions, ISMBCredential credential)
+        {
             Uri uri = new Uri(path);
             var hostEntry = Dns.GetHostEntry(uri.Host);
             ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
@@ -464,7 +492,11 @@ namespace System.IO.Abstractions.SMB
                     break;
             }
 
-            var credential = _credentialProvider.GetSMBCredential(path);
+            if (credential == null)
+            {
+                credential = _credentialProvider.GetSMBCredential(path);
+            }
+
             if (credential == null)
             {
                 throw new Exception($"Unable to find credential for path: {path}");
@@ -512,12 +544,17 @@ namespace System.IO.Abstractions.SMB
 
         public override Stream OpenRead(string path)
         {
+            return OpenRead(path, null);
+        }
+
+        private Stream OpenRead(string path, ISMBCredential credential)
+        {
             if (!IsSMBPath(path))
             {
                 return base.OpenRead(path);
             }
 
-            return Open(path, FileMode.Open, FileAccess.Read);
+            return Open(path, FileMode.Open, FileAccess.Read, credential);
         }
 
         public override StreamReader OpenText(string path)
@@ -532,12 +569,17 @@ namespace System.IO.Abstractions.SMB
 
         public override Stream OpenWrite(string path)
         {
+            return OpenWrite(path, null);
+        }
+
+        private Stream OpenWrite(string path, ISMBCredential credential)
+        {
             if (!IsSMBPath(path))
             {
                 return base.OpenWrite(path);
             }
 
-            return Open(path, FileMode.OpenOrCreate, FileAccess.Write);
+            return Open(path, FileMode.OpenOrCreate, FileAccess.Write, credential);
         }
 
         public override byte[] ReadAllBytes(string path)

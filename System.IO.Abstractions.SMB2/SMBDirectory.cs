@@ -101,6 +101,11 @@ namespace System.IO.Abstractions.SMB
 
         public override IDirectoryInfo CreateDirectory(string path)
         {
+            return CreateDirectory(path, null);
+        }
+
+        private IDirectoryInfo CreateDirectory(string path, ISMBCredential credential)
+        {
             if (!IsSMBPath(path))
             {
                 return base.CreateDirectory(path);
@@ -117,7 +122,11 @@ namespace System.IO.Abstractions.SMB
             CreateDisposition disposition = CreateDisposition.FILE_CREATE;
             CreateOptions createOptions = CreateOptions.FILE_DIRECTORY_FILE;
 
-            var credential = _credentialProvider.GetSMBCredential(path);
+            if (credential == null)
+            {
+                credential = _credentialProvider.GetSMBCredential(path);
+            }
+
             if (credential == null)
             {
                 throw new Exception($"Unable to find credential for path: {path}");
@@ -138,7 +147,7 @@ namespace System.IO.Abstractions.SMB
             }
             fileStore.CloseFile(handle);
 
-            return GetDirectoryInfo(path);
+            return GetDirectoryInfo(path, credential);
         }
 
         public override void Delete(string path)
@@ -226,7 +235,8 @@ namespace System.IO.Abstractions.SMB
                         {
                             FileDirectoryInformation fileDirectoryInformation = (FileDirectoryInformation)file;
                             if (fileDirectoryInformation.FileName == "."
-                                || fileDirectoryInformation.FileName == "..")
+                                || fileDirectoryInformation.FileName == ".."
+                                || fileDirectoryInformation.FileName == ".DS_Store")
                             {
                                 continue;
                             }
@@ -269,16 +279,16 @@ namespace System.IO.Abstractions.SMB
 
         public override IEnumerable<string> EnumerateDirectories(string path, string searchPattern, SearchOption searchOption)
         {
-            if (!IsSMBPath(path))
-            {
-                return base.EnumerateDirectories(path, searchPattern, searchOption);
-            }
-
             return EnumerateDirectories(path, searchPattern, searchOption, null);
         }
 
         private IEnumerable<string> EnumerateDirectories(string path, string searchPattern, SearchOption searchOption, ISMBCredential credential)
         {
+            if (!IsSMBPath(path))
+            {
+                return base.EnumerateDirectories(path, searchPattern, searchOption);
+            }
+
             Uri uri = new Uri(path);
             var hostEntry = Dns.GetHostEntry(uri.Host);
             ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
@@ -358,16 +368,16 @@ namespace System.IO.Abstractions.SMB
 
         public override IEnumerable<string> EnumerateFiles(string path, string searchPattern, SearchOption searchOption)
         {
-            if (!IsSMBPath(path))
-            {
-                return base.EnumerateFiles(path, searchPattern, searchOption);
-            }
-
             return EnumerateFiles(path, searchPattern, searchOption, null);
         }
 
         private IEnumerable<string> EnumerateFiles(string path, string searchPattern, SearchOption searchOption, ISMBCredential credential)
         {
+            if (!IsSMBPath(path))
+            {
+                return base.EnumerateFiles(path, searchPattern, searchOption);
+            }
+
             Uri uri = new Uri(path);
             var hostEntry = Dns.GetHostEntry(uri.Host);
             ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
@@ -404,7 +414,8 @@ namespace System.IO.Abstractions.SMB
                     {
                         FileDirectoryInformation fileDirectoryInformation = (FileDirectoryInformation)file;
                         if (fileDirectoryInformation.FileName == "."
-                            || fileDirectoryInformation.FileName == "..")
+                            || fileDirectoryInformation.FileName == ".."
+                            || fileDirectoryInformation.FileName == ".DS_Store")
                         {
                             continue;
                         }
@@ -451,11 +462,6 @@ namespace System.IO.Abstractions.SMB
 
         public override IEnumerable<string> EnumerateFileSystemEntries(string path, string searchPattern, SearchOption searchOption)
         {
-            if (!IsSMBPath(path))
-            {
-                return base.EnumerateFileSystemEntries(path, searchPattern, searchOption);
-            }
-
             return EnumerateFileSystemEntries(path, searchPattern, searchOption, null);
         }
 
@@ -501,7 +507,7 @@ namespace System.IO.Abstractions.SMB
                     if (file.FileInformationClass == FileInformationClass.FileDirectoryInformation)
                     {
                         FileDirectoryInformation fileDirectoryInformation = (FileDirectoryInformation)file;
-                        if (fileDirectoryInformation.FileName == "." || fileDirectoryInformation.FileName == "..")
+                        if (fileDirectoryInformation.FileName == "." || fileDirectoryInformation.FileName == ".." || fileDirectoryInformation.FileName == ".DS_Store")
                         {
                             continue;
                         }
@@ -778,7 +784,39 @@ namespace System.IO.Abstractions.SMB
 
         public override void Move(string sourceDirName, string destDirName)
         {
-            throw new NotImplementedException();
+            Move(sourceDirName, destDirName, null, null);
+        }
+
+        private void Move(string sourceDirName, string destDirName, ISMBCredential sourceCredential, ISMBCredential destinationCredential)
+        {
+            if(sourceCredential == null)
+            {
+                sourceCredential = _credentialProvider.GetSMBCredential(sourceDirName);
+            }
+
+            if(destinationCredential == null)
+            {
+                destinationCredential = _credentialProvider.GetSMBCredential(destDirName);
+            }
+
+            CreateDirectory(destDirName, destinationCredential);
+
+            var dirs = EnumerateDirectories(sourceDirName, "*", SearchOption.TopDirectoryOnly, sourceCredential);
+
+            foreach (var dir in dirs)
+            {
+                var destDirPath = Path.Combine(destDirName, new Uri(dir).Segments.Last());
+                Move(dir, destDirPath, sourceCredential, destinationCredential);
+            }
+
+            var files = EnumerateFiles(sourceDirName, "*", SearchOption.TopDirectoryOnly, sourceCredential);
+
+            foreach(var file in files)
+            {
+                var destFilePath = Path.Combine(destDirName, new Uri(file).Segments.Last());
+                SMBFile smbFile = _fileSystem.File as SMBFile;
+                smbFile.Move(file, destFilePath, sourceCredential, destinationCredential);
+            }
         }
 
         public override void SetAccessControl(string path, DirectorySecurity directorySecurity)
