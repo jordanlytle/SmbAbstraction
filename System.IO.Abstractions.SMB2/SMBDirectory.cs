@@ -394,6 +394,7 @@ namespace System.IO.Abstractions.SMB
 
                 status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, newPath, AccessMask.GENERIC_READ, 0, ShareAccess.Read,
                     CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
+
                 if (status != NTStatus.STATUS_SUCCESS)
                 {
                     throw new IOException($"Unable to connect to smbShare. Status = {status}");

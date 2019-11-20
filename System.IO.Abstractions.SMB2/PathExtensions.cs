@@ -20,7 +20,7 @@ namespace System.IO.Abstractions.SMB
         public static bool IsSmbPath(this string path)
         {
             var uri = new Uri(path);
-            return uri.Scheme.Equals("smb");
+            return uri.Scheme.Equals("smb") || uri.IsUnc;
         }
 
         public static string GetHostName(this string path)
@@ -54,7 +54,7 @@ namespace System.IO.Abstractions.SMB
         {
             var sharePath = path.GetSharePath();
 
-            var relativePath = path.Replace(sharePath, "").ReplacePathSeperators(@"\");
+            var relativePath = path.Replace(sharePath, "").RemoveAnySlashes();
 
             return relativePath;
         }

@@ -28,7 +28,7 @@ namespace System.IO.Abstractions.SMB.Tests.Integration
         {
             var testCredentials = _settings.ShareCredentials;
             var testShare = _settings.Shares.First();
-            var testRootUncPath = Path.Combine(testShare.RootUncPath,testShare.Directories.First());
+            var testRootUncPath = Path.Combine(testShare.RootUncPath);
 
             using var credential = new SMBCredential(testCredentials.Domain, testCredentials.Username, testCredentials.Password, testRootUncPath, _credentialProvider);
 
@@ -42,7 +42,7 @@ namespace System.IO.Abstractions.SMB.Tests.Integration
         {
             var testCredentials = _settings.ShareCredentials;
             var testShare = _settings.Shares.First();
-            var testRootSmbUri = Path.Combine(testShare.RootSmbUri, testShare.Directories.First());
+            var testRootSmbUri = Path.Combine(testShare.RootSmbUri);
 
             using var credential = new SMBCredential(testCredentials.Domain, testCredentials.Username, testCredentials.Password, testRootSmbUri, _credentialProvider);
 
