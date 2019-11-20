@@ -181,12 +181,70 @@ namespace System.IO.Abstractions.SMB
 
         public override void Delete(string path, bool recursive)
         {
+            Delete(path, recursive, null);
+        }
+
+        public void Delete(string path, bool recursive, ISMBCredential credential)
+        {
             if (!IsSMBPath(path))
             {
                 base.Delete(path, recursive);
             }
 
-            throw new NotImplementedException();
+            if (recursive)
+            {
+                Uri uri = new Uri(path);
+                var hostEntry = Dns.GetHostEntry(uri.Host);
+                ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
+
+                NTStatus status = NTStatus.STATUS_SUCCESS;
+
+                if (credential == null)
+                {
+                    credential = _credentialProvider.GetSMBCredential(path);
+                }
+
+                using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential))
+                {
+                    var shareName = uri.Segments[1].Replace(Path.DirectorySeparatorChar.ToString(), "");
+                    var newPath = uri.AbsolutePath.Replace(uri.Segments[1], "").Remove(0, 1).Replace('/', '\\');
+
+                    ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
+
+                    status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, newPath, AccessMask.GENERIC_READ, 0, ShareAccess.Delete,
+                        CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
+                    if (status != NTStatus.STATUS_SUCCESS)
+                    {
+                        throw new IOException($"Unable to connect to smbShare. Status = {status}");
+                    }
+
+                    fileStore.QueryDirectory(out List<QueryDirectoryFileInformation> queryDirectoryFileInformation, handle, "*", FileInformationClass.FileDirectoryInformation);
+
+                    foreach (var file in queryDirectoryFileInformation)
+                    {
+                        if (file.FileInformationClass == FileInformationClass.FileDirectoryInformation)
+                        {
+                            FileDirectoryInformation fileDirectoryInformation = (FileDirectoryInformation)file;
+                            if (fileDirectoryInformation.FileName == "."
+                                || fileDirectoryInformation.FileName == "..")
+                            {
+                                continue;
+                            }
+                            else if (fileDirectoryInformation.FileAttributes.HasFlag(SmbLibraryStd.FileAttributes.Directory))
+                            {
+                                Delete(Path.Combine(path, fileDirectoryInformation.FileName), recursive, credential);
+                            }
+
+                            _fileSystem.File.Delete(Path.Combine(path, fileDirectoryInformation.FileName));
+                        }
+                    }
+                    fileStore.CloseFile(handle);
+                }
+            }
+            else
+            {
+                Delete(path);
+            }
         }
 
         public override IEnumerable<string> EnumerateDirectories(string path)
