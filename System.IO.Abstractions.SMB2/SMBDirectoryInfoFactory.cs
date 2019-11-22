@@ -34,14 +34,12 @@ namespace System.IO.Abstractions.SMB
 
         internal IDirectoryInfo FromDirectoryName(string path, ISMBCredential credential)
         {
-            Uri uri = new Uri(path);
-
-            if (uri.Segments.Length < 2)
+            if (path.IsValidSharePath())
             {
                 return null;
             }
 
-            var hostEntry = Dns.GetHostEntry(uri.Host);
+            var hostEntry = Dns.GetHostEntry(path.HostName());
             var ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
@@ -58,12 +56,12 @@ namespace System.IO.Abstractions.SMB
 
             using var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential);
 
-            var shareName = uri.Segments[1].Replace(Path.DirectorySeparatorChar.ToString(), "");
-            var newPath = uri.AbsolutePath.Replace(uri.Segments[1], "").Remove(0, 1).Replace('/', '\\');
+            var shareName = path.ShareName();
+            var relativePath = path.RelativeSharePath();
 
             ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
-            status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, newPath, AccessMask.GENERIC_READ, 0, ShareAccess.Read,
+            status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativePath, AccessMask.GENERIC_READ, 0, ShareAccess.Read,
                     CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
             if (status != NTStatus.STATUS_SUCCESS)
             {

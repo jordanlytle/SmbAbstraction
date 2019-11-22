@@ -1,0 +1,21 @@
+{
+  "IntegrationTestSettings": {
+    "ShareCredentials": {
+      "Domain": "",
+      "Username": "",
+      "Password": ""
+    },
+    "Shares": [
+      {
+        "HostName": "",
+        "ShareName": "",
+        "Files": [
+          "file.txt"
+        ],
+        "Directories": [
+          "Dir"
+        ]
+      }
+    ]
+  }
+}
