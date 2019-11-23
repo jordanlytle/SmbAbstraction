@@ -508,7 +508,7 @@ namespace System.IO.Abstractions.SMB
                 return base.GetAccessControl(path);
             }
 
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         public override DirectorySecurity GetAccessControl(string path, AccessControlSections includeSections)
@@ -518,7 +518,7 @@ namespace System.IO.Abstractions.SMB
                 return base.GetAccessControl(path, includeSections);
             }
 
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         public override DateTime GetCreationTime(string path)
@@ -743,7 +743,7 @@ namespace System.IO.Abstractions.SMB
                 base.SetAccessControl(path, directorySecurity);
             }
 
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         public override void SetCreationTime(string path, DateTime creationTime)
@@ -753,7 +753,9 @@ namespace System.IO.Abstractions.SMB
                 base.SetCreationTime(path, creationTime);
             }
 
-            throw new NotImplementedException();
+            var dirInfo = _directoryInfoFactory.FromDirectoryName(path);
+            dirInfo.CreationTime = creationTime.ToUniversalTime();
+            _directoryInfoFactory.SaveDirectoryInfo((SMBDirectoryInfo)dirInfo);
         }
 
         public override void SetCreationTimeUtc(string path, DateTime creationTimeUtc)
@@ -763,7 +765,9 @@ namespace System.IO.Abstractions.SMB
                 base.SetCreationTimeUtc(path, creationTimeUtc);
             }
 
-            throw new NotImplementedException();
+            var dirInfo = _directoryInfoFactory.FromDirectoryName(path);
+            dirInfo.CreationTime = creationTimeUtc;
+            _directoryInfoFactory.SaveDirectoryInfo((SMBDirectoryInfo)dirInfo);
         }
 
         public override void SetCurrentDirectory(string path)
@@ -783,7 +787,9 @@ namespace System.IO.Abstractions.SMB
                 base.SetLastAccessTime(path, lastAccessTime);
             }
 
-            throw new NotImplementedException();
+            var dirInfo = _directoryInfoFactory.FromDirectoryName(path);
+            dirInfo.LastAccessTime = lastAccessTime.ToUniversalTime();
+            _directoryInfoFactory.SaveDirectoryInfo((SMBDirectoryInfo)dirInfo);
         }
 
         public override void SetLastAccessTimeUtc(string path, DateTime lastAccessTimeUtc)
@@ -793,7 +799,9 @@ namespace System.IO.Abstractions.SMB
                 base.SetLastAccessTimeUtc(path, lastAccessTimeUtc);
             }
 
-            throw new NotImplementedException();
+            var dirInfo = _directoryInfoFactory.FromDirectoryName(path);
+            dirInfo.LastAccessTime = lastAccessTimeUtc;
+            _directoryInfoFactory.SaveDirectoryInfo((SMBDirectoryInfo)dirInfo);
         }
 
         public override void SetLastWriteTime(string path, DateTime lastWriteTime)
@@ -803,7 +811,9 @@ namespace System.IO.Abstractions.SMB
                 base.SetLastWriteTime(path, lastWriteTime);
             }
 
-            throw new NotImplementedException();
+            var dirInfo = _directoryInfoFactory.FromDirectoryName(path);
+            dirInfo.LastWriteTime = lastWriteTime.ToUniversalTime();
+            _directoryInfoFactory.SaveDirectoryInfo((SMBDirectoryInfo)dirInfo);
         }
 
         public override void SetLastWriteTimeUtc(string path, DateTime lastWriteTimeUtc)
@@ -813,7 +823,9 @@ namespace System.IO.Abstractions.SMB
                 base.SetLastWriteTimeUtc(path, lastWriteTimeUtc);
             }
 
-            throw new NotImplementedException();
+            var dirInfo = _directoryInfoFactory.FromDirectoryName(path);
+            dirInfo.LastWriteTime = lastWriteTimeUtc;
+            _directoryInfoFactory.SaveDirectoryInfo((SMBDirectoryInfo)dirInfo);
         }
     }
 }

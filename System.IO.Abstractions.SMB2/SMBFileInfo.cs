@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Security.AccessControl;
+using SmbLibraryStd;
 
 namespace System.IO.Abstractions.SMB
 {
@@ -7,11 +8,43 @@ namespace System.IO.Abstractions.SMB
     {
         private SMBFile _file => FileSystem.File as SMBFile;
         private SMBFileInfoFactory _fileInfoFactory => FileSystem.FileInfo as SMBFileInfoFactory;
+        private SMBDirectoryInfoFactory _dirInfoFactory => FileSystem.DirectoryInfo as SMBDirectoryInfoFactory;
 
         public SMBFileInfo(string path, IFileSystem fileSystem)
         {
             FullName = path;
             FileSystem = fileSystem;
+        }
+
+        internal SMBFileInfo(string path, IFileSystem fileSystem, FileInformation fileInformation, ISMBCredential credential) : this(path, fileSystem)
+        {
+            FileBasicInformation fileBasicInformation = (FileBasicInformation)fileInformation;
+            if (fileBasicInformation.CreationTime.Time.HasValue)
+            {
+                CreationTime = fileBasicInformation.CreationTime.Time.Value;
+                CreationTimeUtc = CreationTime.ToUniversalTime();
+            }
+            if (fileBasicInformation.LastAccessTime.Time.HasValue)
+            {
+                LastAccessTime = fileBasicInformation.LastAccessTime.Time.Value;
+                LastAccessTimeUtc = LastAccessTime.ToUniversalTime();
+            }
+            if (fileBasicInformation.LastWriteTime.Time.HasValue)
+            {
+                LastWriteTime = fileBasicInformation.LastWriteTime.Time.Value;
+                LastWriteTimeUtc = LastWriteTime.ToUniversalTime();
+            }
+
+            Attributes = (System.IO.FileAttributes)fileBasicInformation.FileAttributes;
+
+            var pathUri = new Uri(path);
+            var parentUri = pathUri.AbsoluteUri.EndsWith('/') ? new Uri(pathUri, "..") : new Uri(pathUri, ".");
+
+            Directory = _dirInfoFactory.FromDirectoryName(parentUri.AbsoluteUri, credential);
+            DirectoryName = Directory?.Name;
+            Exists = true;
+            IsReadOnly = fileBasicInformation.FileAttributes.HasFlag(SmbLibraryStd.FileAttributes.ReadOnly);
+            Length = fileBasicInformation.Length;
         }
 
         public IDirectoryInfo Directory { get; set; }
@@ -157,6 +190,31 @@ namespace System.IO.Abstractions.SMB
         public void SetAccessControl(FileSecurity fileSecurity)
         {
             _file.SetAccessControl(FullName, fileSecurity);
+        }
+
+        internal FileInformation ToSMBFileInformation(ISMBCredential credential = null)
+        {
+            FileBasicInformation fileBasicInformation = new FileBasicInformation();
+
+            fileBasicInformation.CreationTime.Time = CreationTime;
+            fileBasicInformation.LastAccessTime.Time = LastAccessTime;
+            fileBasicInformation.LastWriteTime.Time = LastWriteTime;
+
+            fileBasicInformation.FileAttributes = (SmbLibraryStd.FileAttributes)Attributes;
+
+            var pathUri = new Uri(FullName);
+            var parentUri = pathUri.AbsoluteUri.EndsWith('/') ? new Uri(pathUri, "..") : new Uri(pathUri, ".");
+
+            if (IsReadOnly)
+            {
+                fileBasicInformation.FileAttributes |= SmbLibraryStd.FileAttributes.ReadOnly;
+            }
+            else
+            {
+                fileBasicInformation.FileAttributes &= SmbLibraryStd.FileAttributes.ReadOnly;
+            }
+
+            return fileBasicInformation;
         }
     }
 }

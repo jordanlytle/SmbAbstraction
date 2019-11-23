@@ -16,6 +16,8 @@ namespace System.IO.Abstractions.SMB
     {
         private readonly ISMBClientFactory _smbClientFactory;
         private readonly ISMBCredentialProvider _credentialProvider;
+        private readonly IFileSystem _fileSystem;
+        private SMBFileInfoFactory _fileInfoFactory => _fileSystem.FileInfo as SMBFileInfoFactory;
 
         public SMBTransportType transport { get; set; }
 
@@ -23,6 +25,7 @@ namespace System.IO.Abstractions.SMB
         {
             _smbClientFactory = smbclientFactory;
             _credentialProvider = credentialProvider;
+            _fileSystem = fileSystem;
             transport = SMBTransportType.DirectTCPTransport;
         }
 
@@ -302,7 +305,8 @@ namespace System.IO.Abstractions.SMB
             {
                 return base.GetAccessControl(path);
             }
-            throw new NotImplementedException();
+
+            throw new NotSupportedException();
         }
 
         public override FileSecurity GetAccessControl(string path, AccessControlSections includeSections)
@@ -311,7 +315,8 @@ namespace System.IO.Abstractions.SMB
             {
                 return base.GetAccessControl(path, includeSections);
             }
-            throw new NotImplementedException();
+
+            throw new NotSupportedException();
         }
 
         public override FileAttributes GetAttributes(string path)
@@ -320,7 +325,10 @@ namespace System.IO.Abstractions.SMB
             {
                 return base.GetAttributes(path);
             }
-            throw new NotImplementedException();
+
+            var fileInfo = _fileInfoFactory.FromFileName(path);
+
+            return fileInfo.Attributes;
         }
 
         public override DateTime GetCreationTime(string path)
@@ -329,7 +337,10 @@ namespace System.IO.Abstractions.SMB
             {
                 return base.GetCreationTime(path);
             }
-            throw new NotImplementedException();
+
+            var fileInfo = _fileInfoFactory.FromFileName(path);
+
+            return fileInfo.CreationTime;
         }
 
         public override DateTime GetCreationTimeUtc(string path)
@@ -338,7 +349,10 @@ namespace System.IO.Abstractions.SMB
             {
                 return base.GetCreationTimeUtc(path);
             }
-            throw new NotImplementedException();
+
+            var fileInfo = _fileInfoFactory.FromFileName(path);
+
+            return fileInfo.CreationTimeUtc;
         }
 
         public override DateTime GetLastAccessTime(string path)
@@ -347,7 +361,10 @@ namespace System.IO.Abstractions.SMB
             {
                 return base.GetLastAccessTime(path);
             }
-            throw new NotImplementedException();
+
+            var fileInfo = _fileInfoFactory.FromFileName(path);
+
+            return fileInfo.LastAccessTime;
         }
 
         public override DateTime GetLastAccessTimeUtc(string path)
@@ -356,7 +373,10 @@ namespace System.IO.Abstractions.SMB
             {
                 return base.GetLastAccessTimeUtc(path);
             }
-            throw new NotImplementedException();
+
+            var fileInfo = _fileInfoFactory.FromFileName(path);
+
+            return fileInfo.LastAccessTimeUtc;
         }
 
         public override DateTime GetLastWriteTime(string path)
@@ -365,7 +385,10 @@ namespace System.IO.Abstractions.SMB
             {
                 return base.GetLastWriteTime(path);
             }
-            throw new NotImplementedException();
+
+            var fileInfo = _fileInfoFactory.FromFileName(path);
+
+            return fileInfo.LastAccessTimeUtc;
         }
 
         public override DateTime GetLastWriteTimeUtc(string path)
@@ -374,7 +397,10 @@ namespace System.IO.Abstractions.SMB
             {
                 return base.GetLastWriteTimeUtc(path);
             }
-            throw new NotImplementedException();
+
+            var fileInfo = _fileInfoFactory.FromFileName(path);
+
+            return fileInfo.LastAccessTimeUtc;
         }
 
         public override void Move(string sourceFileName, string destFileName)
@@ -760,7 +786,9 @@ namespace System.IO.Abstractions.SMB
                 return;
             }
 
-            throw new NotSupportedException();
+            var fileInfo = _fileInfoFactory.FromFileName(path);
+            fileInfo.CreationTime = creationTime.ToUniversalTime();
+            _fileInfoFactory.SaveFileInfo((SMBFileInfo)fileInfo);
         }
 
         public override void SetCreationTimeUtc(string path, DateTime creationTimeUtc)
@@ -771,7 +799,9 @@ namespace System.IO.Abstractions.SMB
                 return;
             }
 
-            throw new NotSupportedException();
+            var fileInfo = _fileInfoFactory.FromFileName(path);
+            fileInfo.CreationTime = creationTimeUtc;
+            _fileInfoFactory.SaveFileInfo((SMBFileInfo)fileInfo);
         }
 
         public override void SetLastAccessTime(string path, DateTime lastAccessTime)
@@ -782,7 +812,9 @@ namespace System.IO.Abstractions.SMB
                 return;
             }
 
-            throw new NotSupportedException();
+            var fileInfo = _fileInfoFactory.FromFileName(path);
+            fileInfo.LastAccessTime = lastAccessTime.ToUniversalTime();
+            _fileInfoFactory.SaveFileInfo((SMBFileInfo)fileInfo);
         }
 
         public override void SetLastAccessTimeUtc(string path, DateTime lastAccessTimeUtc)
@@ -793,7 +825,9 @@ namespace System.IO.Abstractions.SMB
                 return;
             }
 
-            throw new NotSupportedException();
+            var fileInfo = _fileInfoFactory.FromFileName(path);
+            fileInfo.LastAccessTime = lastAccessTimeUtc;
+            _fileInfoFactory.SaveFileInfo((SMBFileInfo)fileInfo);
         }
 
         public override void SetLastWriteTime(string path, DateTime lastWriteTime)
@@ -804,7 +838,9 @@ namespace System.IO.Abstractions.SMB
                 return;
             }
 
-            throw new NotSupportedException();
+            var fileInfo = _fileInfoFactory.FromFileName(path);
+            fileInfo.LastWriteTime = lastWriteTime.ToUniversalTime();
+            _fileInfoFactory.SaveFileInfo((SMBFileInfo)fileInfo);
         }
 
         public override void SetLastWriteTimeUtc(string path, DateTime lastWriteTimeUtc)
@@ -815,7 +851,9 @@ namespace System.IO.Abstractions.SMB
                 return;
             }
 
-            throw new NotSupportedException();
+            var fileInfo = _fileInfoFactory.FromFileName(path);
+            fileInfo.LastWriteTime = lastWriteTimeUtc;
+            _fileInfoFactory.SaveFileInfo((SMBFileInfo)fileInfo);
         }
 
         public override void WriteAllBytes(string path, byte[] bytes)

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.AccessControl;
+using SmbLibraryStd;
 
 namespace System.IO.Abstractions.SMB
 {
@@ -12,13 +13,43 @@ namespace System.IO.Abstractions.SMB
         private readonly SMBDirectoryInfoFactory _directoryInfoFactory;
         private readonly SMBFileInfoFactory _fileInfoFactory;
 
-        public SMBDirectoryInfo(string fileName, SMBDirectory smbDirectory, SMBFile smbFile, SMBDirectoryInfoFactory directoryInfoFactory, SMBFileInfoFactory fileInfoFactory)
+        public SMBDirectoryInfo(string fileName, SMBDirectory smbDirectory, SMBFile smbFile, SMBDirectoryInfoFactory directoryInfoFactory,
+            SMBFileInfoFactory fileInfoFactory)
         {
             _fullName = fileName;
             _smbDirectory = smbDirectory;
             _smbFile = smbFile;
             _directoryInfoFactory = directoryInfoFactory;
             _fileInfoFactory = fileInfoFactory;
+        }
+
+        internal SMBDirectoryInfo(string fileName, SMBDirectory smbDirectory, SMBFile smbFile, SMBDirectoryInfoFactory directoryInfoFactory,
+            SMBFileInfoFactory fileInfoFactory, FileInformation fileInfo, ISMBCredential credential)
+            : this(fileName, smbDirectory, smbFile, directoryInfoFactory, fileInfoFactory)
+        {
+            FileBasicInformation fileDirectoryInformation = (FileBasicInformation)fileInfo;
+            if (fileDirectoryInformation.CreationTime.Time.HasValue)
+            {
+                CreationTime = fileDirectoryInformation.CreationTime.Time.Value;
+                CreationTimeUtc = CreationTime.ToUniversalTime();
+            }
+            FileSystem = FileSystem;
+            if (fileDirectoryInformation.LastAccessTime.Time.HasValue)
+            {
+                LastAccessTime = fileDirectoryInformation.LastAccessTime.Time.Value;
+                LastAccessTimeUtc = LastAccessTime.ToUniversalTime();
+            }
+            if (fileDirectoryInformation.LastWriteTime.Time.HasValue)
+            {
+                LastWriteTime = fileDirectoryInformation.LastWriteTime.Time.Value;
+                LastWriteTimeUtc = LastWriteTime.ToUniversalTime();
+            }
+            Parent = _smbDirectory.GetParent(fileName, credential);
+            var pathRoot = Path.GetPathRoot(fileName);
+            if (pathRoot != string.Empty)
+            {
+                Root = _directoryInfoFactory.FromDirectoryName(pathRoot, credential);
+            }
         }
 
         private readonly string _fullName;
@@ -112,17 +143,31 @@ namespace System.IO.Abstractions.SMB
 
         public IEnumerable<IFileSystemInfo> EnumerateFileSystemInfos()
         {
-            throw new NotImplementedException();
+            return EnumerateFileSystemInfos("*");
         }
 
         public IEnumerable<IFileSystemInfo> EnumerateFileSystemInfos(string searchPattern)
         {
-            throw new NotImplementedException();
+            return EnumerateFileSystemInfos(searchPattern, SearchOption.TopDirectoryOnly);
         }
 
         public IEnumerable<IFileSystemInfo> EnumerateFileSystemInfos(string searchPattern, SearchOption searchOption)
         {
-            throw new NotImplementedException();
+            var paths = _smbDirectory.EnumerateFileSystemEntries(FullName, searchPattern, searchOption);
+            List<IFileSystemInfo> fileSystemInfos = new List<IFileSystemInfo>();
+            foreach (var path in paths)
+            {
+                if (_smbFile.Exists(path))
+                {
+                    fileSystemInfos.Add(_fileInfoFactory.FromFileName(path));
+                }
+                else
+                {
+                    fileSystemInfos.Add(_directoryInfoFactory.FromDirectoryName(path));
+                }
+            }
+
+            return fileSystemInfos;
         }
 
         public DirectorySecurity GetAccessControl()
@@ -203,6 +248,19 @@ namespace System.IO.Abstractions.SMB
         public void SetAccessControl(DirectorySecurity directorySecurity)
         {
             _smbDirectory.SetAccessControl(_fullName, directorySecurity);
+        }
+
+        internal FileInformation ToSMBFileInformation(ISMBCredential credential = null)
+        {
+            FileBasicInformation fileBasicInformation = new FileBasicInformation();
+
+            fileBasicInformation.CreationTime.Time = CreationTime;
+            fileBasicInformation.LastAccessTime.Time = LastAccessTime;
+            fileBasicInformation.LastWriteTime.Time = LastWriteTime;
+
+            fileBasicInformation.FileAttributes = (SmbLibraryStd.FileAttributes)Attributes;
+
+            return fileBasicInformation;
         }
     }
 }

@@ -34,7 +34,7 @@ namespace System.IO.Abstractions.SMB
 
         internal IDirectoryInfo FromDirectoryName(string path, ISMBCredential credential)
         {
-            if (path.IsValidSharePath())
+            if (!path.IsSmbPath() || !path.IsValidSharePath())
             {
                 return null;
             }
@@ -68,8 +68,6 @@ namespace System.IO.Abstractions.SMB
                 return null;
             }
 
-            SMBDirectoryInfo directoryInfo = new SMBDirectoryInfo(path, _smbDirectory, _smbFile, this, _fileInfoFactory);
-
             status = fileStore.GetFileInformation(out FileInformation fileInfo, handle, FileInformationClass.FileBasicInformation); // If you call this with any other FileInformationClass value
                                                                                                                                     // it doesn't work for some reason
             if (status != NTStatus.STATUS_SUCCESS)
@@ -77,30 +75,49 @@ namespace System.IO.Abstractions.SMB
                 return null;
             }
 
-            FileBasicInformation fileDirectoryInformation = (FileBasicInformation)fileInfo;
-            if (fileDirectoryInformation.CreationTime.Time.HasValue)
+            return new SMBDirectoryInfo(path, _smbDirectory, _smbFile, this, _fileInfoFactory, fileInfo, credential);
+        }
+
+        internal void SaveDirectoryInfo(SMBDirectoryInfo dirInfo, ISMBCredential credential = null)
+        {
+            var path = dirInfo.FullName;
+
+            var hostEntry = Dns.GetHostEntry(path.HostName());
+            var ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
+
+            NTStatus status = NTStatus.STATUS_SUCCESS;
+
+            if (credential == null)
             {
-                directoryInfo.CreationTime = fileDirectoryInformation.CreationTime.Time.Value;
-                directoryInfo.CreationTimeUtc = directoryInfo.CreationTime.ToUniversalTime();
+                credential = _credentialProvider.GetSMBCredential(path);
             }
-            directoryInfo.FileSystem = _fileSystem;
-            if (fileDirectoryInformation.LastAccessTime.Time.HasValue)
+
+            if (credential == null)
             {
-                directoryInfo.LastAccessTime = fileDirectoryInformation.LastAccessTime.Time.Value;
-                directoryInfo.LastAccessTimeUtc = directoryInfo.LastAccessTime.ToUniversalTime();
+                throw new Exception($"Unable to find credential for path: {path}");
             }
-            if (fileDirectoryInformation.LastWriteTime.Time.HasValue)
+
+            using var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential);
+
+            var shareName = path.ShareName();
+            var relativePath = path.RelativeSharePath();
+
+            ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
+
+            status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativePath, AccessMask.GENERIC_WRITE, 0, ShareAccess.Read,
+                    CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
+            if (status != NTStatus.STATUS_SUCCESS)
             {
-                directoryInfo.LastWriteTime = fileDirectoryInformation.LastWriteTime.Time.Value;
-                directoryInfo.LastWriteTimeUtc = directoryInfo.LastWriteTime.ToUniversalTime();
+                throw new IOException($"Unable to open directory. NTSTatus: {status}");
             }
-            directoryInfo.Parent = _smbDirectory.GetParent(path, credential);
-            var pathRoot = Path.GetPathRoot(path);
-            if (pathRoot != string.Empty)
+
+            var fileInfo = dirInfo.ToSMBFileInformation(credential);
+            status = fileStore.SetFileInformation(handle, fileInfo);
+
+            if (status != NTStatus.STATUS_SUCCESS)
             {
-                directoryInfo.Root = FromDirectoryName(pathRoot, credential);
+                throw new IOException($"Unable to set file info. NTSTatus: {status}");
             }
-            return directoryInfo;
         }
     }
 }
