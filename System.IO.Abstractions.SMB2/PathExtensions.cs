@@ -11,7 +11,7 @@ namespace System.IO.Abstractions.SMB
         public static bool IsValidSharePath(this string path)
         {
             var uri = new Uri(path);
-            var valid = uri.Segments.Length > 2;
+            var valid = uri.Segments.Length >= 2;
 
             return valid;
         }
