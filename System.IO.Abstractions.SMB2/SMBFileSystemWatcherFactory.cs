@@ -1,20 +1,16 @@
 ﻿using System;
 namespace System.IO.Abstractions.SMB
 {
-    public class SMBFileSystemWatcherFactory : IFileSystemWatcherFactory
+    public class SMBFileSystemWatcherFactory : FileSystemWatcherFactory, IFileSystemWatcherFactory
     {
-        public SMBFileSystemWatcherFactory()
+        public new IFileSystemWatcher FromPath(string path)
         {
-        }
+            if(path.IsSmbPath())
+            {
+                return base.FromPath(path);
+            }
 
-        public IFileSystemWatcher CreateNew()
-        {
-            throw new NotImplementedException();
-        }
-
-        public IFileSystemWatcher FromPath(string path)
-        {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
     }
 }
