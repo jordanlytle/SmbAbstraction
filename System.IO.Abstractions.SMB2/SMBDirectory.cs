@@ -78,6 +78,11 @@ namespace System.IO.Abstractions.SMB
 
         public override void Delete(string path)
         {
+            Delete(path, null);
+        }
+
+        internal void Delete(string path, ISMBCredential credential)
+        {
             if (!path.IsSmbPath())
             {
                 base.Delete(path);
@@ -88,7 +93,15 @@ namespace System.IO.Abstractions.SMB
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
 
-            var credential = _credentialProvider.GetSMBCredential(path);
+            if(credential == null)
+            {
+                credential = _credentialProvider.GetSMBCredential(path);
+            }
+
+            if(EnumerateFileSystemEntries(path).Count() > 0)
+            {
+                throw new IOException("Cannot delete directory. Directory is not empty.");
+            }
 
             using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential))
             {
@@ -97,7 +110,7 @@ namespace System.IO.Abstractions.SMB
 
                 ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
-                status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativePath, AccessMask.DELETE, 0, ShareAccess.None,
+                status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativePath, AccessMask.DELETE, 0, ShareAccess.Delete,
                     CreateDisposition.FILE_OPEN, CreateOptions.FILE_DELETE_ON_CLOSE, null);
 
                 if (status != NTStatus.STATUS_SUCCESS)
@@ -143,8 +156,19 @@ namespace System.IO.Abstractions.SMB
 
                     ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
-                    status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativePath, AccessMask.GENERIC_READ, 0, ShareAccess.Delete,
-                        CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
+                    int attempts = 0;
+                    int allowedRetrys = 3;
+                    object handle;
+
+                    do
+                    {
+                        attempts++;
+
+                        status = fileStore.CreateFile(out handle, out FileStatus fileStatus, relativePath, AccessMask.GENERIC_READ, 0, ShareAccess.Delete,
+                            CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
+                    }
+                    while (status == NTStatus.STATUS_PENDING && attempts < allowedRetrys);
+
                     if (status != NTStatus.STATUS_SUCCESS)
                     {
                         throw new IOException($"Unable to connect to smbShare. Status = {status}");
@@ -172,6 +196,8 @@ namespace System.IO.Abstractions.SMB
                         }
                     }
                     fileStore.CloseFile(handle);
+
+                    Delete(path, credential);
                 }
             }
             else

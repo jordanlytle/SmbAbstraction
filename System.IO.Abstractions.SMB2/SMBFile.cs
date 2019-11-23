@@ -237,8 +237,19 @@ namespace System.IO.Abstractions.SMB
 
                 ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
-                status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativePath, AccessMask.DELETE, 0, ShareAccess.Read,
-                    CreateDisposition.FILE_OPEN, CreateOptions.FILE_DELETE_ON_CLOSE, null);
+                int attempts = 0;
+                int allowedRetrys = 3;
+                object handle;
+
+                do
+                {
+                    attempts++;
+
+                    status = fileStore.CreateFile(out handle, out FileStatus fileStatus, relativePath, AccessMask.DELETE, 0, ShareAccess.Read,
+                        CreateDisposition.FILE_OPEN, CreateOptions.FILE_DELETE_ON_CLOSE, null);
+                }
+                while (status == NTStatus.STATUS_PENDING && attempts < allowedRetrys);
+
                 if (status != NTStatus.STATUS_SUCCESS)
                 {
                     throw new IOException($"Unable to connect to smbShare. Status = {status}");
