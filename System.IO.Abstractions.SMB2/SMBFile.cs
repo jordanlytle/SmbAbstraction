@@ -198,7 +198,7 @@ namespace System.IO.Abstractions.SMB
                 return base.Create(path, bufferSize, options);
             }
 
-            return Create(path, bufferSize, options);
+            return new BufferedStream(Open(path, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite, options, null), bufferSize);
         }
 
         public override StreamWriter CreateText(string path)
@@ -438,7 +438,7 @@ namespace System.IO.Abstractions.SMB
             return Open(path, mode, access, share, FileOptions.None, credential);
         }
 
-        private Stream Open(string path, FileMode mode, FileAccess access, FileShare share, FileOptions fileOptions, ISMBCredential credential)
+        internal Stream Open(string path, FileMode mode, FileAccess access, FileShare share, FileOptions fileOptions, ISMBCredential credential)
         {
             var hostEntry = Dns.GetHostEntry(path.HostName());
             var ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);

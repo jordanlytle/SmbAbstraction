@@ -11,7 +11,7 @@ namespace System.IO.Abstractions.SMB
             Directory = new SMBDirectory(ismbClientfactory, credentialProvider, this);
             DirectoryInfo = new SMBDirectoryInfoFactory(this, credentialProvider, ismbClientfactory);
             FileInfo = new SMBFileInfoFactory(this, credentialProvider, ismbClientfactory);
-            FileStream = new SMBFileStreamFactory();
+            FileStream = new SMBFileStreamFactory(this);
             Path = new PathWrapper(this);
             DriveInfo = new SMBDriveInfoFactory();
         }
