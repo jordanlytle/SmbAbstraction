@@ -21,11 +21,7 @@ namespace System.IO.Abstractions.SMB
             var relativePath = path.RelativeSharePath();
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
-
-            status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativePath,
-                                      AccessMask.GENERIC_READ, 0, ShareAccess.Read, CreateDisposition.FILE_OPEN,
-                                      CreateOptions.FILE_DIRECTORY_FILE, null);
-
+        
             if (status == NTStatus.STATUS_SUCCESS)
             {
                 fileStore.GetFileSystemInformation(out var fileFsVolumeInformation, FileSystemInformationClass.FileFsVolumeInformation);
