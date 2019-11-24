@@ -13,7 +13,7 @@ namespace System.IO.Abstractions.SMB
             FileInfo = new SMBFileInfoFactory(this, credentialProvider, ismbClientfactory);
             FileStream = new SMBFileStreamFactory(this);
             Path = new PathWrapper(this);
-            DriveInfo = new SMBDriveInfoFactory();
+            DriveInfo = new SMBDriveInfoFactory(this,credentialProvider, ismbClientfactory);
         }
 
         public IDirectory Directory { get; }

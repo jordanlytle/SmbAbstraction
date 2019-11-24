@@ -25,10 +25,17 @@ namespace System.IO.Abstractions.SMB
             }
         }
 
+        public IEnumerable<ISMBCredential> GetSMBCredentials()
+        {
+            return credentials;
+        }
+
         public void AddSMBCredential(ISMBCredential credential)
         {
             credential.SetParentList(credentials);
             credentials.Add(credential);
         }
+
+        
     }
 }

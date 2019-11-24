@@ -1,20 +1,152 @@
-﻿using System;
+﻿using SmbLibraryStd;
+using SmbLibraryStd.Client;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+
 namespace System.IO.Abstractions.SMB
 {
     public class SMBDriveInfoFactory : IDriveInfoFactory
     {
-        public SMBDriveInfoFactory()
+        private readonly IFileSystem _fileSystem;
+        private readonly ISMBCredentialProvider _smbCredentialProvider;
+        private readonly ISMBClientFactory _smbClientFactory;
+
+        public SMBTransportType transport { get; set; }
+
+
+        public SMBDriveInfoFactory(IFileSystem fileSystem, ISMBCredentialProvider smbCredentialProvider, ISMBClientFactory smbClientFactory)
         {
+            _fileSystem = fileSystem;
+            _smbCredentialProvider = smbCredentialProvider;
+            _smbClientFactory = smbClientFactory;
+            transport = SMBTransportType.DirectTCPTransport;
         }
 
         public IDriveInfo FromDriveName(string driveName)
         {
-            throw new NotImplementedException();
+            return FromDriveName(driveName, null);
+        }
+
+        internal IDriveInfo FromDriveName(string shareName, ISMBCredential credential)
+        {
+            if (credential == null)
+            {
+                credential = _smbCredentialProvider.GetSMBCredentials().Where(c => c.Path.Contains(shareName)).FirstOrDefault();
+
+                if(credential == null)
+                {
+                    return null;
+                }
+            }
+
+            var path = credential.Path;
+            var hostEntry = Dns.GetHostEntry(path.HostName());
+            var ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
+            
+            NTStatus status = NTStatus.STATUS_SUCCESS;
+
+            using var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential);
+
+            var relativePath = path.RelativeSharePath();
+
+            ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
+
+            if (status != NTStatus.STATUS_SUCCESS)
+            {
+                return null;
+            }
+
+            status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativePath, AccessMask.GENERIC_READ, 0, ShareAccess.Read, CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
+
+            if (status != NTStatus.STATUS_SUCCESS)
+            {
+                return null;
+            }
+
+            var smbFileSystemInformation = new SMBFileSystemInformation(fileStore, path);
+
+            var smbDriveInfo = new SMBDriveInfo(path, _fileSystem, smbFileSystemInformation, credential);
+
+            return smbDriveInfo;
         }
 
         public IDriveInfo[] GetDrives()
         {
-            throw new NotImplementedException();
+            return GetDrives(null);
+        }
+
+        internal IDriveInfo[] GetDrives(ISMBCredential smbCredential)
+        {
+            var credentialsToCheck = new List<ISMBCredential>();
+            credentialsToCheck = _smbCredentialProvider.GetSMBCredentials().ToList();
+
+            if (smbCredential == null && credentialsToCheck.Count == 0)
+            {
+                return null;
+            }
+
+            List<IDriveInfo> driveInfos = new List<IDriveInfo>();
+
+            NTStatus status = NTStatus.STATUS_SUCCESS;
+
+            var shareHostNames = new List<string>();
+
+            if (smbCredential != null)
+            {
+                credentialsToCheck.Add(smbCredential);
+            }
+            else
+            {
+                credentialsToCheck = _smbCredentialProvider.GetSMBCredentials().ToList();
+            }
+
+            shareHostNames = credentialsToCheck.Select(smbCredential => smbCredential.Path.HostName()).Distinct().ToList();
+
+            var shareHostShareNames = new Dictionary<string, IEnumerable<string>>();
+
+            foreach (var shareHost in shareHostNames)
+            {
+                var credential = credentialsToCheck.Where(smbCredential => smbCredential.Path.HostName() == shareHost).First();
+
+                var path = credential.Path;
+                var hostEntry = Dns.GetHostEntry(path.HostName());
+                var ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
+
+                using var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential);
+
+                var shareNames = connection.SMBClient.ListShares(out status);
+                var shareDirectoryInfoFactory = new SMBDirectoryInfoFactory(_fileSystem, _smbCredentialProvider, _smbClientFactory);
+
+                foreach (var shareName in shareNames)
+                {
+                    var sharePath = path.BuildSharePath(shareName);
+                    var relativeSharePath = path.RelativeSharePath();
+
+                    ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
+
+                    if (status != NTStatus.STATUS_SUCCESS)
+                    {
+                        continue;
+                    }
+
+                    status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativeSharePath, AccessMask.GENERIC_READ, 0, ShareAccess.Read, CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
+
+                    if (status != NTStatus.STATUS_SUCCESS)
+                    {
+                        continue;
+                    }
+
+                    var smbFileSystemInformation = new SMBFileSystemInformation(fileStore, sharePath);
+
+                    var smbDriveInfo = new SMBDriveInfo(sharePath, _fileSystem, smbFileSystemInformation, credential);
+
+                    driveInfos.Add(smbDriveInfo);
+                }
+            }
+
+            return driveInfos.ToArray();
         }
     }
 }

@@ -7,6 +7,7 @@ namespace System.IO.Abstractions.SMB
     public static class PathExtensions
     {
         static readonly string[] pathSeperators = { @"\", "/" };
+        static readonly char s = IO.Path.DirectorySeparatorChar;
 
         public static bool IsValidSharePath(this string path)
         {
@@ -20,6 +21,20 @@ namespace System.IO.Abstractions.SMB
         {
             var uri = new Uri(path);
             return uri.Scheme.Equals("smb") || uri.IsUnc;
+        }
+
+
+        public static string BuildSharePath(this string path, string shareName)
+        {
+            var uri = new Uri(path);
+            if(!uri.IsUnc)
+            {
+                return $"smb://{path.HostName()}/{shareName}";
+            }
+            else
+            {
+                return $"{s}{s}{path.HostName()}{s}{shareName}";
+            }
         }
 
         public static string HostName(this string path)
@@ -44,7 +59,7 @@ namespace System.IO.Abstractions.SMB
             if (uri.Scheme.Equals("smb"))
                 sharePath = $"{uri.Scheme}://{uri.Host}/{uri.Segments[1].RemoveAnySeperators()}";
             else if (uri.IsUnc)
-                sharePath = $@"\\{uri.Host}\{uri.Segments[1].RemoveAnySeperators()}";
+                sharePath = $@"{s}{s}{uri.Host}{s}{uri.Segments[1].RemoveAnySeperators()}";
 
             return sharePath;
         }

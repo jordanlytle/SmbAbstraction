@@ -20,6 +20,7 @@ namespace System.IO.Abstractions.SMB.Tests.Integration
         }
 
         [Fact]
+        [Trait("Category", "Integration")]
         public void CanCreateDirectoryInUncRootDirectory()
         {
             var testCredentials = TestSettings.ShareCredentials;
@@ -36,6 +37,7 @@ namespace System.IO.Abstractions.SMB.Tests.Integration
         }
 
         [Fact]
+        [Trait("Category", "Integration")]
         public void CanEnumerateFilesUncRootDirectory()
         {
             var testCredentials = TestSettings.ShareCredentials;
@@ -50,6 +52,7 @@ namespace System.IO.Abstractions.SMB.Tests.Integration
         }
 
         [Fact]
+        [Trait("Category", "Integration")]
         public void CanEnumerateFilesSmbRootDirectory()
         {
             var testCredentials = TestSettings.ShareCredentials;
