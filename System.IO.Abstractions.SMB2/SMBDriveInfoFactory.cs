@@ -33,7 +33,7 @@ namespace System.IO.Abstractions.SMB
         {
             if (credential == null)
             {
-                credential = _smbCredentialProvider.GetSMBCredentials().Where(c => c.Path.Contains(shareName)).FirstOrDefault();
+                credential = _smbCredentialProvider.GetSMBCredentials().Where(c => c.Path.ShareName().Equals(shareName)).FirstOrDefault();
 
                 if(credential == null)
                 {
@@ -101,7 +101,7 @@ namespace System.IO.Abstractions.SMB
 
             foreach (var shareHost in shareHostNames)
             {
-                var credential = credentialsToCheck.Where(smbCredential => smbCredential.Path.HostName() == shareHost).First();
+                var credential = credentialsToCheck.Where(smbCredential => smbCredential.Path.HostName().Equals(shareHost)).First();
 
                 var path = credential.Path;
                 var hostEntry = Dns.GetHostEntry(path.HostName());
