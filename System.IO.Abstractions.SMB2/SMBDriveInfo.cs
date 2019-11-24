@@ -4,21 +4,26 @@ namespace System.IO.Abstractions.SMB
 {
     public class SMBDriveInfo : IDriveInfo
     {
-        private readonly SMBFileSystemInformation _smbFileSystemInformation;
         private SMBDirectoryInfoFactory _dirInfoFactory => FileSystem.DirectoryInfo as SMBDirectoryInfoFactory;
+        private string _volumeLabel;
+
         public SMBDriveInfo(string path, IFileSystem fileSystem, SMBFileSystemInformation smbFileSystemInformation, ISMBCredential credential)
         {
             FileSystem = fileSystem;
-            _smbFileSystemInformation = smbFileSystemInformation;
+            AvailableFreeSpace = smbFileSystemInformation.SizeInformation.CallerAvailableAllocationUnits;
+            DriveFormat = smbFileSystemInformation.AttributeInformation.FileSystemName;
             Name = path.ShareName();
             RootDirectory = _dirInfoFactory.FromDirectoryName(path, credential);
+            TotalFreeSpace = smbFileSystemInformation.SizeInformation.ActualAvailableAllocationUnits;
+            TotalSize = smbFileSystemInformation.SizeInformation.TotalAllocationUnits;
+            _volumeLabel = smbFileSystemInformation.VolumeInformation.VolumeLabel;
         }
 
         public IFileSystem FileSystem { get; }
 
-        public long AvailableFreeSpace => _smbFileSystemInformation.SizeInformation.CallerAvailableAllocationUnits;
+        public long AvailableFreeSpace { get; }
 
-        public string DriveFormat => _smbFileSystemInformation.AttributeInformation.FileSystemName;
+        public string DriveFormat { get; }
 
         public DriveType DriveType => DriveType.Network;
 
@@ -28,10 +33,10 @@ namespace System.IO.Abstractions.SMB
 
         public IDirectoryInfo RootDirectory { get; }
 
-        public long TotalFreeSpace => _smbFileSystemInformation.SizeInformation.ActualAvailableAllocationUnits;
+        public long TotalFreeSpace { get; }
 
-        public long TotalSize => _smbFileSystemInformation.SizeInformation.TotalAllocationUnits;
+        public long TotalSize { get; }
 
-        public string VolumeLabel { get => _smbFileSystemInformation.VolumeInformation.VolumeLabel; set => throw new NotSupportedException(); }
+        public string VolumeLabel { get => _volumeLabel; set => throw new NotSupportedException(); }
     }
 }
