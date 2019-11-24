@@ -57,14 +57,7 @@ namespace System.IO.Abstractions.SMB
             {
                 return null;
             }
-
-            status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativePath, AccessMask.GENERIC_READ, 0, ShareAccess.Read, CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
-
-            if (status != NTStatus.STATUS_SUCCESS)
-            {
-                return null;
-            }
-
+            
             var smbFileSystemInformation = new SMBFileSystemInformation(fileStore, path);
 
             var smbDriveInfo = new SMBDriveInfo(path, _fileSystem, smbFileSystemInformation, credential);
@@ -130,14 +123,7 @@ namespace System.IO.Abstractions.SMB
                     {
                         continue;
                     }
-
-                    status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativeSharePath, AccessMask.GENERIC_READ, 0, ShareAccess.Read, CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
-
-                    if (status != NTStatus.STATUS_SUCCESS)
-                    {
-                        continue;
-                    }
-
+                
                     var smbFileSystemInformation = new SMBFileSystemInformation(fileStore, sharePath);
 
                     var smbDriveInfo = new SMBDriveInfo(sharePath, _fileSystem, smbFileSystemInformation, credential);
