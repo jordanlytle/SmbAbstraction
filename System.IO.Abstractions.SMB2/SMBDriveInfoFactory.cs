@@ -115,7 +115,7 @@ namespace System.IO.Abstractions.SMB
                 foreach (var shareName in shareNames)
                 {
                     var sharePath = path.BuildSharePath(shareName);
-                    var relativeSharePath = path.RelativeSharePath();
+                    var relativeSharePath = sharePath.RelativeSharePath();
 
                     ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
