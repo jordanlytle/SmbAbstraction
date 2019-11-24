@@ -61,8 +61,14 @@ namespace System.IO.Abstractions.SMB
 
             ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
+            if (status != NTStatus.STATUS_SUCCESS)
+            {
+                return null;
+            }
+
             status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativePath, AccessMask.GENERIC_READ, 0, ShareAccess.Read,
                     CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
+
             if (status != NTStatus.STATUS_SUCCESS)
             {
                 return null;

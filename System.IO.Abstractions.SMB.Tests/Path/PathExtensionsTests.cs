@@ -7,6 +7,7 @@ namespace System.IO.Abstractions.SMB.Tests.Path
     {
         private readonly IPathTestData _smbUriTestData;
         private readonly IPathTestData _uncPathTestData;
+        private readonly char s = IO.Path.DirectorySeparatorChar;
 
         public PathExtensionsTests()
         {
@@ -15,7 +16,7 @@ namespace System.IO.Abstractions.SMB.Tests.Path
         }
 
         [Fact]
-        public void IsSmbReturnsTrueForSmbUrl()
+        public void IsSmb_ReturnsTrue_ForSmbUrl()
         {
             foreach (var property in _smbUriTestData.GetType().GetProperties())
             {
@@ -26,7 +27,7 @@ namespace System.IO.Abstractions.SMB.Tests.Path
         }
 
         [Fact]
-        public void IsSmbReturnsTrueForUncPath()
+        public void IsSmb_ReturnsTrue_ForUncPath()
         {
             foreach (var property in _uncPathTestData.GetType().GetProperties())
             {
@@ -37,7 +38,39 @@ namespace System.IO.Abstractions.SMB.Tests.Path
         }
 
         [Fact]
-        public void GetHostNameReturnsHostForSmbUrl()
+        public void BuildSharePath_ReturnsSmbPath_ForSmbPath()
+        {
+            foreach (var property in _smbUriTestData.GetType().GetProperties())
+            {
+                var path = (string)property.GetValue(_smbUriTestData);
+                var testBuildShareName = "TestBuildSharePath";
+
+                var builtSharePath = path.BuildSharePath(testBuildShareName);
+
+                string expectedPath = $"smb://{path.HostName()}/{testBuildShareName}";
+
+                Assert.Equal(expectedPath, builtSharePath);
+            }
+        }
+
+        [Fact]
+        public void BuildSharePath_ReturnsSmbPath_ForUncPath()
+        {
+            foreach (var property in _uncPathTestData.GetType().GetProperties())
+            {
+                var path = (string)property.GetValue(_uncPathTestData);
+                var testBuildShareName = "TestBuildSharePath";
+
+                var builtSharePath = path.BuildSharePath(testBuildShareName);
+
+                string expectedPath = $"{s}{s}{path.HostName()}{s}{testBuildShareName}";
+                
+                Assert.Equal(expectedPath, builtSharePath);
+            }
+        }
+
+        [Fact]
+        public void HostName_ReturnsHost_ForSmbUrl()
         {
             foreach (var property in _smbUriTestData.GetType().GetProperties())
             {
@@ -49,7 +82,7 @@ namespace System.IO.Abstractions.SMB.Tests.Path
         }
 
         [Fact]
-        public void GetHostNameReturnsHostForUncPath()
+        public void HostName_ReturnsHost_ForUncPath()
         {
             foreach (var property in _uncPathTestData.GetType().GetProperties())
             {
@@ -61,7 +94,7 @@ namespace System.IO.Abstractions.SMB.Tests.Path
         }
 
         [Fact]
-        public void GetSharePathReturnsSharePathForSmbUri()
+        public void SharePath_ReturnsSharePath_ForSmbUri()
         {
             foreach (var property in _smbUriTestData.GetType().GetProperties())
             {
@@ -72,7 +105,7 @@ namespace System.IO.Abstractions.SMB.Tests.Path
         }
 
         [Fact]
-        public void GetSharePathReturnsSharePathForUncPath()
+        public void SharePath_ReturnsSharePath_ForUncPath()
         {
             foreach (var property in _uncPathTestData.GetType().GetProperties())
             {
@@ -83,7 +116,7 @@ namespace System.IO.Abstractions.SMB.Tests.Path
         }
 
         [Fact]
-        public void GetShareNameReturnsShareForSmbUri()
+        public void ShareName_ReturnsShare_ForSmbUri()
         {
             foreach (var property in _smbUriTestData.GetType().GetProperties())
             {
@@ -95,7 +128,7 @@ namespace System.IO.Abstractions.SMB.Tests.Path
         }
 
         [Fact]
-        public void GetShareNameReturnsShareForUncPath()
+        public void ShareName_ReturnsShare_ForUncPath()
         {
             foreach (var property in _uncPathTestData.GetType().GetProperties())
             {
@@ -107,7 +140,7 @@ namespace System.IO.Abstractions.SMB.Tests.Path
         }
 
         [Fact]
-        public void GetRelativeSharePathReturnsPathAfterShareRootForSmbUri()
+        public void RelativeSharePath_ReturnsPathAfterShareRoot_ForSmbUri()
         {
             foreach (var property in _smbUriTestData.GetType().GetProperties())
             {
@@ -120,12 +153,12 @@ namespace System.IO.Abstractions.SMB.Tests.Path
         }
 
         [Fact]
-        public void GetRelativeSharePathReturnsPathAfterShareRootForUncPath()
+        public void RelativeSharePath_ReturnsPathAfterShareRoot_ForUncPath()
         {
             foreach (var property in _uncPathTestData.GetType().GetProperties())
             {
                 var path = (string)property.GetValue(_uncPathTestData);
-                var relative = ReplacePathSeperators(path.Replace(_uncPathTestData.Root, ""), @"\");
+                var relative = RemoveLeadingSeperator(ReplacePathSeperators(path.Replace(_uncPathTestData.Root, ""), @"\"));
                 var relativeSharePath = path.RelativeSharePath();
 
                 Assert.Equal(relative, relativeSharePath);
