@@ -103,6 +103,12 @@ namespace System.IO.Abstractions.SMB
                 //ERRSRV Class
                 case (NTStatus.STATUS_INVALID_SMB):
                     throw new ArgumentException("Invalid Handle.");
+
+
+
+
+
+
                 case (NTStatus.STATUS_INVALID_INFO_CLASS):
                     throw new ArgumentException("Invalid Information Class.");
                 case (NTStatus.STATUS_INVALID_PARAMETER):
