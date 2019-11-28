@@ -89,6 +89,5 @@ namespace System.IO.Abstractions.SMB.Tests.Integration
             Assert.NotNull(shares);
         }
 
-
     }
 }

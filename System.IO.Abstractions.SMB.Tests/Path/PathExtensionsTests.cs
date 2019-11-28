@@ -7,7 +7,6 @@ namespace System.IO.Abstractions.SMB.Tests.Path
     {
         private readonly IPathTestData _smbUriTestData;
         private readonly IPathTestData _uncPathTestData;
-        private readonly char s = IO.Path.DirectorySeparatorChar;
 
         public PathExtensionsTests()
         {
@@ -63,7 +62,7 @@ namespace System.IO.Abstractions.SMB.Tests.Path
 
                 var builtSharePath = path.BuildSharePath(testBuildShareName);
 
-                string expectedPath = $"{s}{s}{path.HostName()}{s}{testBuildShareName}";
+                string expectedPath = $@"\\{path.HostName()}\{testBuildShareName}";
                 
                 Assert.Equal(expectedPath, builtSharePath);
             }
