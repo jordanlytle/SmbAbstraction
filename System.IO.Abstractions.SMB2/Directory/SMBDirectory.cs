@@ -64,13 +64,14 @@ namespace System.IO.Abstractions.SMB
             var relativePath = path.RelativeSharePath();
 
             ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
+            
+            status.HandleStatus();
 
             status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativePath, accessMask, 0, shareAccess,
                 disposition, createOptions, null);
-            if (status != NTStatus.STATUS_SUCCESS)
-            {
-                throw new IOException($"Unable to connect to smbShare. Status = {status}, FileStatus = {fileStatus}");
-            }
+
+            status.HandleStatus();
+           
             fileStore.CloseFile(handle);
 
             return _directoryInfoFactory.FromDirectoryName(path, credential);
@@ -109,18 +110,18 @@ namespace System.IO.Abstractions.SMB
                 var relativePath = path.RelativeSharePath();
 
                 ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
+                
+                status.HandleStatus();
 
+             
                 status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativePath, AccessMask.DELETE, 0, ShareAccess.Delete,
                     CreateDisposition.FILE_OPEN, CreateOptions.FILE_DELETE_ON_CLOSE, null);
 
-                if (status != NTStatus.STATUS_SUCCESS)
-                {
-                    throw new IOException($"Unable to connect to smbShare. Status = {status}");
-                }
+                status.HandleStatus();
 
                 // This is the correct delete command, but it doesn't work for some reason. You have to use FILE_DELETE_ON_CLOSE
                 // fileStore.SetFileInformation(handle, new FileDispositionInformation());
-                
+
                 fileStore.CloseFile(handle);
             }
         }
@@ -155,7 +156,9 @@ namespace System.IO.Abstractions.SMB
                     var relativePath = path.RelativeSharePath();
 
                     ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
-
+                    
+                    status.HandleStatus();
+                    
                     int attempts = 0;
                     int allowedRetrys = 3;
                     object handle;
@@ -169,11 +172,8 @@ namespace System.IO.Abstractions.SMB
                     }
                     while (status == NTStatus.STATUS_PENDING && attempts < allowedRetrys);
 
-                    if (status != NTStatus.STATUS_SUCCESS)
-                    {
-                        throw new IOException($"Unable to connect to smbShare. Status = {status}");
-                    }
-
+                    status.HandleStatus();
+           
                     fileStore.QueryDirectory(out List<QueryDirectoryFileInformation> queryDirectoryFileInformation, handle, "*", FileInformationClass.FileDirectoryInformation);
 
                     foreach (var file in queryDirectoryFileInformation)
@@ -255,13 +255,13 @@ namespace System.IO.Abstractions.SMB
 
                 ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
+                status.HandleStatus();
+
                 status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativePath, AccessMask.GENERIC_READ, 0, ShareAccess.Read,
                     CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
-                if (status != NTStatus.STATUS_SUCCESS)
-                {
-                    throw new IOException($"Unable to connect to smbShare. Status = {status}");
-                }
 
+                status.HandleStatus();
+                
                 fileStore.QueryDirectory(out List<QueryDirectoryFileInformation> queryDirectoryFileInformation, handle, searchPattern, FileInformationClass.FileDirectoryInformation);
 
 
@@ -343,14 +343,13 @@ namespace System.IO.Abstractions.SMB
 
                 ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
+                status.HandleStatus();
+
                 status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativePath, AccessMask.GENERIC_READ, 0, ShareAccess.Read,
                     CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
 
-                if (status != NTStatus.STATUS_SUCCESS)
-                {
-                    throw new IOException($"Unable to connect to smbShare. Status = {status}");
-                }
-
+                status.HandleStatus();
+            
                 fileStore.QueryDirectory(out List<QueryDirectoryFileInformation> queryDirectoryFileInformation, handle, searchPattern, FileInformationClass.FileDirectoryInformation);
 
 
@@ -437,13 +436,13 @@ namespace System.IO.Abstractions.SMB
 
                 ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
+                status.HandleStatus();
+
                 status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativePath, AccessMask.GENERIC_READ, 0, ShareAccess.Read,
                     CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
-                if (status != NTStatus.STATUS_SUCCESS)
-                {
-                    throw new IOException($"Unable to connect to smbShare. Status = {status}");
-                }
 
+                status.HandleStatus();
+             
                 fileStore.QueryDirectory(out List<QueryDirectoryFileInformation> queryDirectoryFileInformation, handle, searchPattern, FileInformationClass.FileDirectoryInformation);
 
 
@@ -499,12 +498,12 @@ namespace System.IO.Abstractions.SMB
 
                 ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
+                status.HandleStatus();
+
                 status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, directoryPath, AccessMask.GENERIC_READ, 0, ShareAccess.Read,
                     CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
-                if (status != NTStatus.STATUS_SUCCESS)
-                {
-                    throw new IOException($"Unable to connect to smbShare. Status = {status}");
-                }
+
+                status.HandleStatus();
 
                 fileStore.QueryDirectory(out List<QueryDirectoryFileInformation> queryDirectoryFileInformation, handle, string.IsNullOrEmpty(directoryPath) ? "*" : directoryPath, FileInformationClass.FileDirectoryInformation);
 

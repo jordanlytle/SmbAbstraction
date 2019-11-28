@@ -35,7 +35,7 @@ namespace System.IO.Abstractions.SMB
             {
                 credential = _smbCredentialProvider.GetSMBCredentials().Where(c => c.Path.ShareName().Equals(shareName)).FirstOrDefault();
 
-                if(credential == null)
+                if (credential == null)
                 {
                     return null;
                 }
@@ -44,7 +44,7 @@ namespace System.IO.Abstractions.SMB
             var path = credential.Path;
             var hostEntry = Dns.GetHostEntry(path.HostName());
             var ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
-            
+
             NTStatus status = NTStatus.STATUS_SUCCESS;
 
             using var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential);
@@ -53,11 +53,8 @@ namespace System.IO.Abstractions.SMB
 
             ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
-            if (status != NTStatus.STATUS_SUCCESS)
-            {
-                return null;
-            }
-            
+            status.HandleStatus();
+
             var smbFileSystemInformation = new SMBFileSystemInformation(fileStore, path);
 
             var smbDriveInfo = new SMBDriveInfo(path, _fileSystem, smbFileSystemInformation, credential);
@@ -117,18 +114,23 @@ namespace System.IO.Abstractions.SMB
                     var sharePath = path.BuildSharePath(shareName);
                     var relativeSharePath = sharePath.RelativeSharePath();
 
-                    ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
+                    try
+                    {
+                        ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
-                    if (status != NTStatus.STATUS_SUCCESS)
+                        status.HandleStatus();
+
+                        var smbFileSystemInformation = new SMBFileSystemInformation(fileStore, sharePath);
+
+                        var smbDriveInfo = new SMBDriveInfo(sharePath, _fileSystem, smbFileSystemInformation, credential);
+
+                        driveInfos.Add(smbDriveInfo);
+                    }
+                    catch (Exception)
                     {
                         continue;
                     }
-                
-                    var smbFileSystemInformation = new SMBFileSystemInformation(fileStore, sharePath);
 
-                    var smbDriveInfo = new SMBDriveInfo(sharePath, _fileSystem, smbFileSystemInformation, credential);
-
-                    driveInfos.Add(smbDriveInfo);
                 }
             }
 

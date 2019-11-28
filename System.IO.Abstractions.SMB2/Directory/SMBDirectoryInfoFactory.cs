@@ -60,19 +60,13 @@ namespace System.IO.Abstractions.SMB
             var relativePath = path.RelativeSharePath();
 
             ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
-
-            if (status != NTStatus.STATUS_SUCCESS)
-            {
-                return null;
-            }
+            
+            status.HandleStatus();
 
             status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativePath, AccessMask.GENERIC_READ, 0, ShareAccess.Read,
                     CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
 
-            if (status != NTStatus.STATUS_SUCCESS)
-            {
-                return null;
-            }
+            status.HandleStatus();
 
             status = fileStore.GetFileInformation(out FileInformation fileInfo, handle, FileInformationClass.FileBasicInformation); // If you call this with any other FileInformationClass value
                                                                                                                                     // it doesn't work for some reason
@@ -109,21 +103,18 @@ namespace System.IO.Abstractions.SMB
             var relativePath = path.RelativeSharePath();
 
             ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
-
+            
+            status.HandleStatus();
+            
             status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativePath, AccessMask.GENERIC_WRITE, 0, ShareAccess.Read,
                     CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
-            if (status != NTStatus.STATUS_SUCCESS)
-            {
-                throw new IOException($"Unable to open directory. NTSTatus: {status}");
-            }
+            
+            status.HandleStatus();
 
             var fileInfo = dirInfo.ToSMBFileInformation(credential);
             status = fileStore.SetFileInformation(handle, fileInfo);
 
-            if (status != NTStatus.STATUS_SUCCESS)
-            {
-                throw new IOException($"Unable to set file info. NTSTatus: {status}");
-            }
+            status.HandleStatus();
         }
     }
 }

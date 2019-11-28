@@ -59,16 +59,13 @@ namespace System.IO.Abstractions.SMB
                     break;
                 case SeekOrigin.End:
                     var status = _fileStore.GetFileInformation(out SmbLibraryStd.FileInformation result, _fileHandle, SmbLibraryStd.FileInformationClass.FileStreamInformation);
-                    if (status == SmbLibraryStd.NTStatus.STATUS_SUCCESS)
-                    {
-                        SmbLibraryStd.FileStreamInformation fileStreamInformation = (SmbLibraryStd.FileStreamInformation)result;
-                        _position += fileStreamInformation.Entries[0].StreamSize;
-                        return _position;
-                    }
-                    else
-                    {
-                        throw new IOException($"Unable to seek file. Unable to read file information. Status = {status}");
-                    }
+
+                    status.HandleStatus();
+
+                    SmbLibraryStd.FileStreamInformation fileStreamInformation = (SmbLibraryStd.FileStreamInformation)result;
+                    _position += fileStreamInformation.Entries[0].StreamSize;
+
+                    return _position;
             }
             _position += offset;
             return _position;
@@ -83,16 +80,14 @@ namespace System.IO.Abstractions.SMB
         {
             byte[] data = new byte[count];
 
-            for (int i = offset, i2 = 0; i < count; i++, i2++) 
+            for (int i = offset, i2 = 0; i < count; i++, i2++)
             {
                 data[i2] = buffer[i];
             }
 
             var status = _fileStore.WriteFile(out int bytesWritten, _fileHandle, _position, data);
-            if(status != SmbLibraryStd.NTStatus.STATUS_SUCCESS)
-            {
-                throw new IOException($"Unable to write to share. Status: {status}");
-            }
+
+            status.HandleStatus();
 
             _position += bytesWritten;
         }
