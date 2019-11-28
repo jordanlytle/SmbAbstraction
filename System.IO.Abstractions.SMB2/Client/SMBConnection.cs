@@ -35,10 +35,8 @@ namespace System.IO.Abstractions.SMB
                 throw new IOException($"Unable to connect to SMB share.");
             }
             var status = SMBClient.Login(_credential.Domain, _credential.UserName, _credential.Password);
-            if(status != NTStatus.STATUS_SUCCESS)
-            {
-                throw new IOException($"Unable to login to SMB share. Status was: {status}");
-            }
+
+            status.HandleStatus();
         }
 
         public static SMBConnection CreateSMBConnection(ISMBClientFactory smbClientFactory, IPAddress address, SMBTransportType transport, ISMBCredential credential)

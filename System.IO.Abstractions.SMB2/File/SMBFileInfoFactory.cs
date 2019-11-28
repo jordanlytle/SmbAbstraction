@@ -58,19 +58,16 @@ namespace System.IO.Abstractions.SMB
 
             ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
+            status.HandleStatus();
+
             status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativePath, AccessMask.GENERIC_READ, 0, ShareAccess.Read,
                     CreateDisposition.FILE_OPEN, CreateOptions.FILE_NON_DIRECTORY_FILE, null);
-            if (status != NTStatus.STATUS_SUCCESS)
-            {
-                return null;
-            }
+
+            status.HandleStatus();
 
             status = fileStore.GetFileInformation(out FileInformation fileInfo, handle, FileInformationClass.FileBasicInformation); // If you call this with any other FileInformationClass value
                                                                                                                                     // it doesn't work for some reason
-            if (status != NTStatus.STATUS_SUCCESS)
-            {
-                return null;
-            }
+            status.HandleStatus();
 
             return new SMBFileInfo(path, _fileSystem, fileInfo, credential);
         }
@@ -103,18 +100,13 @@ namespace System.IO.Abstractions.SMB
 
             status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativePath, AccessMask.GENERIC_WRITE, 0, ShareAccess.Read,
                     CreateDisposition.FILE_OPEN, CreateOptions.FILE_NON_DIRECTORY_FILE, null);
-            if (status != NTStatus.STATUS_SUCCESS)
-            {
-                throw new IOException($"Unable to open file. NTSTatus: {status}");
-            }
+
+            status.HandleStatus();
 
             var smbFileInfo = fileInfo.ToSMBFileInformation(credential);
             status = fileStore.SetFileInformation(handle, smbFileInfo);
 
-            if (status != NTStatus.STATUS_SUCCESS)
-            {
-                throw new IOException($"Unable to set file info. NTSTatus: {status}");
-            }
+            status.HandleStatus();
         }
     }
 }
