@@ -1,25 +1,22 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
-using System.Security.AccessControl;
 using SmbLibraryStd;
+using System.Linq;
 using SmbLibraryStd.Client;
+using System.Runtime.Serialization;
 
 namespace System.IO.Abstractions.SMB
 {
-    public class SMBDirectoryInfoFactory : IDirectoryInfoFactory
+    public class SMBFileInfoFactory : IFileInfoFactory
     {
         private readonly IFileSystem _fileSystem;
-        private readonly ISMBCredentialProvider  _credentialProvider;
+        private readonly ISMBCredentialProvider _credentialProvider;
         private readonly ISMBClientFactory _smbClientFactory;
-        private SMBDirectory _smbDirectory => _fileSystem.Directory as SMBDirectory;
-        private SMBFile _smbFile => _fileSystem.File as SMBFile;
-        private SMBFileInfoFactory _fileInfoFactory => _fileSystem.FileInfo as SMBFileInfoFactory;
+        private SMBDirectoryInfoFactory _dirInfoFactory => _fileSystem.DirectoryInfo as SMBDirectoryInfoFactory;
 
         public SMBTransportType transport { get; set; }
 
-        public SMBDirectoryInfoFactory(IFileSystem fileSystem, ISMBCredentialProvider credentialProvider, ISMBClientFactory smbClientFactory)
+        public SMBFileInfoFactory(IFileSystem fileSystem, ISMBCredentialProvider credentialProvider, ISMBClientFactory smbClientFactory)
         {
             _fileSystem = fileSystem;
             _credentialProvider = credentialProvider;
@@ -27,14 +24,14 @@ namespace System.IO.Abstractions.SMB
             transport = SMBTransportType.DirectTCPTransport;
         }
 
-        public IDirectoryInfo FromDirectoryName(string directoryName)
+        public IFileInfo FromFileName(string fileName)
         {
-            return FromDirectoryName(directoryName, null);
+            return FromFileName(fileName, null);
         }
 
-        internal IDirectoryInfo FromDirectoryName(string path, ISMBCredential credential)
+        internal IFileInfo FromFileName(string path, ISMBCredential credential)
         {
-            if (!path.IsSmbPath() || !path.IsValidSharePath())
+            if (!path.IsSmbPath())
             {
                 return null;
             }
@@ -61,26 +58,23 @@ namespace System.IO.Abstractions.SMB
 
             ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
+            status.HandleStatus();
+
             status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativePath, AccessMask.GENERIC_READ, 0, ShareAccess.Read,
-                    CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
-            if (status != NTStatus.STATUS_SUCCESS)
-            {
-                return null;
-            }
+                    CreateDisposition.FILE_OPEN, CreateOptions.FILE_NON_DIRECTORY_FILE, null);
+
+            status.HandleStatus();
 
             status = fileStore.GetFileInformation(out FileInformation fileInfo, handle, FileInformationClass.FileBasicInformation); // If you call this with any other FileInformationClass value
                                                                                                                                     // it doesn't work for some reason
-            if (status != NTStatus.STATUS_SUCCESS)
-            {
-                return null;
-            }
+            status.HandleStatus();
 
-            return new SMBDirectoryInfo(path, _smbDirectory, _smbFile, this, _fileInfoFactory, fileInfo, credential);
+            return new SMBFileInfo(path, _fileSystem, fileInfo, credential);
         }
 
-        internal void SaveDirectoryInfo(SMBDirectoryInfo dirInfo, ISMBCredential credential = null)
+        internal void SaveFileInfo(SMBFileInfo fileInfo, ISMBCredential credential = null)
         {
-            var path = dirInfo.FullName;
+            var path = fileInfo.FullName;
 
             var hostEntry = Dns.GetHostEntry(path.HostName());
             var ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
@@ -105,19 +99,14 @@ namespace System.IO.Abstractions.SMB
             ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
             status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativePath, AccessMask.GENERIC_WRITE, 0, ShareAccess.Read,
-                    CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
-            if (status != NTStatus.STATUS_SUCCESS)
-            {
-                throw new IOException($"Unable to open directory. NTSTatus: {status}");
-            }
+                    CreateDisposition.FILE_OPEN, CreateOptions.FILE_NON_DIRECTORY_FILE, null);
 
-            var fileInfo = dirInfo.ToSMBFileInformation(credential);
-            status = fileStore.SetFileInformation(handle, fileInfo);
+            status.HandleStatus();
 
-            if (status != NTStatus.STATUS_SUCCESS)
-            {
-                throw new IOException($"Unable to set file info. NTSTatus: {status}");
-            }
+            var smbFileInfo = fileInfo.ToSMBFileInformation(credential);
+            status = fileStore.SetFileInformation(handle, smbFileInfo);
+
+            status.HandleStatus();
         }
     }
 }

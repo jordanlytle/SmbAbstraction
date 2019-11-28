@@ -46,7 +46,7 @@ namespace System.IO.Abstractions.SMB
             }
             Parent = _smbDirectory.GetParent(fileName, credential);
             var pathRoot = Path.GetPathRoot(fileName);
-            if (pathRoot != string.Empty)
+            if (pathRoot != string.Empty && Parent != null)
             {
                 Root = _directoryInfoFactory.FromDirectoryName(pathRoot, credential);
             }
