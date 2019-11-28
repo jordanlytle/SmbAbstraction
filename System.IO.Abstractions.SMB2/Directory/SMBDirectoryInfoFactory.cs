@@ -29,6 +29,12 @@ namespace System.IO.Abstractions.SMB
 
         public IDirectoryInfo FromDirectoryName(string directoryName)
         {
+            if (!directoryName.IsSmbPath())
+            {
+                var dirInfo = new DirectoryInfo(directoryName);
+                return new DirectoryInfoWrapper(new FileSystem(), dirInfo);
+            }
+
             return FromDirectoryName(directoryName, null);
         }
 
