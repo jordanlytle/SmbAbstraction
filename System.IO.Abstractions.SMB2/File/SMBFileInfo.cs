@@ -100,7 +100,7 @@ namespace System.IO.Abstractions.SMB
 
         public StreamWriter CreateText()
         {
-            var streamWriter =  _file.CreateText(FullName);
+            var streamWriter = _file.CreateText(FullName);
             Exists = true;
             return streamWriter;
         }
@@ -135,7 +135,7 @@ namespace System.IO.Abstractions.SMB
 
         public Stream Open(FileMode mode, FileAccess access)
         {
-            var stream =  _file.Open(FullName, mode, access);
+            var stream = _file.Open(FullName, mode, access);
             Exists = true;
             return stream;
         }
@@ -149,7 +149,7 @@ namespace System.IO.Abstractions.SMB
 
         public Stream OpenRead()
         {
-            var stream =  _file.OpenRead(FullName);
+            var stream = _file.OpenRead(FullName);
             Exists = true;
             return stream;
         }
