@@ -38,7 +38,10 @@ namespace System.IO.Abstractions.SMB
                 return base.CreateDirectory(path);
             }
 
-            IPAddress ipAddress = path.TryResolveHostnameFromPath();
+            if(!path.TryResolveHostnameFromPath(out var ipAddress))
+            {
+                throw new ArgumentException($"Unable to resolve \"{path.Hostname()}\"");
+            }
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
 
@@ -88,7 +91,10 @@ namespace System.IO.Abstractions.SMB
                 base.Delete(path);
             }
 
-            IPAddress ipAddress = path.TryResolveHostnameFromPath();
+            if (!path.TryResolveHostnameFromPath(out var ipAddress))
+            {
+                throw new ArgumentException($"Unable to resolve \"{path.Hostname()}\"");
+            }
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
 
@@ -138,7 +144,10 @@ namespace System.IO.Abstractions.SMB
 
             if (recursive)
             {
-                IPAddress ipAddress = path.TryResolveHostnameFromPath();
+                if (!path.TryResolveHostnameFromPath(out var ipAddress))
+                {
+                    throw new ArgumentException($"Unable to resolve \"{path.Hostname()}\"");
+                }
 
                 NTStatus status = NTStatus.STATUS_SUCCESS;
 
@@ -235,7 +244,10 @@ namespace System.IO.Abstractions.SMB
                 return base.EnumerateDirectories(path, searchPattern, searchOption);
             }
 
-            IPAddress ipAddress = path.TryResolveHostnameFromPath();
+            if (!path.TryResolveHostnameFromPath(out var ipAddress))
+            {
+                throw new ArgumentException($"Unable to resolve \"{path.Hostname()}\"");
+            }
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
 
@@ -322,7 +334,10 @@ namespace System.IO.Abstractions.SMB
                 return base.EnumerateFiles(path, searchPattern, searchOption);
             }
 
-            IPAddress ipAddress = path.TryResolveHostnameFromPath();
+            if (!path.TryResolveHostnameFromPath(out var ipAddress))
+            {
+                throw new ArgumentException($"Unable to resolve \"{path.Hostname()}\"");
+            }
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
 
@@ -414,7 +429,10 @@ namespace System.IO.Abstractions.SMB
                 return base.EnumerateFileSystemEntries(path, searchPattern, searchOption);
             }
 
-            IPAddress ipAddress = path.TryResolveHostnameFromPath();
+            if (!path.TryResolveHostnameFromPath(out var ipAddress))
+            {
+                throw new ArgumentException($"Unable to resolve \"{path.Hostname()}\"");
+            }
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
 
@@ -477,7 +495,10 @@ namespace System.IO.Abstractions.SMB
                 return base.Exists(path);
             }
 
-            IPAddress ipAddress = path.TryResolveHostnameFromPath();
+            if (!path.TryResolveHostnameFromPath(out var ipAddress))
+            {
+                throw new ArgumentException($"Unable to resolve \"{path.Hostname()}\"");
+            }
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
 

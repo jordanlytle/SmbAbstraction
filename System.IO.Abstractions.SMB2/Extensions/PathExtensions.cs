@@ -44,30 +44,31 @@ namespace System.IO.Abstractions.SMB
             return uri.Host;
         }
 
-        public static IPAddress TryResolveHostnameFromPath(this string path)
+        public static bool TryResolveHostnameFromPath(this string path, out IPAddress ipAddress)
         {
-            return path.Hostname().TryResolveHostname();
+            return path.Hostname().TryResolveHostname(out ipAddress);
         }
 
-        public static IPAddress TryResolveHostname(this string hostnameOrAddress)
+        public static bool TryResolveHostname(this string hostnameOrAddress, out IPAddress ipAddress)
         {
-            IPAddress ipAddress;
+            var parsedIPAddress = IPAddress.TryParse(hostnameOrAddress, out ipAddress);
             
-            if(IPAddress.TryParse(hostnameOrAddress, out ipAddress))
+            if (parsedIPAddress)
             {
-                return ipAddress;
+                return true;
             }
 
             try
             {
                 var hostEntry = Dns.GetHostEntry(hostnameOrAddress);
                 ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
-
-                return ipAddress;
+                
+                return true;
             }
             catch(Exception ex)
             {
-                throw new AggregateException("Unable to resolve hostname", ex);
+                ipAddress = IPAddress.None;
+                return false;
             }
         }
 
