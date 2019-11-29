@@ -26,6 +26,12 @@ namespace System.IO.Abstractions.SMB
 
         public IFileInfo FromFileName(string fileName)
         {
+            if (!fileName.IsSmbPath())
+            {
+                var fileInfo = new FileInfo(fileName);
+                return new FileInfoWrapper(new FileSystem(), fileInfo);
+            }
+
             return FromFileName(fileName, null);
         }
 

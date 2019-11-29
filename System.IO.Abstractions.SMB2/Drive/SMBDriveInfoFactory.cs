@@ -12,6 +12,7 @@ namespace System.IO.Abstractions.SMB
         private readonly IFileSystem _fileSystem;
         private readonly ISMBCredentialProvider _smbCredentialProvider;
         private readonly ISMBClientFactory _smbClientFactory;
+        private readonly FileSystem _baseFileSystem;
 
         public SMBTransportType transport { get; set; }
 
@@ -21,11 +22,19 @@ namespace System.IO.Abstractions.SMB
             _fileSystem = fileSystem;
             _smbCredentialProvider = smbCredentialProvider;
             _smbClientFactory = smbClientFactory;
+            _baseFileSystem = new FileSystem();
             transport = SMBTransportType.DirectTCPTransport;
         }
 
         public IDriveInfo FromDriveName(string driveName)
         {
+            if (Uri.IsWellFormedUriString(driveName, UriKind.Absolute)
+                && !driveName.IsSmbPath())
+            {
+                var driveInfo = new DriveInfo(driveName);
+                return new DriveInfoWrapper(new FileSystem(), driveInfo);
+            }
+
             return FromDriveName(driveName, null);
         }
 
@@ -66,7 +75,12 @@ namespace System.IO.Abstractions.SMB
 
         public IDriveInfo[] GetDrives()
         {
-            return GetDrives(null);
+            var drives = new List<IDriveInfo>();
+
+            drives.AddRange(GetDrives(null));
+            drives.AddRange(_baseFileSystem.DriveInfo.GetDrives());
+
+            return drives.ToArray();
         }
 
         internal IDriveInfo[] GetDrives(ISMBCredential smbCredential)
