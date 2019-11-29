@@ -46,7 +46,7 @@ namespace System.IO.Abstractions.SMB.Tests.Path
 
                 var builtSharePath = path.BuildSharePath(testBuildShareName);
 
-                string expectedPath = $"smb://{path.HostName()}/{testBuildShareName}";
+                string expectedPath = $"smb://{path.Hostname()}/{testBuildShareName}";
 
                 Assert.Equal(expectedPath, builtSharePath);
             }
@@ -62,7 +62,7 @@ namespace System.IO.Abstractions.SMB.Tests.Path
 
                 var builtSharePath = path.BuildSharePath(testBuildShareName);
 
-                string expectedPath = $@"\\{path.HostName()}\{testBuildShareName}";
+                string expectedPath = $@"\\{path.Hostname()}\{testBuildShareName}";
                 
                 Assert.Equal(expectedPath, builtSharePath);
             }
@@ -74,7 +74,7 @@ namespace System.IO.Abstractions.SMB.Tests.Path
             foreach (var property in _smbUriTestData.GetType().GetProperties())
             {
                 var path = (string)property.GetValue(_smbUriTestData);
-                var hostName = path.HostName();
+                var hostName = path.Hostname();
 
                 Assert.Equal("host", hostName);
             }
@@ -86,11 +86,12 @@ namespace System.IO.Abstractions.SMB.Tests.Path
             foreach (var property in _uncPathTestData.GetType().GetProperties())
             {
                 var path = (string)property.GetValue(_uncPathTestData);
-                var hostName = path.HostName();
+                var hostName = path.Hostname();
 
                 Assert.Equal("host", hostName);
             }
         }
+
 
         [Fact]
         public void SharePath_ReturnsSharePath_ForSmbUri()

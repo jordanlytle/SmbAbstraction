@@ -36,8 +36,7 @@ namespace System.IO.Abstractions.SMB
                 return null;
             }
 
-            var hostEntry = Dns.GetHostEntry(path.HostName());
-            var ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
+            IPAddress ipAddress = path.TryResolveHostnameFromPath();
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
 
@@ -76,8 +75,7 @@ namespace System.IO.Abstractions.SMB
         {
             var path = fileInfo.FullName;
 
-            var hostEntry = Dns.GetHostEntry(path.HostName());
-            var ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
+            IPAddress ipAddress = path.TryResolveHostnameFromPath();
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
 

@@ -42,8 +42,7 @@ namespace System.IO.Abstractions.SMB
             }
 
             var path = credential.Path;
-            var hostEntry = Dns.GetHostEntry(path.HostName());
-            var ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
+            IPAddress ipAddress = path.TryResolveHostnameFromPath();
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
 
@@ -92,17 +91,16 @@ namespace System.IO.Abstractions.SMB
                 credentialsToCheck = _smbCredentialProvider.GetSMBCredentials().ToList();
             }
 
-            shareHostNames = credentialsToCheck.Select(smbCredential => smbCredential.Path.HostName()).Distinct().ToList();
+            shareHostNames = credentialsToCheck.Select(smbCredential => smbCredential.Path.Hostname()).Distinct().ToList();
 
             var shareHostShareNames = new Dictionary<string, IEnumerable<string>>();
 
             foreach (var shareHost in shareHostNames)
             {
-                var credential = credentialsToCheck.Where(smbCredential => smbCredential.Path.HostName().Equals(shareHost)).First();
+                var credential = credentialsToCheck.Where(smbCredential => smbCredential.Path.Hostname().Equals(shareHost)).First();
 
                 var path = credential.Path;
-                var hostEntry = Dns.GetHostEntry(path.HostName());
-                var ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
+                IPAddress ipAddress = path.TryResolveHostnameFromPath();
 
                 using var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential);
 

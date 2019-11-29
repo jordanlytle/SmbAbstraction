@@ -222,8 +222,7 @@ namespace System.IO.Abstractions.SMB
                 return;
             }
 
-            var hostEntry = Dns.GetHostEntry(path.HostName());
-            var ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
+            IPAddress ipAddress = path.TryResolveHostnameFromPath();
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
 
@@ -266,8 +265,7 @@ namespace System.IO.Abstractions.SMB
                 return base.Exists(path);
             }
 
-            var hostEntry = Dns.GetHostEntry(path.HostName());
-            var ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
+            IPAddress ipAddress = path.TryResolveHostnameFromPath();
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
 
@@ -476,8 +474,7 @@ namespace System.IO.Abstractions.SMB
 
         internal Stream Open(string path, FileMode mode, FileAccess access, FileShare share, FileOptions fileOptions, ISMBCredential credential)
         {
-            var hostEntry = Dns.GetHostEntry(path.HostName());
-            var ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
+            IPAddress ipAddress = path.TryResolveHostnameFromPath();
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
 

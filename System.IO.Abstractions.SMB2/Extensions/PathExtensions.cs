@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Net;
 using System.Text;
 
 namespace System.IO.Abstractions.SMB
@@ -28,18 +30,45 @@ namespace System.IO.Abstractions.SMB
             var uri = new Uri(path);
             if(!uri.IsUnc)
             {
-                return $"smb://{path.HostName()}/{shareName}";
+                return $"smb://{path.Hostname()}/{shareName}";
             }
             else
             {
-                return $@"\\{path.HostName()}\{shareName}";
+                return $@"\\{path.Hostname()}\{shareName}";
             }
         }
 
-        public static string HostName(this string path)
+        public static string Hostname(this string path)
         {
             var uri = new Uri(path);
             return uri.Host;
+        }
+
+        public static IPAddress TryResolveHostnameFromPath(this string path)
+        {
+            return path.Hostname().TryResolveHostname();
+        }
+
+        public static IPAddress TryResolveHostname(this string hostnameOrAddress)
+        {
+            IPAddress ipAddress;
+            
+            if(IPAddress.TryParse(hostnameOrAddress, out ipAddress))
+            {
+                return ipAddress;
+            }
+
+            try
+            {
+                var hostEntry = Dns.GetHostEntry(hostnameOrAddress);
+                ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
+
+                return ipAddress;
+            }
+            catch(Exception ex)
+            {
+                throw new AggregateException("Unable to resolve hostname", ex);
+            }
         }
 
         public static string ShareName(this string path)

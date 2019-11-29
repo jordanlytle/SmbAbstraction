@@ -38,8 +38,7 @@ namespace System.IO.Abstractions.SMB
                 return base.CreateDirectory(path);
             }
 
-            var hostEntry = Dns.GetHostEntry(path.HostName());
-            var ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
+            IPAddress ipAddress = path.TryResolveHostnameFromPath();
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
 
@@ -89,8 +88,7 @@ namespace System.IO.Abstractions.SMB
                 base.Delete(path);
             }
 
-            var hostEntry = Dns.GetHostEntry(path.HostName());
-            var ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
+            IPAddress ipAddress = path.TryResolveHostnameFromPath();
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
 
@@ -140,8 +138,7 @@ namespace System.IO.Abstractions.SMB
 
             if (recursive)
             {
-                var hostEntry = Dns.GetHostEntry(path.HostName());
-                var ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
+                IPAddress ipAddress = path.TryResolveHostnameFromPath();
 
                 NTStatus status = NTStatus.STATUS_SUCCESS;
 
@@ -238,8 +235,7 @@ namespace System.IO.Abstractions.SMB
                 return base.EnumerateDirectories(path, searchPattern, searchOption);
             }
 
-            var hostEntry = Dns.GetHostEntry(path.HostName());
-            var ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
+            IPAddress ipAddress = path.TryResolveHostnameFromPath();
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
 
@@ -326,8 +322,7 @@ namespace System.IO.Abstractions.SMB
                 return base.EnumerateFiles(path, searchPattern, searchOption);
             }
 
-            var hostEntry = Dns.GetHostEntry(path.HostName());
-            var ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
+            IPAddress ipAddress = path.TryResolveHostnameFromPath();
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
 
@@ -419,8 +414,7 @@ namespace System.IO.Abstractions.SMB
                 return base.EnumerateFileSystemEntries(path, searchPattern, searchOption);
             }
 
-            var hostEntry = Dns.GetHostEntry(path.HostName());
-            var ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
+            IPAddress ipAddress = path.TryResolveHostnameFromPath();
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
 
@@ -483,8 +477,7 @@ namespace System.IO.Abstractions.SMB
                 return base.Exists(path);
             }
 
-            var hostEntry = Dns.GetHostEntry(path.HostName());
-            var ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
+            IPAddress ipAddress = path.TryResolveHostnameFromPath();
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
 
