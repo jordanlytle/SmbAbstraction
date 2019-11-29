@@ -28,7 +28,7 @@ namespace System.IO.Abstractions.SMB
         public static string BuildSharePath(this string path, string shareName)
         {
             var uri = new Uri(path);
-            if(!uri.IsUnc)
+            if (!uri.IsUnc)
             {
                 return $"smb://{path.Hostname()}/{shareName}";
             }
@@ -52,7 +52,7 @@ namespace System.IO.Abstractions.SMB
         public static bool TryResolveHostname(this string hostnameOrAddress, out IPAddress ipAddress)
         {
             var parsedIPAddress = IPAddress.TryParse(hostnameOrAddress, out ipAddress);
-            
+
             if (parsedIPAddress)
             {
                 return true;
@@ -62,10 +62,10 @@ namespace System.IO.Abstractions.SMB
             {
                 var hostEntry = Dns.GetHostEntry(hostnameOrAddress);
                 ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
-                
+
                 return true;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 ipAddress = IPAddress.None;
                 return false;
@@ -123,9 +123,9 @@ namespace System.IO.Abstractions.SMB
         {
             foreach (var pathSeperator in pathSeperators)
             {
-                if(input.StartsWith(pathSeperator))
+                if (input.StartsWith(pathSeperator))
                 {
-                    input = input.Remove(0,1);
+                    input = input.Remove(0, 1);
                 }
             }
 

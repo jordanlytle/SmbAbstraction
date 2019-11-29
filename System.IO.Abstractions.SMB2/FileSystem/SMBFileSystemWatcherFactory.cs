@@ -5,7 +5,7 @@ namespace System.IO.Abstractions.SMB
     {
         public new IFileSystemWatcher FromPath(string path)
         {
-            if(path.IsSmbPath())
+            if (path.IsSmbPath())
             {
                 return base.FromPath(path);
             }
