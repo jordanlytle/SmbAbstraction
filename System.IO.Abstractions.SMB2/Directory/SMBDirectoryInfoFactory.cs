@@ -11,7 +11,7 @@ namespace System.IO.Abstractions.SMB
     public class SMBDirectoryInfoFactory : IDirectoryInfoFactory
     {
         private readonly IFileSystem _fileSystem;
-        private readonly ISMBCredentialProvider  _credentialProvider;
+        private readonly ISMBCredentialProvider _credentialProvider;
         private readonly ISMBClientFactory _smbClientFactory;
         private SMBDirectory _smbDirectory => _fileSystem.Directory as SMBDirectory;
         private SMBFile _smbFile => _fileSystem.File as SMBFile;
@@ -45,8 +45,10 @@ namespace System.IO.Abstractions.SMB
                 return null;
             }
 
-            var hostEntry = Dns.GetHostEntry(path.HostName());
-            var ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
+            if (!path.TryResolveHostnameFromPath(out var ipAddress))
+            {
+                throw new ArgumentException($"Unable to resolve \"{path.Hostname()}\"");
+            }
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
 
@@ -66,7 +68,7 @@ namespace System.IO.Abstractions.SMB
             var relativePath = path.RelativeSharePath();
 
             ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
-            
+
             status.HandleStatus();
 
             status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativePath, AccessMask.GENERIC_READ, 0, ShareAccess.Read,
@@ -88,8 +90,10 @@ namespace System.IO.Abstractions.SMB
         {
             var path = dirInfo.FullName;
 
-            var hostEntry = Dns.GetHostEntry(path.HostName());
-            var ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
+            if (!path.TryResolveHostnameFromPath(out var ipAddress))
+            {
+                throw new ArgumentException($"Unable to resolve \"{path.Hostname()}\"");
+            }
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
 
@@ -109,12 +113,12 @@ namespace System.IO.Abstractions.SMB
             var relativePath = path.RelativeSharePath();
 
             ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
-            
+
             status.HandleStatus();
-            
+
             status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativePath, AccessMask.GENERIC_WRITE, 0, ShareAccess.Read,
                     CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
-            
+
             status.HandleStatus();
 
             var fileInfo = dirInfo.ToSMBFileInformation(credential);

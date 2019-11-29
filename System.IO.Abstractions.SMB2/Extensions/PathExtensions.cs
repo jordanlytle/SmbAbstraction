@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Net;
 using System.Text;
 
 namespace System.IO.Abstractions.SMB
@@ -7,7 +9,6 @@ namespace System.IO.Abstractions.SMB
     public static class PathExtensions
     {
         static readonly string[] pathSeperators = { @"\", "/" };
-        static readonly char s = IO.Path.DirectorySeparatorChar;
 
         public static bool IsValidSharePath(this string path)
         {
@@ -27,20 +28,48 @@ namespace System.IO.Abstractions.SMB
         public static string BuildSharePath(this string path, string shareName)
         {
             var uri = new Uri(path);
-            if(!uri.IsUnc)
+            if (!uri.IsUnc)
             {
-                return $"smb://{path.HostName()}/{shareName}";
+                return $"smb://{path.Hostname()}/{shareName}";
             }
             else
             {
-                return $"{s}{s}{path.HostName()}{s}{shareName}";
+                return $@"\\{path.Hostname()}\{shareName}";
             }
         }
 
-        public static string HostName(this string path)
+        public static string Hostname(this string path)
         {
             var uri = new Uri(path);
             return uri.Host;
+        }
+
+        public static bool TryResolveHostnameFromPath(this string path, out IPAddress ipAddress)
+        {
+            return path.Hostname().TryResolveHostname(out ipAddress);
+        }
+
+        public static bool TryResolveHostname(this string hostnameOrAddress, out IPAddress ipAddress)
+        {
+            var parsedIPAddress = IPAddress.TryParse(hostnameOrAddress, out ipAddress);
+
+            if (parsedIPAddress)
+            {
+                return true;
+            }
+
+            try
+            {
+                var hostEntry = Dns.GetHostEntry(hostnameOrAddress);
+                ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                ipAddress = IPAddress.None;
+                return false;
+            }
         }
 
         public static string ShareName(this string path)
@@ -59,7 +88,7 @@ namespace System.IO.Abstractions.SMB
             if (uri.Scheme.Equals("smb"))
                 sharePath = $"{uri.Scheme}://{uri.Host}/{uri.Segments[1].RemoveAnySeperators()}";
             else if (uri.IsUnc)
-                sharePath = $@"{s}{s}{uri.Host}{s}{uri.Segments[1].RemoveAnySeperators()}";
+                sharePath = $@"\\{uri.Host}\{uri.Segments[1].RemoveAnySeperators()}";
 
             return sharePath;
         }
@@ -94,9 +123,9 @@ namespace System.IO.Abstractions.SMB
         {
             foreach (var pathSeperator in pathSeperators)
             {
-                if(input.StartsWith(pathSeperator))
+                if (input.StartsWith(pathSeperator))
                 {
-                    input = input.Remove(0,1);
+                    input = input.Remove(0, 1);
                 }
             }
 

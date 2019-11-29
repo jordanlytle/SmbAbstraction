@@ -38,8 +38,10 @@ namespace System.IO.Abstractions.SMB
                 return base.CreateDirectory(path);
             }
 
-            var hostEntry = Dns.GetHostEntry(path.HostName());
-            var ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
+            if (!path.TryResolveHostnameFromPath(out var ipAddress))
+            {
+                throw new ArgumentException($"Unable to resolve \"{path.Hostname()}\"");
+            }
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
 
@@ -64,14 +66,14 @@ namespace System.IO.Abstractions.SMB
             var relativePath = path.RelativeSharePath();
 
             ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
-            
+
             status.HandleStatus();
 
             status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativePath, accessMask, 0, shareAccess,
                 disposition, createOptions, null);
 
             status.HandleStatus();
-           
+
             fileStore.CloseFile(handle);
 
             return _directoryInfoFactory.FromDirectoryName(path, credential);
@@ -89,17 +91,19 @@ namespace System.IO.Abstractions.SMB
                 base.Delete(path);
             }
 
-            var hostEntry = Dns.GetHostEntry(path.HostName());
-            var ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
+            if (!path.TryResolveHostnameFromPath(out var ipAddress))
+            {
+                throw new ArgumentException($"Unable to resolve \"{path.Hostname()}\"");
+            }
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
 
-            if(credential == null)
+            if (credential == null)
             {
                 credential = _credentialProvider.GetSMBCredential(path);
             }
 
-            if(EnumerateFileSystemEntries(path).Count() > 0)
+            if (EnumerateFileSystemEntries(path).Count() > 0)
             {
                 throw new IOException("Cannot delete directory. Directory is not empty.");
             }
@@ -110,10 +114,10 @@ namespace System.IO.Abstractions.SMB
                 var relativePath = path.RelativeSharePath();
 
                 ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
-                
+
                 status.HandleStatus();
 
-             
+
                 status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativePath, AccessMask.DELETE, 0, ShareAccess.Delete,
                     CreateDisposition.FILE_OPEN, CreateOptions.FILE_DELETE_ON_CLOSE, null);
 
@@ -140,8 +144,10 @@ namespace System.IO.Abstractions.SMB
 
             if (recursive)
             {
-                var hostEntry = Dns.GetHostEntry(path.HostName());
-                var ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
+                if (!path.TryResolveHostnameFromPath(out var ipAddress))
+                {
+                    throw new ArgumentException($"Unable to resolve \"{path.Hostname()}\"");
+                }
 
                 NTStatus status = NTStatus.STATUS_SUCCESS;
 
@@ -156,9 +162,9 @@ namespace System.IO.Abstractions.SMB
                     var relativePath = path.RelativeSharePath();
 
                     ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
-                    
+
                     status.HandleStatus();
-                    
+
                     int attempts = 0;
                     int allowedRetrys = 3;
                     object handle;
@@ -173,7 +179,7 @@ namespace System.IO.Abstractions.SMB
                     while (status == NTStatus.STATUS_PENDING && attempts < allowedRetrys);
 
                     status.HandleStatus();
-           
+
                     fileStore.QueryDirectory(out List<QueryDirectoryFileInformation> queryDirectoryFileInformation, handle, "*", FileInformationClass.FileDirectoryInformation);
 
                     foreach (var file in queryDirectoryFileInformation)
@@ -238,8 +244,10 @@ namespace System.IO.Abstractions.SMB
                 return base.EnumerateDirectories(path, searchPattern, searchOption);
             }
 
-            var hostEntry = Dns.GetHostEntry(path.HostName());
-            var ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
+            if (!path.TryResolveHostnameFromPath(out var ipAddress))
+            {
+                throw new ArgumentException($"Unable to resolve \"{path.Hostname()}\"");
+            }
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
 
@@ -261,7 +269,7 @@ namespace System.IO.Abstractions.SMB
                     CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
 
                 status.HandleStatus();
-                
+
                 fileStore.QueryDirectory(out List<QueryDirectoryFileInformation> queryDirectoryFileInformation, handle, searchPattern, FileInformationClass.FileDirectoryInformation);
 
 
@@ -326,8 +334,10 @@ namespace System.IO.Abstractions.SMB
                 return base.EnumerateFiles(path, searchPattern, searchOption);
             }
 
-            var hostEntry = Dns.GetHostEntry(path.HostName());
-            var ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
+            if (!path.TryResolveHostnameFromPath(out var ipAddress))
+            {
+                throw new ArgumentException($"Unable to resolve \"{path.Hostname()}\"");
+            }
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
 
@@ -349,7 +359,7 @@ namespace System.IO.Abstractions.SMB
                     CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
 
                 status.HandleStatus();
-            
+
                 fileStore.QueryDirectory(out List<QueryDirectoryFileInformation> queryDirectoryFileInformation, handle, searchPattern, FileInformationClass.FileDirectoryInformation);
 
 
@@ -419,8 +429,10 @@ namespace System.IO.Abstractions.SMB
                 return base.EnumerateFileSystemEntries(path, searchPattern, searchOption);
             }
 
-            var hostEntry = Dns.GetHostEntry(path.HostName());
-            var ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
+            if (!path.TryResolveHostnameFromPath(out var ipAddress))
+            {
+                throw new ArgumentException($"Unable to resolve \"{path.Hostname()}\"");
+            }
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
 
@@ -442,7 +454,7 @@ namespace System.IO.Abstractions.SMB
                     CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
 
                 status.HandleStatus();
-             
+
                 fileStore.QueryDirectory(out List<QueryDirectoryFileInformation> queryDirectoryFileInformation, handle, searchPattern, FileInformationClass.FileDirectoryInformation);
 
 
@@ -483,8 +495,10 @@ namespace System.IO.Abstractions.SMB
                 return base.Exists(path);
             }
 
-            var hostEntry = Dns.GetHostEntry(path.HostName());
-            var ipAddress = hostEntry.AddressList.First(a => a.AddressFamily == Net.Sockets.AddressFamily.InterNetwork);
+            if (!path.TryResolveHostnameFromPath(out var ipAddress))
+            {
+                throw new ArgumentException($"Unable to resolve \"{path.Hostname()}\"");
+            }
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
 
@@ -731,12 +745,12 @@ namespace System.IO.Abstractions.SMB
 
         private void Move(string sourceDirName, string destDirName, ISMBCredential sourceCredential, ISMBCredential destinationCredential)
         {
-            if(sourceCredential == null)
+            if (sourceCredential == null)
             {
                 sourceCredential = _credentialProvider.GetSMBCredential(sourceDirName);
             }
 
-            if(destinationCredential == null)
+            if (destinationCredential == null)
             {
                 destinationCredential = _credentialProvider.GetSMBCredential(destDirName);
             }
@@ -753,7 +767,7 @@ namespace System.IO.Abstractions.SMB
 
             var files = EnumerateFiles(sourceDirName, "*", SearchOption.TopDirectoryOnly, sourceCredential);
 
-            foreach(var file in files)
+            foreach (var file in files)
             {
                 var destFilePath = Path.Combine(destDirName, new Uri(file).Segments.Last());
                 SMBFile smbFile = _fileSystem.File as SMBFile;

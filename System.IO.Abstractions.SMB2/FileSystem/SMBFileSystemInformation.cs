@@ -21,7 +21,7 @@ namespace System.IO.Abstractions.SMB
             var relativePath = path.RelativeSharePath();
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
-        
+
             if (status == NTStatus.STATUS_SUCCESS)
             {
                 fileStore.GetFileSystemInformation(out var fileFsVolumeInformation, FileSystemInformationClass.FileFsVolumeInformation);

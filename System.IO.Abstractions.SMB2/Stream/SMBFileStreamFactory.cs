@@ -70,7 +70,7 @@ namespace System.IO.Abstractions.SMB
                 return new FileStream(path, mode, access, share, bufferSize, useAsync);
             }
 
-            if(useAsync == false)
+            if (useAsync == false)
             {
                 return new BufferedStream(_fileSystem.File.Open(path, mode, access, share), bufferSize);
             }
@@ -82,7 +82,7 @@ namespace System.IO.Abstractions.SMB
 
         public Stream Create(SafeFileHandle handle, FileAccess access)
         {
-            throw new NotSupportedException();    
+            throw new NotSupportedException();
         }
 
         public Stream Create(SafeFileHandle handle, FileAccess access, int bufferSize)

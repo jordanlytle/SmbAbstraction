@@ -25,12 +25,10 @@ namespace System.IO.Abstractions.SMB.Tests.Path
 
     public class UncPathTestData : IPathTestData
     {
-        private char s = System.IO.Path.DirectorySeparatorChar;
-
-        public string Root { get { return $@"{s}{s}host{s}share"; } }
-        public string DirectoryAtRoot { get { return $@"{s}{s}host{s}share{s}dir"; } }
-        public string FileAtRoot { get { return $@"{s}{s}host{s}share{s}file.txt"; } }
-        public string NestedDirectoryAtRoot { get { return $@"{s}{s}host{s}share{s}dir{s}nested_dir"; } }
-        public string FileInNestedDirectoryAtRoot { get { return $@"{s}{s}host{s}share{s}dir{s}nested_dir{s}file.text"; } }
+        public string Root { get { return $@"\\host\share"; } }
+        public string DirectoryAtRoot { get { return $@"\\host\share\dir"; } }
+        public string FileAtRoot { get { return $@"\\host\share\file.txt"; } }
+        public string NestedDirectoryAtRoot { get { return $@"\\host\share\dir\nested_dir"; } }
+        public string FileInNestedDirectoryAtRoot { get { return $@"\\host\share\dir\nested_dir\file.text"; } }
     }
 }

@@ -28,8 +28,7 @@ namespace System.IO.Abstractions.SMB.Tests.Integration
         {
             get
             {
-                var s = Path.DirectorySeparatorChar;
-                return $"{s}{s}{HostName}{s}{ShareName}";
+                return $@"\\{HostName}\{ShareName}";
             }
         }
 
