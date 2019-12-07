@@ -2,6 +2,12 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.1</TargetFramework>
+    <PackOnBuild>true</PackOnBuild>
+    <Authors>jordanlytle</Authors>
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <Description>This library implements the System.IO.Abstractions interfaces for interacting with the filesystem, and adds support for interacting with UNC or SMB paths.</Description>
+    <PackageId>System.IO.Abstractions.SMB</PackageId>
+    <PackageVersion>1.0.0</PackageVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -12,7 +18,11 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="SmbLibraryStd" Version="1.3.4.1" />
-    <PackageReference Include="System.IO.Abstractions" Version="7.0.7" />
+    <PackageReference Include="System.IO.Abstractions" Version="7.0.15" />
+    <PackageReference Include="NuGet.Build.Packaging" Version="0.2.3">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="SMBPath.cs" />
