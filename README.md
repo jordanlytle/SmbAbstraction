@@ -1,4 +1,4 @@
-# System.IO.Abstractions.SMB
+# SmbAbstraction
 
 This library implements the System.IO.Abstractions interfaces for interacting
 with the filesystem, and adds support for interacting with UNC or SMB paths.
