@@ -79,7 +79,7 @@ namespace SmbAbstraction
         {
             if (!path.IsSmbPath())
             {
-                base.AppendAllLinesAsync(path, contents, encoding, cancellationToken);
+                return base.AppendAllLinesAsync(path, contents, encoding, cancellationToken);
             }
 
             return new Task(() => AppendAllLines(path, contents, encoding), cancellationToken);
@@ -1005,6 +1005,7 @@ namespace SmbAbstraction
             if (!path.IsSmbPath())
             {
                 base.WriteAllText(path, contents, encoding);
+                return;
             }
 
             using (StreamWriter sw = new StreamWriter(OpenWrite(path), encoding))

@@ -7,7 +7,7 @@
     <NeutralLanguage>en-US</NeutralLanguage>
     <Description>This library implements the System.IO.Abstractions interfaces for interacting with the filesystem, and adds support for interacting with UNC or SMB paths.</Description>
     <PackageId>SmbAbstraction</PackageId>
-    <PackageVersion>1.0.0</PackageVersion>
+    <PackageVersion>1.0.1</PackageVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">

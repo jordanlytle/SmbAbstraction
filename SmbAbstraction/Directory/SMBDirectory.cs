@@ -89,6 +89,7 @@ namespace SmbAbstraction
             if (!path.IsSmbPath())
             {
                 base.Delete(path);
+                return;
             }
 
             if (!path.TryResolveHostnameFromPath(out var ipAddress))
@@ -140,6 +141,7 @@ namespace SmbAbstraction
             if (!path.IsSmbPath())
             {
                 base.Delete(path, recursive);
+                return;
             }
 
             if (recursive)
@@ -780,6 +782,7 @@ namespace SmbAbstraction
             if (!path.IsSmbPath())
             {
                 base.SetAccessControl(path, directorySecurity);
+                return;
             }
 
             throw new NotSupportedException();
@@ -790,6 +793,7 @@ namespace SmbAbstraction
             if (!path.IsSmbPath())
             {
                 base.SetCreationTime(path, creationTime);
+                return;
             }
 
             var dirInfo = _directoryInfoFactory.FromDirectoryName(path);
@@ -802,6 +806,7 @@ namespace SmbAbstraction
             if (!path.IsSmbPath())
             {
                 base.SetCreationTimeUtc(path, creationTimeUtc);
+                return;
             }
 
             var dirInfo = _directoryInfoFactory.FromDirectoryName(path);
@@ -814,6 +819,7 @@ namespace SmbAbstraction
             if (!path.IsSmbPath())
             {
                 base.SetCurrentDirectory(path);
+                return;
             }
 
             throw new NotImplementedException();
@@ -824,6 +830,7 @@ namespace SmbAbstraction
             if (!path.IsSmbPath())
             {
                 base.SetLastAccessTime(path, lastAccessTime);
+                return;
             }
 
             var dirInfo = _directoryInfoFactory.FromDirectoryName(path);
@@ -836,6 +843,7 @@ namespace SmbAbstraction
             if (!path.IsSmbPath())
             {
                 base.SetLastAccessTimeUtc(path, lastAccessTimeUtc);
+                return;
             }
 
             var dirInfo = _directoryInfoFactory.FromDirectoryName(path);
@@ -848,6 +856,7 @@ namespace SmbAbstraction
             if (!path.IsSmbPath())
             {
                 base.SetLastWriteTime(path, lastWriteTime);
+                return;
             }
 
             var dirInfo = _directoryInfoFactory.FromDirectoryName(path);
@@ -860,6 +869,7 @@ namespace SmbAbstraction
             if (!path.IsSmbPath())
             {
                 base.SetLastWriteTimeUtc(path, lastWriteTimeUtc);
+                return;
             }
 
             var dirInfo = _directoryInfoFactory.FromDirectoryName(path);
