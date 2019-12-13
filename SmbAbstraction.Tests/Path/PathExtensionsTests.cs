@@ -15,6 +15,13 @@ namespace SmbAbstraction.Tests.Path
         }
 
         [Fact]
+        public void IsSmb_ReturnsFalse_ForLocalUrl()
+        {
+            string path = "C:\\jordan\\lytle";
+            Assert.False(path.IsSmbPath());
+        }
+
+        [Fact]
         public void IsSmb_ReturnsTrue_ForSmbUrl()
         {
             foreach (var property in _smbUriTestData.GetType().GetProperties())

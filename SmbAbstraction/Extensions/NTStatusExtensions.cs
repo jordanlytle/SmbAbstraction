@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Security.Authentication;
-using SmbLibraryStd;
+using SMBLibrary;
 
 namespace SmbAbstraction
 {

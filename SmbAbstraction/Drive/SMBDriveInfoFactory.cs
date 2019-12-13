@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
-using SmbLibraryStd;
-using SmbLibraryStd.Client;
+using SMBLibrary;
+using SMBLibrary.Client;
 
 namespace SmbAbstraction
 {

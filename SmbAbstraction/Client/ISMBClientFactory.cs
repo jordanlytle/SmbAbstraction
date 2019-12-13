@@ -1,5 +1,5 @@
 ﻿using System;
-using SmbLibraryStd.Client;
+using SMBLibrary.Client;
 
 namespace SmbAbstraction
 {

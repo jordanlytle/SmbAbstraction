@@ -1,5 +1,5 @@
 ﻿using System.IO;
-using SmbLibraryStd.Client;
+using SMBLibrary.Client;
 
 namespace SmbAbstraction
 {
@@ -34,14 +34,14 @@ namespace SmbAbstraction
             var status = _fileStore.ReadFile(out byte[] data, _fileHandle, _position, count);
             switch (status)
             {
-                case SmbLibraryStd.NTStatus.STATUS_SUCCESS:
+                case SMBLibrary.NTStatus.STATUS_SUCCESS:
                     for (int i = offset, i2 = 0; i2 < data.Length; i++, i2++)
                     {
                         buffer[i] = data[i2];
                     }
                     _position += data.Length;
                     return data.Length;
-                case SmbLibraryStd.NTStatus.STATUS_END_OF_FILE:
+                case SMBLibrary.NTStatus.STATUS_END_OF_FILE:
                     return 0;
                 default:
                     throw new IOException($"Unable to read file; Status: {status}");
@@ -59,11 +59,11 @@ namespace SmbAbstraction
                 case SeekOrigin.Current:
                     break;
                 case SeekOrigin.End:
-                    var status = _fileStore.GetFileInformation(out SmbLibraryStd.FileInformation result, _fileHandle, SmbLibraryStd.FileInformationClass.FileStreamInformation);
+                    var status = _fileStore.GetFileInformation(out SMBLibrary.FileInformation result, _fileHandle, SMBLibrary.FileInformationClass.FileStreamInformation);
 
                     status.HandleStatus();
 
-                    SmbLibraryStd.FileStreamInformation fileStreamInformation = (SmbLibraryStd.FileStreamInformation)result;
+                    SMBLibrary.FileStreamInformation fileStreamInformation = (SMBLibrary.FileStreamInformation)result;
                     _position += fileStreamInformation.Entries[0].StreamSize;
 
                     return _position;

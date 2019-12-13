@@ -1,8 +1,8 @@
 ﻿using System;
 using System.IO;
 using System.IO.Abstractions;
-using SmbLibraryStd;
-using SmbLibraryStd.Client;
+using SMBLibrary;
+using SMBLibrary.Client;
 
 namespace SmbAbstraction
 {

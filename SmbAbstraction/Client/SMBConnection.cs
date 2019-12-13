@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.Net;
 using System.IO;
-using SmbLibraryStd;
-using SmbLibraryStd.Client;
+using SMBLibrary;
+using SMBLibrary.Client;
 
 namespace SmbAbstraction
 {

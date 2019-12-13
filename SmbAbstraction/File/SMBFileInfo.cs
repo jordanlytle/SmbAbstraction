@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Security.AccessControl;
 using System.IO.Abstractions;
-using SmbLibraryStd;
+using SMBLibrary;
 using System.IO;
 
 namespace SmbAbstraction
@@ -45,7 +45,7 @@ namespace SmbAbstraction
             Directory = _dirInfoFactory.FromDirectoryName(parentUri.AbsoluteUri, credential);
             DirectoryName = Directory?.Name;
             Exists = true;
-            IsReadOnly = fileBasicInformation.FileAttributes.HasFlag(SmbLibraryStd.FileAttributes.ReadOnly);
+            IsReadOnly = fileBasicInformation.FileAttributes.HasFlag(SMBLibrary.FileAttributes.ReadOnly);
             Length = fileBasicInformation.Length;
         }
 
@@ -202,18 +202,18 @@ namespace SmbAbstraction
             fileBasicInformation.LastAccessTime.Time = LastAccessTime;
             fileBasicInformation.LastWriteTime.Time = LastWriteTime;
 
-            fileBasicInformation.FileAttributes = (SmbLibraryStd.FileAttributes)Attributes;
+            fileBasicInformation.FileAttributes = (SMBLibrary.FileAttributes)Attributes;
 
             var pathUri = new Uri(FullName);
             var parentUri = pathUri.AbsoluteUri.EndsWith('/') ? new Uri(pathUri, "..") : new Uri(pathUri, ".");
 
             if (IsReadOnly)
             {
-                fileBasicInformation.FileAttributes |= SmbLibraryStd.FileAttributes.ReadOnly;
+                fileBasicInformation.FileAttributes |= SMBLibrary.FileAttributes.ReadOnly;
             }
             else
             {
-                fileBasicInformation.FileAttributes &= SmbLibraryStd.FileAttributes.ReadOnly;
+                fileBasicInformation.FileAttributes &= SMBLibrary.FileAttributes.ReadOnly;
             }
 
             return fileBasicInformation;

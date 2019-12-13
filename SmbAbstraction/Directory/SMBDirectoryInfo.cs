@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO.Abstractions;
 using System.Linq;
 using System.Security.AccessControl;
-using SmbLibraryStd;
+using SMBLibrary;
 using System.IO;
 
 namespace SmbAbstraction
@@ -260,7 +260,7 @@ namespace SmbAbstraction
             fileBasicInformation.LastAccessTime.Time = LastAccessTime;
             fileBasicInformation.LastWriteTime.Time = LastWriteTime;
 
-            fileBasicInformation.FileAttributes = (SmbLibraryStd.FileAttributes)Attributes;
+            fileBasicInformation.FileAttributes = (SMBLibrary.FileAttributes)Attributes;
 
             return fileBasicInformation;
         }

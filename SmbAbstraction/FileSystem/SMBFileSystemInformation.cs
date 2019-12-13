@@ -1,5 +1,5 @@
-﻿using SmbLibraryStd;
-using SmbLibraryStd.Client;
+﻿using SMBLibrary;
+using SMBLibrary.Client;
 using System;
 using System.Collections.Generic;
 using System.Text;

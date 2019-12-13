@@ -7,8 +7,8 @@ using System.Security.AccessControl;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using SmbLibraryStd;
-using SmbLibraryStd.Client;
+using SMBLibrary;
+using SMBLibrary.Client;
 
 namespace SmbAbstraction
 {

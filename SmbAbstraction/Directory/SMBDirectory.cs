@@ -4,8 +4,8 @@ using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
 using System.Security.AccessControl;
-using SmbLibraryStd;
-using SmbLibraryStd.Client;
+using SMBLibrary;
+using SMBLibrary.Client;
 
 namespace SmbAbstraction
 {
@@ -195,7 +195,7 @@ namespace SmbAbstraction
                             {
                                 continue;
                             }
-                            else if (fileDirectoryInformation.FileAttributes.HasFlag(SmbLibraryStd.FileAttributes.Directory))
+                            else if (fileDirectoryInformation.FileAttributes.HasFlag(SMBLibrary.FileAttributes.Directory))
                             {
                                 Delete(Path.Combine(path, fileDirectoryInformation.FileName), recursive, credential);
                             }
@@ -288,7 +288,7 @@ namespace SmbAbstraction
                             continue;
                         }
 
-                        if (fileDirectoryInformation.FileAttributes.HasFlag(SmbLibraryStd.FileAttributes.Directory))
+                        if (fileDirectoryInformation.FileAttributes.HasFlag(SMBLibrary.FileAttributes.Directory))
                         {
                             files.Add(Path.Combine(path, fileDirectoryInformation.FileName));
                             if (searchOption == SearchOption.AllDirectories)
@@ -379,7 +379,7 @@ namespace SmbAbstraction
                             continue;
                         }
 
-                        if (fileDirectoryInformation.FileAttributes.HasFlag(SmbLibraryStd.FileAttributes.Directory))
+                        if (fileDirectoryInformation.FileAttributes.HasFlag(SMBLibrary.FileAttributes.Directory))
                         {
                             if (searchOption == SearchOption.AllDirectories)
                             {
@@ -473,7 +473,7 @@ namespace SmbAbstraction
                         }
 
 
-                        if (fileDirectoryInformation.FileAttributes.HasFlag(SmbLibraryStd.FileAttributes.Directory))
+                        if (fileDirectoryInformation.FileAttributes.HasFlag(SMBLibrary.FileAttributes.Directory))
                         {
                             if (searchOption == SearchOption.AllDirectories)
                             {
