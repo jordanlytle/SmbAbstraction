@@ -134,6 +134,8 @@ namespace SmbAbstraction
                     throw new IOException($"{status.ToString()}: {NTStatus_STATUS_CANCELLED}");
                 case (NTStatus.STATUS_PENDING):
                     throw new InvalidOperationException($"{status.ToString()}: {NTStatus_STATUS_PENDING}");
+                case (SMBLibrary.NTStatus)3221225566:
+                    throw new UnauthorizedAccessException("No logon servers are currently available to service the logon request.");  
                 case (NTStatus.STATUS_NOTIFY_CLEANUP): //Indicates that a notify change request has been completed due to closing the handle that made the notify change request.
                 case (NTStatus.STATUS_SUCCESS):
                     break;

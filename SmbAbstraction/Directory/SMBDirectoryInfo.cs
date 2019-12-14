@@ -14,20 +14,23 @@ namespace SmbAbstraction
         private readonly SMBFile _smbFile;
         private readonly SMBDirectoryInfoFactory _directoryInfoFactory;
         private readonly SMBFileInfoFactory _fileInfoFactory;
+        private readonly ISMBCredentialProvider _credentialProvider;
 
         public SMBDirectoryInfo(string fileName, SMBDirectory smbDirectory, SMBFile smbFile, SMBDirectoryInfoFactory directoryInfoFactory,
-            SMBFileInfoFactory fileInfoFactory)
+            SMBFileInfoFactory fileInfoFactory, IFileSystem fileSystem, ISMBCredentialProvider credentialProvider)
         {
             _fullName = fileName;
             _smbDirectory = smbDirectory;
             _smbFile = smbFile;
             _directoryInfoFactory = directoryInfoFactory;
             _fileInfoFactory = fileInfoFactory;
+            _credentialProvider = credentialProvider;
+            FileSystem = fileSystem;
         }
 
         internal SMBDirectoryInfo(string fileName, SMBDirectory smbDirectory, SMBFile smbFile, SMBDirectoryInfoFactory directoryInfoFactory,
-            SMBFileInfoFactory fileInfoFactory, FileInformation fileInfo, ISMBCredential credential)
-            : this(fileName, smbDirectory, smbFile, directoryInfoFactory, fileInfoFactory)
+            SMBFileInfoFactory fileInfoFactory, FileInformation fileInfo, IFileSystem fileSystem, ISMBCredentialProvider credentialProvider, ISMBCredential credential)
+            : this(fileName, smbDirectory, smbFile, directoryInfoFactory, fileInfoFactory, fileSystem, credentialProvider)
         {
             FileBasicInformation fileDirectoryInformation = (FileBasicInformation)fileInfo;
             if (fileDirectoryInformation.CreationTime.Time.HasValue)
@@ -52,6 +55,10 @@ namespace SmbAbstraction
             {
                 Root = _directoryInfoFactory.FromDirectoryName(pathRoot, credential);
             }
+
+            Exists = FileSystem.Directory.Exists(FullName);
+            Extension = string.Empty;
+            Name = Path.GetFileName(_fullName);
         }
 
         private readonly string _fullName;
@@ -66,9 +73,9 @@ namespace SmbAbstraction
         public DateTime CreationTime { get; set; }
         public DateTime CreationTimeUtc { get; set; }
 
-        public bool Exists => FileSystem.Directory.Exists(FullName);
+        public bool Exists { get; protected set; }
 
-        public string Extension => FileSystem.Path.GetExtension(_fullName);
+        public string Extension { get; protected set; }
 
         public string FullName => _fullName;
 
@@ -77,7 +84,7 @@ namespace SmbAbstraction
         public DateTime LastWriteTime { get; set; }
         public DateTime LastWriteTimeUtc { get; set; }
 
-        public string Name => Path.GetFileName(_fullName);
+        public string Name { get; protected set; }
 
         public void Create()
         {
@@ -112,10 +119,13 @@ namespace SmbAbstraction
         public IEnumerable<IDirectoryInfo> EnumerateDirectories(string searchPattern, SearchOption searchOption)
         {
             var paths = _smbDirectory.EnumerateDirectories(FullName, searchPattern, searchOption);
+
+            var rootCredential = _credentialProvider.GetSMBCredential(FullName);
+
             List<IDirectoryInfo> directoryInfos = new List<IDirectoryInfo>();
             foreach (var path in paths)
             {
-                directoryInfos.Add(_directoryInfoFactory.FromDirectoryName(path));
+                directoryInfos.Add(_directoryInfoFactory.FromDirectoryName(path, rootCredential));
             }
 
             return directoryInfos;
@@ -134,10 +144,13 @@ namespace SmbAbstraction
         public IEnumerable<IFileInfo> EnumerateFiles(string searchPattern, SearchOption searchOption)
         {
             var paths = _smbDirectory.EnumerateFiles(FullName, searchPattern, searchOption);
+
+            var rootCredential = _credentialProvider.GetSMBCredential(FullName);
+
             List<IFileInfo> fileInfos = new List<IFileInfo>();
             foreach (var path in paths)
             {
-                fileInfos.Add(_fileInfoFactory.FromFileName(path));
+                fileInfos.Add(_fileInfoFactory.FromFileName(path, rootCredential));
             }
 
             return fileInfos;
@@ -156,16 +169,19 @@ namespace SmbAbstraction
         public IEnumerable<IFileSystemInfo> EnumerateFileSystemInfos(string searchPattern, SearchOption searchOption)
         {
             var paths = _smbDirectory.EnumerateFileSystemEntries(FullName, searchPattern, searchOption);
+
+            var rootCredential = _credentialProvider.GetSMBCredential(FullName);
+
             List<IFileSystemInfo> fileSystemInfos = new List<IFileSystemInfo>();
             foreach (var path in paths)
             {
                 if (_smbFile.Exists(path))
                 {
-                    fileSystemInfos.Add(_fileInfoFactory.FromFileName(path));
+                    fileSystemInfos.Add(_fileInfoFactory.FromFileName(path, rootCredential));
                 }
                 else
                 {
-                    fileSystemInfos.Add(_directoryInfoFactory.FromDirectoryName(path));
+                    fileSystemInfos.Add(_directoryInfoFactory.FromDirectoryName(path, rootCredential));
                 }
             }
 

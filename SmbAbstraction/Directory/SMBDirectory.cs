@@ -388,7 +388,7 @@ namespace SmbAbstraction
                         }
                         else
                         {
-                            files.Add(Path.Combine(path, fileDirectoryInformation.FileName));
+                            files.Add(Path.Combine(path, fileDirectoryInformation.FileName.RemoveAnySeperators()));
                         }
                     }
                 }
@@ -510,25 +510,33 @@ namespace SmbAbstraction
             {
                 var shareName = path.ShareName();
                 var relativePath = path.RelativeSharePath();
-                var directoryPath = Path.GetDirectoryName(relativePath);
+
+                if(string.IsNullOrEmpty(relativePath))
+                {
+                    return true;
+                }
+
+                var parentFullPath = path.GetParentPath();
+                var parentPath = parentFullPath.RelativeSharePath();
+                var directoryName = path.GetLastPathSegment().RemoveAnySeperators();
 
                 ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
                 status.HandleStatus();
 
-                status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, directoryPath, AccessMask.GENERIC_READ, 0, ShareAccess.Read,
+                status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, parentPath, AccessMask.GENERIC_READ, 0, ShareAccess.Read,
                     CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
 
                 status.HandleStatus();
 
-                fileStore.QueryDirectory(out List<QueryDirectoryFileInformation> queryDirectoryFileInformation, handle, string.IsNullOrEmpty(directoryPath) ? "*" : directoryPath, FileInformationClass.FileDirectoryInformation);
+                fileStore.QueryDirectory(out List<QueryDirectoryFileInformation> queryDirectoryFileInformation, handle, string.IsNullOrEmpty(directoryName) ? "*" : directoryName, FileInformationClass.FileDirectoryInformation);
 
                 foreach (var file in queryDirectoryFileInformation)
                 {
                     if (file.FileInformationClass == FileInformationClass.FileDirectoryInformation)
                     {
                         FileDirectoryInformation fileDirectoryInformation = (FileDirectoryInformation)file;
-                        if (fileDirectoryInformation.FileName == Path.GetFileName(relativePath))
+                        if (fileDirectoryInformation.FileName == directoryName)
                         {
                             fileStore.CloseFile(handle);
                             return true;
@@ -734,10 +742,7 @@ namespace SmbAbstraction
                 return base.GetParent(path);
             }
 
-            var pathUri = new Uri(path);
-            var parentUri = pathUri.AbsoluteUri.EndsWith('/') ? new Uri(pathUri, "..") : new Uri(pathUri, ".");
-
-            return _directoryInfoFactory.FromDirectoryName(parentUri.AbsoluteUri, credential);
+            return _directoryInfoFactory.FromDirectoryName(path.GetParentPath(), credential);
         }
 
         public override void Move(string sourceDirName, string destDirName)

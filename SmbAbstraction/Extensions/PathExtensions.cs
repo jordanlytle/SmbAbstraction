@@ -100,7 +100,21 @@ namespace SmbAbstraction
             return relativePath;
         }
 
-        private static string RemoveAnySeperators(this string input)
+        public static string GetParentPath(this string path)
+        {
+            var pathUri = new Uri(path);
+            var parentUri = pathUri.AbsoluteUri.EndsWith('/') ? new Uri(pathUri, "..") : new Uri(pathUri, ".");
+            var pathString = parentUri.IsUnc ? parentUri.LocalPath : parentUri.AbsoluteUri;
+            return pathString;
+        }
+
+        public static string GetLastPathSegment(this string path)
+        {
+            var uri = new Uri(path);
+            return uri.Segments.Last();
+        }
+
+        public static string RemoveAnySeperators(this string input)
         {
             foreach (var pathSeperator in pathSeperators)
             {

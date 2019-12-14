@@ -81,7 +81,7 @@ namespace SmbAbstraction
                 return null;
             }
 
-            return new SMBDirectoryInfo(path, _smbDirectory, _smbFile, this, _fileInfoFactory, fileInfo, credential);
+            return new SMBDirectoryInfo(path, _smbDirectory, _smbFile, this, _fileInfoFactory, fileInfo, _fileSystem, _credentialProvider, credential);
         }
 
         internal void SaveDirectoryInfo(SMBDirectoryInfo dirInfo, ISMBCredential credential = null)

@@ -41,8 +41,9 @@ namespace SmbAbstraction
 
             var pathUri = new Uri(path);
             var parentUri = pathUri.AbsoluteUri.EndsWith('/') ? new Uri(pathUri, "..") : new Uri(pathUri, ".");
+            var parentPathString = parentUri.IsUnc ? parentUri.LocalPath : parentUri.AbsoluteUri;
 
-            Directory = _dirInfoFactory.FromDirectoryName(parentUri.AbsoluteUri, credential);
+            Directory = _dirInfoFactory.FromDirectoryName(parentPathString, credential);
             DirectoryName = Directory?.Name;
             Exists = true;
             IsReadOnly = fileBasicInformation.FileAttributes.HasFlag(SMBLibrary.FileAttributes.ReadOnly);
@@ -203,9 +204,6 @@ namespace SmbAbstraction
             fileBasicInformation.LastWriteTime.Time = LastWriteTime;
 
             fileBasicInformation.FileAttributes = (SMBLibrary.FileAttributes)Attributes;
-
-            var pathUri = new Uri(FullName);
-            var parentUri = pathUri.AbsoluteUri.EndsWith('/') ? new Uri(pathUri, "..") : new Uri(pathUri, ".");
 
             if (IsReadOnly)
             {
