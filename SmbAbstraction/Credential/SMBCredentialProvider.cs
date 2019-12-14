@@ -14,7 +14,10 @@ namespace SmbAbstraction
 
         public ISMBCredential GetSMBCredential(string path)
         {
-            var credential = credentials.Where(q => q.Path == path).FirstOrDefault();
+            var host = path.Hostname();
+            var shareName = path.ShareName();
+
+            var credential = credentials.Where(q => q.Host == host && q.ShareName == shareName).FirstOrDefault();
             if(credential != null)
             {
                 return credential;
@@ -35,7 +38,5 @@ namespace SmbAbstraction
             credential.SetParentList(credentials);
             credentials.Add(credential);
         }
-
-        
     }
 }

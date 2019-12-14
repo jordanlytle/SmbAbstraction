@@ -5,23 +5,25 @@ namespace SmbAbstraction
 {
     public class SMBCredential : ISMBCredential
     {
-        public string Domain => _domain;
-        public string UserName => _userName;
-        public string Password => _password;
-        public string Path => _path;
+        public string Host { get; }
+        public string ShareName { get; }
 
-        private string _domain;
-        private string _userName;
-        private string _password;
-        private string _path;
+        public string Domain { get; }
+        public string UserName { get; }
+        public string Password { get; }
+        public string Path { get; }
+
         private List<ISMBCredential> _parentList;
 
         public SMBCredential(string domain, string userName, string password, string path)
         {
-            _domain = domain;
-            _userName = userName;
-            _password = password;
-            _path = path;
+            Domain = domain;
+            UserName = userName;
+            Password = password;
+            Path = path;
+
+            Host = path.Hostname();
+            ShareName = path.ShareName();
         }
 
         public SMBCredential(string domain, string userName, string password, string path, ISMBCredentialProvider provider)

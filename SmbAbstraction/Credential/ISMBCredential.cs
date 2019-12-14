@@ -9,6 +9,8 @@ namespace SmbAbstraction
         string UserName { get; }
         string Password { get; }
         string Path { get; }
+        string Host { get; }
+        string ShareName { get; }
         void SetParentList(List<ISMBCredential> parentList);
     }
 }
