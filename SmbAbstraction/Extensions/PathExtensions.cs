@@ -111,7 +111,7 @@ namespace SmbAbstraction
         public static string GetLastPathSegment(this string path)
         {
             var uri = new Uri(path);
-            return uri.Segments.Last();
+            return uri.Segments.Last().Replace("%20", " ");
         }
 
         public static string RemoveAnySeperators(this string input)
