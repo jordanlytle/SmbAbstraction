@@ -10,6 +10,7 @@ namespace SmbAbstraction
     public class SMBConnection : IDisposable
     {
         private static Dictionary<IPAddress, SMBConnection> instances = new Dictionary<IPAddress, SMBConnection>();
+        private static readonly object _connectionLock = new object();
 
         private readonly IPAddress _address;
         private readonly SMBTransportType _transport;
@@ -42,48 +43,59 @@ namespace SmbAbstraction
 
         public static SMBConnection CreateSMBConnection(ISMBClientFactory smbClientFactory, IPAddress address, SMBTransportType transport, ISMBCredential credential)
         {
-            if(instances.ContainsKey(address))
+            if (credential == null)
             {
-                var instance = instances[address];
-                instance._referenceCount += 1;
-                return instance;
+                throw new ArgumentNullException(nameof(credential));
             }
-            else
+
+            lock (_connectionLock)
             {
-                var instance = new SMBConnection(smbClientFactory, address, transport, credential);
-                instance.Connect();
-                instances.Add(address, instance);
-                return instance;
+                if (instances.ContainsKey(address))
+                {
+                    var instance = instances[address];
+                    instance._referenceCount += 1;
+                    return instance;
+                }
+                else
+                {
+                    var instance = new SMBConnection(smbClientFactory, address, transport, credential);
+                    instance.Connect();
+                    instances.Add(address, instance);
+                    return instance;
+                }
             }
         }
 
         public void Dispose()
         {
-            if (_isDesposed)
+            lock (_connectionLock)
             {
-                return;
-            }
+                if (_isDesposed)
+                {
+                    return;
+                }
 
-            if (_referenceCount == 1)
-            {
-                try
+                if (_referenceCount == 1)
                 {
-                    SMBClient.Logoff(); //Once you logout OR disconnect you can't log back in for some reason. TODO come back to this and try to debug more.
-                    SMBClient.Disconnect();
+                    try
+                    {
+                        SMBClient.Logoff(); //Once you logout OR disconnect you can't log back in for some reason. TODO come back to this and try to debug more.
+                        SMBClient.Disconnect();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex.Message);
+                    }
+                    finally
+                    {
+                        instances.Remove(_address);
+                        _isDesposed = true;
+                    }
                 }
-                catch(Exception ex)
+                else
                 {
-                    Console.WriteLine(ex.Message);
+                    _referenceCount -= 1;
                 }
-                finally
-                {
-                    instances.Remove(_address);
-                    _isDesposed = true;
-                }
-            }
-            else
-            {
-                _referenceCount -= 1;
             }
         }
     }
