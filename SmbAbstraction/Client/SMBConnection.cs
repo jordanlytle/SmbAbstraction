@@ -4,12 +4,13 @@ using System.Net;
 using System.IO;
 using SMBLibrary;
 using SMBLibrary.Client;
+using System.Threading;
 
 namespace SmbAbstraction
 {
     public class SMBConnection : IDisposable
     {
-        private static Dictionary<IPAddress, SMBConnection> instances = new Dictionary<IPAddress, SMBConnection>();
+        private static Dictionary<int, Dictionary<IPAddress, SMBConnection>> instances = new Dictionary<int, Dictionary<IPAddress, SMBConnection>>();
         private static readonly object _connectionLock = new object();
 
         private readonly IPAddress _address;
@@ -17,16 +18,18 @@ namespace SmbAbstraction
         private readonly ISMBCredential _credential;
         private long _referenceCount { get; set; }
         private bool _isDesposed { get; set; }
+        private int _threadId { get; set; }
 
         public readonly ISMBClient SMBClient;
 
-        private SMBConnection(ISMBClientFactory smbClientFactory, IPAddress address, SMBTransportType transport, ISMBCredential credential)
+        private SMBConnection(ISMBClientFactory smbClientFactory, IPAddress address, SMBTransportType transport, ISMBCredential credential, int threadId)
         {
             SMBClient = smbClientFactory.CreateClient();
             _address = address;
             _transport = transport;
             _credential = credential;
             _referenceCount = 1;
+            _threadId = threadId;
         }
 
         private void Connect()
@@ -43,6 +46,8 @@ namespace SmbAbstraction
 
         public static SMBConnection CreateSMBConnection(ISMBClientFactory smbClientFactory, IPAddress address, SMBTransportType transport, ISMBCredential credential)
         {
+            var threadId = Thread.CurrentThread.ManagedThreadId;
+
             if (credential == null)
             {
                 throw new ArgumentNullException(nameof(credential));
@@ -50,17 +55,22 @@ namespace SmbAbstraction
 
             lock (_connectionLock)
             {
-                if (instances.ContainsKey(address))
+                if(!instances.ContainsKey(threadId))
                 {
-                    var instance = instances[address];
+                    instances.Add(threadId, new Dictionary<IPAddress, SMBConnection>());
+                }
+
+                if (instances[threadId].ContainsKey(address))
+                {
+                    var instance = instances[threadId][address];
                     instance._referenceCount += 1;
                     return instance;
                 }
                 else
                 {
-                    var instance = new SMBConnection(smbClientFactory, address, transport, credential);
+                    var instance = new SMBConnection(smbClientFactory, address, transport, credential, threadId);
                     instance.Connect();
-                    instances.Add(address, instance);
+                    instances[threadId].Add(address, instance);
                     return instance;
                 }
             }
@@ -88,7 +98,11 @@ namespace SmbAbstraction
                     }
                     finally
                     {
-                        instances.Remove(_address);
+                        instances[_threadId].Remove(_address);
+                        if(instances[_threadId].Count == 0)
+                        {
+                            instances.Remove(_threadId);
+                        }
                         _isDesposed = true;
                     }
                 }
