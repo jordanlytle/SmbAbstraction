@@ -46,8 +46,8 @@ namespace SmbAbstraction
             NTStatus status = NTStatus.STATUS_SUCCESS;
 
             AccessMask accessMask = AccessMask.MAXIMUM_ALLOWED;
-            ShareAccess shareAccess = ShareAccess.None;
-            CreateDisposition disposition = CreateDisposition.FILE_CREATE;
+            ShareAccess shareAccess = ShareAccess.Read;
+            CreateDisposition disposition = CreateDisposition.FILE_OPEN_IF;
             CreateOptions createOptions = CreateOptions.FILE_DIRECTORY_FILE;
 
             if (credential == null)
@@ -69,8 +69,18 @@ namespace SmbAbstraction
 
             status.HandleStatus();
 
-            status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativePath, accessMask, 0, shareAccess,
+            int attempts = 0;
+            int allowedRetrys = 3;
+            object handle;
+
+            do
+            {
+                attempts++;
+
+                status = fileStore.CreateFile(out handle, out FileStatus fileStatus, relativePath, accessMask, 0, shareAccess,
                 disposition, createOptions, null);
+            }
+            while (status == NTStatus.STATUS_PENDING && attempts < allowedRetrys);
 
             status.HandleStatus();
 
@@ -118,9 +128,18 @@ namespace SmbAbstraction
 
                 status.HandleStatus();
 
+                int attempts = 0;
+                int allowedRetrys = 3;
+                object handle;
 
-                status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativePath, AccessMask.DELETE, 0, ShareAccess.Delete,
+                do
+                {
+                    attempts++;
+
+                    status = fileStore.CreateFile(out handle, out FileStatus fileStatus, relativePath, AccessMask.DELETE, 0, ShareAccess.Delete,
                     CreateDisposition.FILE_OPEN, CreateOptions.FILE_DELETE_ON_CLOSE, null);
+                }
+                while (status == NTStatus.STATUS_PENDING && attempts < allowedRetrys);
 
                 status.HandleStatus();
 
