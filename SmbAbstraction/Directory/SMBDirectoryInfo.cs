@@ -58,7 +58,7 @@ namespace SmbAbstraction
 
             Exists = FileSystem.Directory.Exists(FullName);
             Extension = string.Empty;
-            Name = Path.GetFileName(_fullName);
+            Name = _fullName.GetLastPathSegment().RemoveAnySeperators();
         }
 
         private readonly string _fullName;
