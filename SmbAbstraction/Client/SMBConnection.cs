@@ -22,9 +22,10 @@ namespace SmbAbstraction
 
         public readonly ISMBClient SMBClient;
 
-        private SMBConnection(ISMBClientFactory smbClientFactory, IPAddress address, SMBTransportType transport, ISMBCredential credential, int threadId)
+        private SMBConnection(ISMBClientFactory smbClientFactory, IPAddress address, SMBTransportType transport,
+            ISMBCredential credential, int threadId, uint maxBufferSize)
         {
-            SMBClient = smbClientFactory.CreateClient();
+            SMBClient = smbClientFactory.CreateClient(maxBufferSize);
             _address = address;
             _transport = transport;
             _credential = credential;
@@ -44,7 +45,8 @@ namespace SmbAbstraction
             status.HandleStatus();
         }
 
-        public static SMBConnection CreateSMBConnection(ISMBClientFactory smbClientFactory, IPAddress address, SMBTransportType transport, ISMBCredential credential)
+        public static SMBConnection CreateSMBConnection(ISMBClientFactory smbClientFactory,
+            IPAddress address, SMBTransportType transport, ISMBCredential credential, uint maxBufferSize)
         {
             var threadId = Thread.CurrentThread.ManagedThreadId;
 
@@ -68,7 +70,7 @@ namespace SmbAbstraction
                 }
                 else
                 {
-                    var instance = new SMBConnection(smbClientFactory, address, transport, credential, threadId);
+                    var instance = new SMBConnection(smbClientFactory, address, transport, credential, threadId, maxBufferSize);
                     instance.Connect();
                     instances[threadId].Add(address, instance);
                     return instance;

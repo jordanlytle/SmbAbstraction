@@ -32,7 +32,7 @@ namespace SmbAbstraction.Tests.Integration
 
             _smbCredentialProvider.AddSMBCredential(new SMBCredential(credentials.Domain, credentials.Username, credentials.Password, share.RootSmbUri));
 
-            var smbDriveInfoFactory = new SMBDriveInfoFactory(_fileSystem, _smbCredentialProvider, _smbClientFactory);
+            var smbDriveInfoFactory = new SMBDriveInfoFactory(_fileSystem, _smbCredentialProvider, _smbClientFactory, 65536);
 
             var shareInfo = smbDriveInfoFactory.FromDriveName(share.ShareName);
 
@@ -48,7 +48,7 @@ namespace SmbAbstraction.Tests.Integration
 
             _smbCredentialProvider.AddSMBCredential(new SMBCredential(credentials.Domain, credentials.Username, credentials.Password, share.RootUncPath));
 
-            var smbDriveInfoFactory = new SMBDriveInfoFactory(_fileSystem, _smbCredentialProvider, _smbClientFactory);
+            var smbDriveInfoFactory = new SMBDriveInfoFactory(_fileSystem, _smbCredentialProvider, _smbClientFactory, 65536);
 
             var shareInfo = smbDriveInfoFactory.FromDriveName(share.ShareName);
 
@@ -64,7 +64,7 @@ namespace SmbAbstraction.Tests.Integration
 
             _smbCredentialProvider.AddSMBCredential(new SMBCredential(credentials.Domain, credentials.Username, credentials.Password, share.RootSmbUri));
 
-            var smbDriveInfoFactory = new SMBDriveInfoFactory(_fileSystem, _smbCredentialProvider, _smbClientFactory);
+            var smbDriveInfoFactory = new SMBDriveInfoFactory(_fileSystem, _smbCredentialProvider, _smbClientFactory, 65536);
 
             var shares = smbDriveInfoFactory.GetDrives();
 
@@ -80,7 +80,7 @@ namespace SmbAbstraction.Tests.Integration
 
             _smbCredentialProvider.AddSMBCredential(new SMBCredential(credentials.Domain, credentials.Username, credentials.Password, share.RootUncPath));
 
-            var smbDriveInfoFactory = new SMBDriveInfoFactory(_fileSystem, _smbCredentialProvider, _smbClientFactory);
+            var smbDriveInfoFactory = new SMBDriveInfoFactory(_fileSystem, _smbCredentialProvider, _smbClientFactory, 65536);
             
             var shares = smbDriveInfoFactory.GetDrives();
 

@@ -14,16 +14,19 @@ namespace SmbAbstraction
         private readonly ISMBCredentialProvider _smbCredentialProvider;
         private readonly ISMBClientFactory _smbClientFactory;
         private readonly FileSystem _baseFileSystem;
+        private readonly uint _maxBufferSize;
 
         public SMBTransportType transport { get; set; }
 
 
-        public SMBDriveInfoFactory(IFileSystem fileSystem, ISMBCredentialProvider smbCredentialProvider, ISMBClientFactory smbClientFactory)
+        public SMBDriveInfoFactory(IFileSystem fileSystem, ISMBCredentialProvider smbCredentialProvider,
+            ISMBClientFactory smbClientFactory, uint maxBufferSize)
         {
             _fileSystem = fileSystem;
             _smbCredentialProvider = smbCredentialProvider;
             _smbClientFactory = smbClientFactory;
             _baseFileSystem = new FileSystem();
+            _maxBufferSize = maxBufferSize;
             transport = SMBTransportType.DirectTCPTransport;
         }
 
@@ -59,7 +62,7 @@ namespace SmbAbstraction
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
 
-            using var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential);
+            using var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize);
 
             var relativePath = path.RelativeSharePath();
 
@@ -123,10 +126,10 @@ namespace SmbAbstraction
                     throw new ArgumentException($"Unable to resolve \"{path.Hostname()}\"");
                 }
 
-                using var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential);
+                using var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize);
 
                 var shareNames = connection.SMBClient.ListShares(out status);
-                var shareDirectoryInfoFactory = new SMBDirectoryInfoFactory(_fileSystem, _smbCredentialProvider, _smbClientFactory);
+                var shareDirectoryInfoFactory = new SMBDirectoryInfoFactory(_fileSystem, _smbCredentialProvider, _smbClientFactory, _maxBufferSize);
 
                 foreach (var shareName in shareNames)
                 {

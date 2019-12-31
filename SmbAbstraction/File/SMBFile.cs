@@ -17,15 +17,18 @@ namespace SmbAbstraction
         private readonly ISMBClientFactory _smbClientFactory;
         private readonly ISMBCredentialProvider _credentialProvider;
         private readonly IFileSystem _fileSystem;
+        private readonly uint _maxBufferSize;
         private SMBFileInfoFactory _fileInfoFactory => _fileSystem.FileInfo as SMBFileInfoFactory;
 
         public SMBTransportType transport { get; set; }
 
-        public SMBFile(ISMBClientFactory smbclientFactory, ISMBCredentialProvider credentialProvider, IFileSystem fileSystem) : base(new FileSystem())
+        public SMBFile(ISMBClientFactory smbclientFactory, ISMBCredentialProvider credentialProvider,
+            IFileSystem fileSystem, uint maxBufferSize = 65536) : base(new FileSystem())
         {
             _smbClientFactory = smbclientFactory;
             _credentialProvider = credentialProvider;
             _fileSystem = fileSystem;
+            _maxBufferSize = maxBufferSize;
             transport = SMBTransportType.DirectTCPTransport;
         }
 
@@ -159,16 +162,16 @@ namespace SmbAbstraction
             {
                 using (Stream destStream = OpenWrite(destFileName))
                 {
-                    sourceStream.CopyTo(destStream);
+                    sourceStream.CopyTo(destStream, Convert.ToInt32(_maxBufferSize));
                 }
             }
         }
 
         public override void Copy(string sourceFileName, string destFileName, bool overwrite)
         {
-            if (!overwrite && Exists(destFileName))
+            if (overwrite && Exists(destFileName))
             {
-                return;
+                Delete(destFileName);
             }
 
             Copy(sourceFileName, destFileName);
@@ -231,7 +234,7 @@ namespace SmbAbstraction
 
             var credential = _credentialProvider.GetSMBCredential(path);
 
-            using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential))
+            using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize))
             {
                 var shareName = path.ShareName();
                 var relativePath = path.RelativeSharePath();
@@ -277,7 +280,7 @@ namespace SmbAbstraction
 
             var credential = _credentialProvider.GetSMBCredential(path);
 
-            using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential))
+            using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize))
             {
                 var shareName = path.ShareName();
                 var relativePath = path.RelativeSharePath();
@@ -428,7 +431,7 @@ namespace SmbAbstraction
             {
                 using (Stream destStream = OpenWrite(destFileName, destinationCredential))
                 {
-                    sourceStream.CopyTo(destStream);
+                    sourceStream.CopyTo(destStream, Convert.ToInt32(_maxBufferSize));
                 }
             }
         }
@@ -540,7 +543,7 @@ namespace SmbAbstraction
                 throw new Exception($"Unable to find credential for path: {path}");
             }
 
-            var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential);
+            var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize);
 
             var shareName = path.ShareName();
             var relativePath = path.RelativeSharePath();
@@ -631,7 +634,7 @@ namespace SmbAbstraction
             {
                 using (Stream s = OpenRead(path))
                 {
-                    s.CopyTo(ms);
+                    s.CopyTo(ms, Convert.ToInt32(_maxBufferSize));
                 }
                 return ms.ToArray();
             }

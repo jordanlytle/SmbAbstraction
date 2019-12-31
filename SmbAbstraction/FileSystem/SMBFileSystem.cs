@@ -6,15 +6,15 @@ namespace SmbAbstraction
 {
     public class SMBFileSystem : IFileSystem
     {
-        public SMBFileSystem(ISMBClientFactory ismbClientfactory, ISMBCredentialProvider credentialProvider)
+        public SMBFileSystem(ISMBClientFactory ismbClientfactory, ISMBCredentialProvider credentialProvider, uint maxBufferSize = 65536)
         {
-            File = new SMBFile(ismbClientfactory, credentialProvider, this);
-            Directory = new SMBDirectory(ismbClientfactory, credentialProvider, this);
-            DirectoryInfo = new SMBDirectoryInfoFactory(this, credentialProvider, ismbClientfactory);
-            FileInfo = new SMBFileInfoFactory(this, credentialProvider, ismbClientfactory);
+            File = new SMBFile(ismbClientfactory, credentialProvider, this, maxBufferSize);
+            Directory = new SMBDirectory(ismbClientfactory, credentialProvider, this, maxBufferSize);
+            DirectoryInfo = new SMBDirectoryInfoFactory(this, credentialProvider, ismbClientfactory, maxBufferSize);
+            FileInfo = new SMBFileInfoFactory(this, credentialProvider, ismbClientfactory, maxBufferSize);
             FileStream = new SMBFileStreamFactory(this);
             Path = new PathWrapper(this);
-            DriveInfo = new SMBDriveInfoFactory(this, credentialProvider, ismbClientfactory);
+            DriveInfo = new SMBDriveInfoFactory(this, credentialProvider, ismbClientfactory, maxBufferSize);
         }
 
         public IDirectory Directory { get; }

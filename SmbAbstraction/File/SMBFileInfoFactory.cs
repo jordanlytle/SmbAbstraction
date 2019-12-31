@@ -11,15 +11,18 @@ namespace SmbAbstraction
         private readonly IFileSystem _fileSystem;
         private readonly ISMBCredentialProvider _credentialProvider;
         private readonly ISMBClientFactory _smbClientFactory;
+        private readonly uint _maxBufferSize;
         private SMBDirectoryInfoFactory _dirInfoFactory => _fileSystem.DirectoryInfo as SMBDirectoryInfoFactory;
 
         public SMBTransportType transport { get; set; }
 
-        public SMBFileInfoFactory(IFileSystem fileSystem, ISMBCredentialProvider credentialProvider, ISMBClientFactory smbClientFactory)
+        public SMBFileInfoFactory(IFileSystem fileSystem, ISMBCredentialProvider credentialProvider,
+            ISMBClientFactory smbClientFactory, uint maxBufferSize)
         {
             _fileSystem = fileSystem;
             _credentialProvider = credentialProvider;
             _smbClientFactory = smbClientFactory;
+            _maxBufferSize = maxBufferSize;
             transport = SMBTransportType.DirectTCPTransport;
         }
 
@@ -58,7 +61,7 @@ namespace SmbAbstraction
                 throw new Exception($"Unable to find credential for path: {path}");
             }
 
-            using var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential);
+            using var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize);
 
             var shareName = path.ShareName();
             var relativePath = path.RelativeSharePath();
@@ -100,7 +103,7 @@ namespace SmbAbstraction
                 throw new Exception($"Unable to find credential for path: {path}");
             }
 
-            using var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential);
+            using var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize);
 
             var shareName = path.ShareName();
             var relativePath = path.RelativeSharePath();

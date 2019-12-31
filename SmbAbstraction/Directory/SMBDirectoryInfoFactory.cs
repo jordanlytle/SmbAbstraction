@@ -11,17 +11,20 @@ namespace SmbAbstraction
         private readonly IFileSystem _fileSystem;
         private readonly ISMBCredentialProvider _credentialProvider;
         private readonly ISMBClientFactory _smbClientFactory;
+        private uint _maxBufferSize;
         private SMBDirectory _smbDirectory => _fileSystem.Directory as SMBDirectory;
         private SMBFile _smbFile => _fileSystem.File as SMBFile;
         private SMBFileInfoFactory _fileInfoFactory => _fileSystem.FileInfo as SMBFileInfoFactory;
 
         public SMBTransportType transport { get; set; }
 
-        public SMBDirectoryInfoFactory(IFileSystem fileSystem, ISMBCredentialProvider credentialProvider, ISMBClientFactory smbClientFactory)
+        public SMBDirectoryInfoFactory(IFileSystem fileSystem, ISMBCredentialProvider credentialProvider,
+            ISMBClientFactory smbClientFactory, uint maxBufferSize)
         {
             _fileSystem = fileSystem;
             _credentialProvider = credentialProvider;
             _smbClientFactory = smbClientFactory;
+            _maxBufferSize = maxBufferSize;
             transport = SMBTransportType.DirectTCPTransport;
         }
 
@@ -60,7 +63,7 @@ namespace SmbAbstraction
                 throw new Exception($"Unable to find credential for path: {path}");
             }
 
-            using var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential);
+            using var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize);
 
             var shareName = path.ShareName();
             var relativePath = path.RelativeSharePath();
@@ -105,7 +108,7 @@ namespace SmbAbstraction
                 throw new Exception($"Unable to find credential for path: {path}");
             }
 
-            using var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential);
+            using var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize);
 
             var shareName = path.ShareName();
             var relativePath = path.RelativeSharePath();

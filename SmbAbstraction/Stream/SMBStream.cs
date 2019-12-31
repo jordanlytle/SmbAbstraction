@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using SMBLibrary.Client;
 
 namespace SmbAbstraction
@@ -14,6 +15,9 @@ namespace SmbAbstraction
         public override bool CanWrite => true;
         private long _length { get; set; }
         private long _position { get; set; }
+        private int _maxReadSize;
+        private int _maxWriteSize;
+        private int _maxBufferSize => Math.Min(_maxReadSize, _maxWriteSize);
         public override long Length => _length;
         public override long Position { get { return _position; } set { _position = value; } }
 
@@ -23,6 +27,8 @@ namespace SmbAbstraction
             _fileStore = fileStore;
             _fileHandle = fileHandle;
             _connection = connection;
+            _maxReadSize = Convert.ToInt32(_connection.SMBClient.MaxReadSize);
+            _maxWriteSize = Convert.ToInt32(_connection.SMBClient.MaxWriteSize);
         }
 
         public override void Flush()
@@ -46,7 +52,6 @@ namespace SmbAbstraction
                 default:
                     throw new IOException($"Unable to read file; Status: {status}");
             }
-
         }
 
         public override long Seek(long offset, SeekOrigin origin)
@@ -98,6 +103,22 @@ namespace SmbAbstraction
             _fileStore.CloseFile(_fileHandle);
             _connection.Dispose();
             base.Close();
+        }
+
+        public override void CopyTo(Stream destination, int bufferSize = 0)
+        {
+            if(bufferSize == 0 || bufferSize > _maxBufferSize)
+            {
+                bufferSize = _maxBufferSize;
+            }
+
+            int count;
+            byte[] buffer = new byte[bufferSize];
+
+            while ((count = this.Read(buffer, 0, buffer.Length)) != 0)
+            {
+                destination.Write(buffer, 0, count);
+            }
         }
     }
 }

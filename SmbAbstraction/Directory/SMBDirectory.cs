@@ -14,15 +14,18 @@ namespace SmbAbstraction
         private readonly ISMBClientFactory _smbClientFactory;
         private readonly IFileSystem _fileSystem;
         private readonly ISMBCredentialProvider _credentialProvider;
+        private readonly uint _maxBufferSize;
         private SMBDirectoryInfoFactory _directoryInfoFactory => _fileSystem.DirectoryInfo as SMBDirectoryInfoFactory;
 
         public SMBTransportType transport { get; set; }
 
-        public SMBDirectory(ISMBClientFactory smbclientFactory, ISMBCredentialProvider credentialProvider, IFileSystem fileSystem) : base(new FileSystem())
+        public SMBDirectory(ISMBClientFactory smbclientFactory, ISMBCredentialProvider credentialProvider,
+            IFileSystem fileSystem, uint maxBufferSize) : base(new FileSystem())
         {
             _smbClientFactory = smbclientFactory;
             _credentialProvider = credentialProvider;
             _fileSystem = fileSystem;
+            _maxBufferSize = maxBufferSize;
             transport = SMBTransportType.DirectTCPTransport;
         }
 
@@ -60,7 +63,7 @@ namespace SmbAbstraction
                 throw new Exception($"Unable to find credential for path: {path}");
             }
 
-            using var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential);
+            using var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize);
 
             var shareName = path.ShareName();
             var relativePath = path.RelativeSharePath();
@@ -119,7 +122,7 @@ namespace SmbAbstraction
                 throw new IOException("Cannot delete directory. Directory is not empty.");
             }
 
-            using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential))
+            using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize))
             {
                 var shareName = path.ShareName();
                 var relativePath = path.RelativeSharePath();
@@ -177,7 +180,7 @@ namespace SmbAbstraction
                     credential = _credentialProvider.GetSMBCredential(path);
                 }
 
-                using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential))
+                using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize))
                 {
                     var shareName = path.ShareName();
                     var relativePath = path.RelativeSharePath();
@@ -277,7 +280,7 @@ namespace SmbAbstraction
                 credential = _credentialProvider.GetSMBCredential(path);
             }
 
-            using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential))
+            using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize))
             {
                 var shareName = path.ShareName();
                 var relativePath = path.RelativeSharePath();
@@ -367,7 +370,7 @@ namespace SmbAbstraction
                 credential = _credentialProvider.GetSMBCredential(path);
             }
 
-            using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential))
+            using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize))
             {
                 var shareName = path.ShareName();
                 var relativePath = path.RelativeSharePath();
@@ -462,7 +465,7 @@ namespace SmbAbstraction
                 credential = _credentialProvider.GetSMBCredential(path);
             }
 
-            using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential))
+            using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize))
             {
                 var shareName = path.ShareName();
                 var relativePath = path.RelativeSharePath();
@@ -525,7 +528,7 @@ namespace SmbAbstraction
 
             var credential = _credentialProvider.GetSMBCredential(path);
 
-            using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential))
+            using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize))
             {
                 var shareName = path.ShareName();
                 var relativePath = path.RelativeSharePath();

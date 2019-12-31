@@ -24,3 +24,8 @@ using (var credential = new SMBCredential(domain, username, password, filePath, 
     // Your calls to the filesystem interface go here.
 }
 ```
+
+## Notes
+
+Currently the maxBufferSize needs to be set to the default, which is 65536. The server *should* be using
+the buffer size that it sends back to the client, but doesn't seem to be honoring that. 

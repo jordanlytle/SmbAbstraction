@@ -5,6 +5,6 @@ namespace SmbAbstraction
 {
     public interface ISMBClientFactory
     {
-        ISMBClient CreateClient();
+        ISMBClient CreateClient(uint maxBufferSize);
     }
 }
