@@ -28,6 +28,23 @@ namespace SmbAbstraction
             FileSystem = fileSystem;
         }
 
+        internal SMBDirectoryInfo(DirectoryInfo directoryInfo, SMBDirectory smbDirectory, SMBFile smbFile, SMBDirectoryInfoFactory directoryInfoFactory, SMBFileInfoFactory fileInfoFactory, IFileSystem fileSystem, ISMBCredentialProvider credentialProvider)
+            : this(directoryInfo.FullName, smbDirectory, smbFile, directoryInfoFactory, fileInfoFactory, fileSystem, credentialProvider)
+        {
+            CreationTime = directoryInfo.CreationTime;
+            CreationTimeUtc = directoryInfo.CreationTimeUtc;
+            FileSystem = fileSystem;
+            LastAccessTime = directoryInfo.LastAccessTime;
+            LastAccessTimeUtc = directoryInfo.LastAccessTimeUtc;
+            LastWriteTime = directoryInfo.LastWriteTime;
+            LastWriteTimeUtc = directoryInfo.LastWriteTimeUtc;
+            Parent = new DirectoryInfoWrapper(fileSystem, directoryInfo.Parent);
+            Root = new DirectoryInfoWrapper(fileSystem, directoryInfo.Root);
+            Exists = directoryInfo.Exists;
+            Extension = directoryInfo.Extension;
+            Name = directoryInfo.Name;
+        }
+
         internal SMBDirectoryInfo(string fileName, SMBDirectory smbDirectory, SMBFile smbFile, SMBDirectoryInfoFactory directoryInfoFactory,
             SMBFileInfoFactory fileInfoFactory, FileInformation fileInfo, IFileSystem fileSystem, ISMBCredentialProvider credentialProvider, ISMBCredential credential)
             : this(fileName, smbDirectory, smbFile, directoryInfoFactory, fileInfoFactory, fileSystem, credentialProvider)
@@ -38,7 +55,7 @@ namespace SmbAbstraction
                 CreationTime = fileDirectoryInformation.CreationTime.Time.Value;
                 CreationTimeUtc = CreationTime.ToUniversalTime();
             }
-            FileSystem = FileSystem;
+            FileSystem = fileSystem;
             if (fileDirectoryInformation.LastAccessTime.Time.HasValue)
             {
                 LastAccessTime = fileDirectoryInformation.LastAccessTime.Time.Value;

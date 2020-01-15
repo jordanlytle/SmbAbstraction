@@ -31,7 +31,7 @@ namespace SmbAbstraction
             if (!fileName.IsSmbPath())
             {
                 var fileInfo = new FileInfo(fileName);
-                return new FileInfoWrapper(new FileSystem(), fileInfo);
+                return new SMBFileInfo(fileInfo, _fileSystem);
             }
 
             return FromFileName(fileName, null);

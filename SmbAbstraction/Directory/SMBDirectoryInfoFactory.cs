@@ -33,7 +33,7 @@ namespace SmbAbstraction
             if (!directoryName.IsSmbPath())
             {
                 var dirInfo = new DirectoryInfo(directoryName);
-                return new DirectoryInfoWrapper(new FileSystem(), dirInfo);
+                return new SMBDirectoryInfo(dirInfo, _smbDirectory, _smbFile, this, _fileInfoFactory, _fileSystem, _credentialProvider);
             }
 
             return FromDirectoryName(directoryName, null);

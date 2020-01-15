@@ -10,6 +10,8 @@ namespace SmbAbstraction.Tests.Integration
         public ShareCredentials ShareCredentials { get; set; }
 
         public List<Share> Shares { get; set; }
+
+        public string LocalTempFolder { get; set; }
     }
 
     public class ShareCredentials

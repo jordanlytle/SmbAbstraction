@@ -18,6 +18,22 @@ namespace SmbAbstraction
             FileSystem = fileSystem;
         }
 
+        internal SMBFileInfo(FileInfo fileInfo, IFileSystem fileSystem) : this(fileInfo.FullName, fileSystem)
+        {
+            CreationTime = fileInfo.CreationTime;
+            CreationTimeUtc = fileInfo.CreationTimeUtc;
+            LastAccessTime = fileInfo.LastAccessTime;
+            LastAccessTimeUtc = fileInfo.LastAccessTimeUtc;
+            LastWriteTime = fileInfo.LastWriteTime;
+            LastWriteTimeUtc = fileInfo.LastWriteTimeUtc;
+            Attributes = fileInfo.Attributes;
+            Directory = new DirectoryInfoWrapper(fileSystem, fileInfo.Directory);
+            DirectoryName = fileInfo.DirectoryName;
+            Exists = fileInfo.Exists;
+            IsReadOnly = fileInfo.IsReadOnly;
+            Length = fileInfo.Length;
+        }
+
         internal SMBFileInfo(string path, IFileSystem fileSystem, FileInformation fileInformation, ISMBCredential credential) : this(path, fileSystem)
         {
             FileBasicInformation fileBasicInformation = (FileBasicInformation)fileInformation;
