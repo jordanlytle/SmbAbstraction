@@ -6,16 +6,22 @@
     <Authors>jordanlytle</Authors>
     <NeutralLanguage>en-US</NeutralLanguage>
     <Description>This library implements the System.IO.Abstractions interfaces for interacting with the filesystem, and adds support for interacting with UNC or SMB paths.</Description>
+  </PropertyGroup>
+
+  <PropertyGroup>
     <PackageId>SmbAbstraction</PackageId>
     <RepositoryUrl>https://github.com/jordanlytle/SmbAbstraction</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>    
+    <RepositoryType>git</RepositoryType>
+    <PackageVersion>1.0.3</PackageVersion>
+  </PropertyGroup>
+
+  <PropertyGroup>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <PackageVersion>1.0.3</PackageVersion>
   </PropertyGroup>
-
+  
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <LangVersion>latestmajor</LangVersion>
   </PropertyGroup>
