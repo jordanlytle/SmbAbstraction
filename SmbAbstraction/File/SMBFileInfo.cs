@@ -34,9 +34,8 @@ namespace SmbAbstraction
             Length = fileInfo.Length;
         }
 
-        internal SMBFileInfo(string path, IFileSystem fileSystem, FileInformation fileInformation, ISMBCredential credential) : this(path, fileSystem)
+        internal SMBFileInfo(string path, IFileSystem fileSystem, FileBasicInformation fileBasicInformation, FileStandardInformation fileStandardInformation, ISMBCredential credential) : this(path, fileSystem)
         {
-            FileBasicInformation fileBasicInformation = (FileBasicInformation)fileInformation;
             if (fileBasicInformation.CreationTime.Time.HasValue)
             {
                 CreationTime = fileBasicInformation.CreationTime.Time.Value;
@@ -63,7 +62,7 @@ namespace SmbAbstraction
             DirectoryName = Directory?.Name;
             Exists = true;
             IsReadOnly = fileBasicInformation.FileAttributes.HasFlag(SMBLibrary.FileAttributes.ReadOnly);
-            Length = fileBasicInformation.Length;
+            Length = fileStandardInformation.EndOfFile;
         }
 
         public IDirectoryInfo Directory { get; set; }

@@ -75,11 +75,12 @@ namespace SmbAbstraction
 
             status.HandleStatus();
 
-            status = fileStore.GetFileInformation(out FileInformation fileInfo, handle, FileInformationClass.FileBasicInformation); // If you call this with any other FileInformationClass value
-                                                                                                                                    // it doesn't work for some reason
+            status = fileStore.GetFileInformation(out FileInformation fileBasicInfo, handle, FileInformationClass.FileBasicInformation); 
+            status.HandleStatus();
+            status = fileStore.GetFileInformation(out FileInformation fileStandardInfo, handle, FileInformationClass.FileStandardInformation);
             status.HandleStatus();
 
-            return new SMBFileInfo(path, _fileSystem, fileInfo, credential);
+            return new SMBFileInfo(path, _fileSystem, (FileBasicInformation)fileBasicInfo, (FileStandardInformation)fileStandardInfo, credential);
         }
 
         internal void SaveFileInfo(SMBFileInfo fileInfo, ISMBCredential credential = null)
