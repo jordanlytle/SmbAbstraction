@@ -572,8 +572,12 @@ namespace SmbAbstraction
                 disposition, createOptions, null);
 
             status.HandleStatus();
+            status = fileStore.GetFileInformation(out FileInformation fileInfo, handle, FileInformationClass.FileStandardInformation);
+            status.HandleStatus();
 
-            Stream s = new SMBStream(fileStore, handle, connection);
+            var fileStandardInfo = (FileStandardInformation)fileInfo;
+
+            Stream s = new SMBStream(fileStore, handle, connection, fileStandardInfo.EndOfFile);
 
             if (mode == FileMode.Append)
             {

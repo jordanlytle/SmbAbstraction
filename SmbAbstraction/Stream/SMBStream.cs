@@ -22,13 +22,14 @@ namespace SmbAbstraction
         public override long Position { get { return _position; } set { _position = value; } }
 
 
-        public SMBStream(ISMBFileStore fileStore, object fileHandle, SMBConnection connection)
+        public SMBStream(ISMBFileStore fileStore, object fileHandle, SMBConnection connection, long fileLength)
         {
             _fileStore = fileStore;
             _fileHandle = fileHandle;
             _connection = connection;
             _maxReadSize = Convert.ToInt32(_connection.SMBClient.MaxReadSize);
             _maxWriteSize = Convert.ToInt32(_connection.SMBClient.MaxWriteSize);
+            _length = fileLength;
         }
 
         public override void Flush()
