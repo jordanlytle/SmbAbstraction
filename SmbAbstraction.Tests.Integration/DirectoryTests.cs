@@ -39,6 +39,24 @@ namespace SmbAbstraction.Tests.Integration
 
         [Fact]
         [Trait("Category", "Integration")]
+        public void CanCreateNestedDirectoryInUncRootDirectory()
+        {
+            var testCredentials = TestSettings.ShareCredentials;
+            var testShare = TestSettings.Shares.First();
+            var testRootUncPath = Path.Combine(testShare.RootUncPath);
+
+            var parentDirectoryPath = Path.Combine(testShare.RootUncPath, $"test_directory_parent-{DateTime.Now.ToFileTimeUtc()}");
+            createdTestDirectoryPath = Path.Combine(parentDirectoryPath, $"test_directory_child-{DateTime.Now.ToFileTimeUtc()}");
+
+            using var credential = new SMBCredential(testCredentials.Domain, testCredentials.Username, testCredentials.Password, createdTestDirectoryPath, SMBCredentialProvider);
+
+            var directoryInfo = FileSystem.Directory.CreateDirectory(createdTestDirectoryPath);
+
+            Assert.True(FileSystem.Directory.Exists(createdTestDirectoryPath));
+        }
+
+        [Fact]
+        [Trait("Category", "Integration")]
         public void CanEnumerateFilesUncRootDirectory()
         {
             var testCredentials = TestSettings.ShareCredentials;

@@ -82,6 +82,13 @@ namespace SmbAbstraction
 
                 status = fileStore.CreateFile(out handle, out FileStatus fileStatus, relativePath, accessMask, 0, shareAccess,
                 disposition, createOptions, null);
+
+                if(status == NTStatus.STATUS_OBJECT_PATH_NOT_FOUND)
+                {
+                    CreateDirectory(path.GetParentPath(), credential);
+                    status = fileStore.CreateFile(out handle, out fileStatus, relativePath, accessMask, 0, shareAccess,
+                    disposition, createOptions, null);
+                }
             }
             while (status == NTStatus.STATUS_PENDING && attempts < allowedRetrys);
 
