@@ -35,6 +35,8 @@ namespace SmbAbstraction
 
         private void Connect()
         {
+            ValidateCredential(_credential);
+
             var succeded = SMBClient.Connect(_address, _transport);
             if(!succeded)
             {
@@ -112,6 +114,22 @@ namespace SmbAbstraction
                 {
                     _referenceCount -= 1;
                 }
+            }
+        }
+
+        private void ValidateCredential(ISMBCredential credential)
+        {
+            if(credential.Domain == null)
+            {
+                throw new InvalidCredentialException($"SMB credential is not valid. {nameof(credential.Domain)} cannot be null.");
+            }
+            else if (credential.UserName == null)
+            {
+                throw new InvalidCredentialException($"SMB credential is not valid. {nameof(credential.UserName)} cannot be null.");
+            }
+            else if (credential.Password == null)
+            {
+                throw new InvalidCredentialException($"SMB credential is not valid. {nameof(credential.Password)} cannot be null.");
             }
         }
     }
