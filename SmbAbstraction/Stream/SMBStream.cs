@@ -99,11 +99,11 @@ namespace SmbAbstraction
             _position += bytesWritten;
         }
 
-        public override void Close()
+        protected override void Dispose(bool disposing)
         {
             _fileStore.CloseFile(_fileHandle);
             _connection.Dispose();
-            base.Close();
+            base.Dispose(disposing);
         }
 
         public override void CopyTo(Stream destination, int bufferSize = 0)
