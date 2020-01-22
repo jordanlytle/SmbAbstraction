@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
 namespace SmbAbstraction
@@ -7,6 +6,7 @@ namespace SmbAbstraction
     public class SMBCredentialProvider : ISMBCredentialProvider
     {
         List<ISMBCredential> credentials = new List<ISMBCredential>();
+        private static readonly object _credentialsLock = new object();
 
         public SMBCredentialProvider()
         {
@@ -14,17 +14,20 @@ namespace SmbAbstraction
 
         public ISMBCredential GetSMBCredential(string path)
         {
-            var host = path.Hostname();
-            var shareName = path.ShareName();
+            lock(_credentialsLock)
+            {
+                var host = path.Hostname();
+                var shareName = path.ShareName();
 
-            var credential = credentials.Where(q => q.Host == host && q.ShareName == shareName).FirstOrDefault();
-            if(credential != null)
-            {
-                return credential;
-            }
-            else
-            {
-                return null;
+                var credential = credentials.Where(q => q.Host == host && q.ShareName == shareName).FirstOrDefault();
+                if(credential != null)
+                {
+                    return credential;
+                }
+                else
+                {
+                    return null;
+                }
             }
         }
 
@@ -35,8 +38,18 @@ namespace SmbAbstraction
 
         public void AddSMBCredential(ISMBCredential credential)
         {
-            credential.SetParentList(credentials);
-            credentials.Add(credential);
+            lock(_credentialsLock)
+            {
+                credentials.Add(credential);
+            }
+        }
+
+        public void RemoveSMBCredential(ISMBCredential credential)
+        {
+            lock(_credentialsLock)
+            {
+                credentials.Remove(credential);
+            }
         }
     }
 }

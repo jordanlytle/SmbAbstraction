@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace SmbAbstraction
 {
@@ -8,5 +7,6 @@ namespace SmbAbstraction
         ISMBCredential GetSMBCredential(string path);
         IEnumerable<ISMBCredential> GetSMBCredentials();
         void AddSMBCredential(ISMBCredential credential);
+        void RemoveSMBCredential(ISMBCredential credential);
     }
 }

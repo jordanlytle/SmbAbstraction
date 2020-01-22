@@ -30,7 +30,7 @@ namespace SmbAbstraction.Tests.Integration
             var credentials = TestSettings.ShareCredentials;
             var share = TestSettings.Shares.FirstOrDefault();
 
-            _smbCredentialProvider.AddSMBCredential(new SMBCredential(credentials.Domain, credentials.Username, credentials.Password, share.RootSmbUri));
+            _smbCredentialProvider.AddSMBCredential(new SMBCredential(credentials.Domain, credentials.Username, credentials.Password, share.RootSmbUri, SMBCredentialProvider));
 
             var smbDriveInfoFactory = new SMBDriveInfoFactory(_fileSystem, _smbCredentialProvider, _smbClientFactory, 65536);
 
@@ -46,7 +46,7 @@ namespace SmbAbstraction.Tests.Integration
             var credentials = TestSettings.ShareCredentials;
             var share = TestSettings.Shares.FirstOrDefault();
 
-            _smbCredentialProvider.AddSMBCredential(new SMBCredential(credentials.Domain, credentials.Username, credentials.Password, share.RootUncPath));
+            _smbCredentialProvider.AddSMBCredential(new SMBCredential(credentials.Domain, credentials.Username, credentials.Password, share.RootUncPath, SMBCredentialProvider));
 
             var smbDriveInfoFactory = new SMBDriveInfoFactory(_fileSystem, _smbCredentialProvider, _smbClientFactory, 65536);
 
@@ -62,7 +62,7 @@ namespace SmbAbstraction.Tests.Integration
             var credentials = TestSettings.ShareCredentials;
             var share = TestSettings.Shares.FirstOrDefault();
 
-            _smbCredentialProvider.AddSMBCredential(new SMBCredential(credentials.Domain, credentials.Username, credentials.Password, share.RootSmbUri));
+            _smbCredentialProvider.AddSMBCredential(new SMBCredential(credentials.Domain, credentials.Username, credentials.Password, share.RootSmbUri, SMBCredentialProvider));
 
             var smbDriveInfoFactory = new SMBDriveInfoFactory(_fileSystem, _smbCredentialProvider, _smbClientFactory, 65536);
 
@@ -78,7 +78,7 @@ namespace SmbAbstraction.Tests.Integration
             var credentials = TestSettings.ShareCredentials;
             var share = TestSettings.Shares.FirstOrDefault();
 
-            _smbCredentialProvider.AddSMBCredential(new SMBCredential(credentials.Domain, credentials.Username, credentials.Password, share.RootUncPath));
+            _smbCredentialProvider.AddSMBCredential(new SMBCredential(credentials.Domain, credentials.Username, credentials.Password, share.RootUncPath, SMBCredentialProvider));
 
             var smbDriveInfoFactory = new SMBDriveInfoFactory(_fileSystem, _smbCredentialProvider, _smbClientFactory, 65536);
             

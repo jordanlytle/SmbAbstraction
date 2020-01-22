@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace SmbAbstraction.Tests.Path
+﻿namespace SmbAbstraction.Tests.Path
 {
     public interface IPathTestData
     {

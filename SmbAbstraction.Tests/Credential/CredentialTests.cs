@@ -1,4 +1,5 @@
 using Xunit;
+using FakeItEasy;
 
 namespace SmbAbstraction.Tests.Path
 {
@@ -15,7 +16,7 @@ namespace SmbAbstraction.Tests.Path
         [Fact]
         public void SetDomainNameFromUserNameIfNull()
         {
-            var credential = new SMBCredential(null, $"{domain}\\{userName}", "password", path); 
+            var credential = new SMBCredential(null, $"{domain}\\{userName}", "password", path, A.Fake<ISMBCredentialProvider>()); 
             Assert.Equal(domain, credential.Domain);
             Assert.Equal(userName, credential.UserName);
         }
@@ -27,7 +28,7 @@ namespace SmbAbstraction.Tests.Path
             var userName = "user";
             var combinedUserName = $"{domain}\\{userName}";
 
-            var credential = new SMBCredential(domain, combinedUserName, "password", path); 
+            var credential = new SMBCredential(domain, combinedUserName, "password", path, A.Fake<ISMBCredentialProvider>()); 
             Assert.Equal(domain, credential.Domain);
             Assert.Equal(combinedUserName, credential.UserName);
         }

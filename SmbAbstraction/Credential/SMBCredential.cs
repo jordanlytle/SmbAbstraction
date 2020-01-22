@@ -4,6 +4,7 @@ namespace SmbAbstraction
 {
     public class SMBCredential : ISMBCredential
     {
+        private readonly ISMBCredentialProvider _credentialProvider;
         public string Host { get; }
         public string ShareName { get; }
 
@@ -12,14 +13,13 @@ namespace SmbAbstraction
         public string Password { get; }
         public string Path { get; }
 
-        private List<ISMBCredential> _parentList;
-
-        public SMBCredential(string domain, string userName, string password, string path)
+        public SMBCredential(string domain, string userName, string password, string path, ISMBCredentialProvider credentialProvider)
         {
             Domain = domain;
             UserName = userName;
             Password = password;
             Path = path;
+            _credentialProvider = credentialProvider;
 
             Host = path.Hostname();
             ShareName = path.ShareName();
@@ -33,25 +33,13 @@ namespace SmbAbstraction
                     UserName = userNameParts[1];
                 }
             }
-        }
 
-        public SMBCredential(string domain, string userName, string password, string path, ISMBCredentialProvider provider)
-            : this(domain, userName, password, path)
-        {
-            provider.AddSMBCredential(this);
+            credentialProvider.AddSMBCredential(this);
         }
 
         public void Dispose()
         {
-            if(_parentList != null)
-            {
-                _parentList.Remove(this);
-            }
-        }
-
-        public void SetParentList(List<ISMBCredential> parentList)
-        {
-            _parentList = parentList;
+            _credentialProvider.RemoveSMBCredential(this);
         }
     }
 }

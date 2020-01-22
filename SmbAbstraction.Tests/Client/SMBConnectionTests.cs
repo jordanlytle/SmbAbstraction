@@ -25,9 +25,9 @@ namespace SmbAbstraction.Tests.Path
             var ipAddress = IPAddress.Parse("127.0.0.1");
 
             var credentials = new List<SMBCredential>() {
-                new SMBCredential(null, userName, password, path),
-                new SMBCredential(domain, null, password, path),
-                new SMBCredential(domain, userName, null, path)
+                new SMBCredential(null, userName, password, path, A.Fake<ISMBCredentialProvider>()),
+                new SMBCredential(domain, null, password, path, A.Fake<ISMBCredentialProvider>()),
+                new SMBCredential(domain, userName, null, path, A.Fake<ISMBCredentialProvider>())
             };
 
             foreach(var credential in credentials)
