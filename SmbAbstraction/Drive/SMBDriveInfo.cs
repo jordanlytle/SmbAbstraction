@@ -13,12 +13,18 @@ namespace SmbAbstraction
         public SMBDriveInfo(string path, IFileSystem fileSystem, SMBFileSystemInformation smbFileSystemInformation, ISMBCredential credential)
         {
             FileSystem = fileSystem;
-            AvailableFreeSpace = smbFileSystemInformation.SizeInformation.CallerAvailableAllocationUnits;
             DriveFormat = smbFileSystemInformation.AttributeInformation.FileSystemName;
             Name = path.ShareName();
             RootDirectory = _dirInfoFactory.FromDirectoryName(path, credential);
-            TotalFreeSpace = smbFileSystemInformation.SizeInformation.ActualAvailableAllocationUnits;
-            TotalSize = smbFileSystemInformation.SizeInformation.TotalAllocationUnits;
+            var actualAvailableAllocationUnits = smbFileSystemInformation.SizeInformation.ActualAvailableAllocationUnits;
+            var sectorsPerUnit = smbFileSystemInformation.SizeInformation.SectorsPerAllocationUnit;
+            var bytesPerSector = smbFileSystemInformation.SizeInformation.BytesPerSector;
+            var totalAllocationUnits = smbFileSystemInformation.SizeInformation.TotalAllocationUnits;
+            var availableAllocationUnits = smbFileSystemInformation.SizeInformation.CallerAvailableAllocationUnits;  
+
+            AvailableFreeSpace = availableAllocationUnits * sectorsPerUnit * bytesPerSector;
+            TotalFreeSpace = actualAvailableAllocationUnits * sectorsPerUnit * bytesPerSector;
+            TotalSize = totalAllocationUnits * sectorsPerUnit * bytesPerSector;
             _volumeLabel = smbFileSystemInformation.VolumeInformation.VolumeLabel;
         }
 
