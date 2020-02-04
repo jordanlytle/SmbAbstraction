@@ -271,49 +271,56 @@ namespace SmbAbstraction
                 return base.Exists(path);
             }
 
-            if (!path.TryResolveHostnameFromPath(out var ipAddress))
+            try
             {
-                throw new ArgumentException($"Unable to resolve \"{path.Hostname()}\"");
-            }
-
-            NTStatus status = NTStatus.STATUS_SUCCESS;
-
-            var credential = _credentialProvider.GetSMBCredential(path);
-
-            using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize))
-            {
-                var shareName = path.ShareName();
-                var relativePath = path.RelativeSharePath();
-                var directoryPath = Path.GetDirectoryName(relativePath);
-
-                ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
-
-                status.HandleStatus();
-
-                status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, directoryPath, AccessMask.GENERIC_READ, 0, ShareAccess.Read,
-                    CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
-
-                status.HandleStatus();
-
-                fileStore.QueryDirectory(out List<QueryDirectoryFileInformation> queryDirectoryFileInformation, handle, string.IsNullOrEmpty(directoryPath) ? "*" : directoryPath, FileInformationClass.FileDirectoryInformation);
-
-                foreach (var file in queryDirectoryFileInformation)
+                if (!path.TryResolveHostnameFromPath(out var ipAddress))
                 {
-                    if (file.FileInformationClass == FileInformationClass.FileDirectoryInformation)
-                    {
-                        FileDirectoryInformation fileDirectoryInformation = (FileDirectoryInformation)file;
-                        if (fileDirectoryInformation.FileName == Path.GetFileName(relativePath))
-                        {
-                            fileStore.CloseFile(handle);
-                            return true;
-                        }
-                    }
+                    throw new ArgumentException($"Unable to resolve \"{path.Hostname()}\"");
                 }
 
-                fileStore.CloseFile(handle);
-            }
+                NTStatus status = NTStatus.STATUS_SUCCESS;
 
-            return false;
+                var credential = _credentialProvider.GetSMBCredential(path);
+
+                using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize))
+                {
+                    var shareName = path.ShareName();
+                    var relativePath = path.RelativeSharePath();
+                    var directoryPath = Path.GetDirectoryName(relativePath);
+
+                    ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
+
+                    status.HandleStatus();
+
+                    status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, directoryPath, AccessMask.GENERIC_READ, 0, ShareAccess.Read,
+                        CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
+
+                    status.HandleStatus();
+
+                    fileStore.QueryDirectory(out List<QueryDirectoryFileInformation> queryDirectoryFileInformation, handle, string.IsNullOrEmpty(directoryPath) ? "*" : directoryPath, FileInformationClass.FileDirectoryInformation);
+
+                    foreach (var file in queryDirectoryFileInformation)
+                    {
+                        if (file.FileInformationClass == FileInformationClass.FileDirectoryInformation)
+                        {
+                            FileDirectoryInformation fileDirectoryInformation = (FileDirectoryInformation)file;
+                            if (fileDirectoryInformation.FileName == Path.GetFileName(relativePath))
+                            {
+                                fileStore.CloseFile(handle);
+                                return true;
+                            }
+                        }
+                    }
+
+                    fileStore.CloseFile(handle);
+                }
+
+                return false;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         public override FileSecurity GetAccessControl(string path)
