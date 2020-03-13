@@ -82,6 +82,13 @@ namespace SmbAbstraction
 
                 status = fileStore.CreateFile(out handle, out FileStatus fileStatus, relativePath, accessMask, 0, shareAccess,
                 disposition, createOptions, null);
+
+                if(status == NTStatus.STATUS_OBJECT_PATH_NOT_FOUND)
+                {
+                    CreateDirectory(path.GetParentPath(), credential);
+                    status = fileStore.CreateFile(out handle, out fileStatus, relativePath, accessMask, 0, shareAccess,
+                    disposition, createOptions, null);
+                }
             }
             while (status == NTStatus.STATUS_PENDING && attempts < allowedRetrys);
 
@@ -519,57 +526,64 @@ namespace SmbAbstraction
                 return base.Exists(path);
             }
 
-            if (!path.TryResolveHostnameFromPath(out var ipAddress))
+            try
             {
-                throw new ArgumentException($"Unable to resolve \"{path.Hostname()}\"");
-            }
-
-            NTStatus status = NTStatus.STATUS_SUCCESS;
-
-            var credential = _credentialProvider.GetSMBCredential(path);
-
-            using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize))
-            {
-                var shareName = path.ShareName();
-                var relativePath = path.RelativeSharePath();
-
-                if(string.IsNullOrEmpty(relativePath))
+                if (!path.TryResolveHostnameFromPath(out var ipAddress))
                 {
-                    return true;
+                    throw new ArgumentException($"Unable to resolve \"{path.Hostname()}\"");
                 }
 
-                var parentFullPath = path.GetParentPath();
-                var parentPath = parentFullPath.RelativeSharePath();
-                var directoryName = path.GetLastPathSegment().RemoveAnySeperators();
+                NTStatus status = NTStatus.STATUS_SUCCESS;
 
-                ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
+                var credential = _credentialProvider.GetSMBCredential(path);
 
-                status.HandleStatus();
-
-                status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, parentPath, AccessMask.GENERIC_READ, 0, ShareAccess.Read,
-                    CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
-
-                status.HandleStatus();
-
-                fileStore.QueryDirectory(out List<QueryDirectoryFileInformation> queryDirectoryFileInformation, handle, string.IsNullOrEmpty(directoryName) ? "*" : directoryName, FileInformationClass.FileDirectoryInformation);
-
-                foreach (var file in queryDirectoryFileInformation)
+                using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize))
                 {
-                    if (file.FileInformationClass == FileInformationClass.FileDirectoryInformation)
+                    var shareName = path.ShareName();
+                    var relativePath = path.RelativeSharePath();
+
+                    if(string.IsNullOrEmpty(relativePath))
                     {
-                        FileDirectoryInformation fileDirectoryInformation = (FileDirectoryInformation)file;
-                        if (fileDirectoryInformation.FileName == directoryName)
+                        return true;
+                    }
+
+                    var parentFullPath = path.GetParentPath();
+                    var parentPath = parentFullPath.RelativeSharePath();
+                    var directoryName = path.GetLastPathSegment().RemoveAnySeperators();
+
+                    ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
+
+                    status.HandleStatus();
+
+                    status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, parentPath, AccessMask.GENERIC_READ, 0, ShareAccess.Read,
+                        CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
+
+                    status.HandleStatus();
+
+                    fileStore.QueryDirectory(out List<QueryDirectoryFileInformation> queryDirectoryFileInformation, handle, string.IsNullOrEmpty(directoryName) ? "*" : directoryName, FileInformationClass.FileDirectoryInformation);
+
+                    foreach (var file in queryDirectoryFileInformation)
+                    {
+                        if (file.FileInformationClass == FileInformationClass.FileDirectoryInformation)
                         {
-                            fileStore.CloseFile(handle);
-                            return true;
+                            FileDirectoryInformation fileDirectoryInformation = (FileDirectoryInformation)file;
+                            if (fileDirectoryInformation.FileName == directoryName)
+                            {
+                                fileStore.CloseFile(handle);
+                                return true;
+                            }
                         }
                     }
+
+                    fileStore.CloseFile(handle);
                 }
 
-                fileStore.CloseFile(handle);
+                return false;
             }
-
-            return false;
+            catch
+            {
+                return false;
+            }
         }
 
         public override DirectorySecurity GetAccessControl(string path)

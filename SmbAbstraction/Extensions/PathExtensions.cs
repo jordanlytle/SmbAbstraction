@@ -20,8 +20,15 @@ namespace SmbAbstraction
 
         public static bool IsSmbPath(this string path)
         {
-            var uri = new Uri(path);
-            return uri.Scheme.Equals("smb") || uri.IsUnc;
+            try
+            {
+                var uri = new Uri(path);
+                return uri.Scheme.Equals("smb") || uri.IsUnc;
+            }
+            catch(Exception ex)
+            {
+                throw new Exception($"Unable to determine if '{path}' is an SMB path", ex);
+            }
         }
 
 
@@ -40,8 +47,15 @@ namespace SmbAbstraction
 
         public static string Hostname(this string path)
         {
-            var uri = new Uri(path);
-            return uri.Host;
+            try 
+            {
+                var uri = new Uri(path);
+                return uri.Host;
+            }
+            catch(Exception ex)
+            {
+                throw new Exception($"Unable to parse hostname for path: {path}", ex);
+            }
         }
 
         public static bool TryResolveHostnameFromPath(this string path, out IPAddress ipAddress)

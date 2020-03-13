@@ -18,9 +18,24 @@ namespace SmbAbstraction
             FileSystem = fileSystem;
         }
 
-        internal SMBFileInfo(string path, IFileSystem fileSystem, FileInformation fileInformation, ISMBCredential credential) : this(path, fileSystem)
+        internal SMBFileInfo(FileInfo fileInfo, IFileSystem fileSystem) : this(fileInfo.FullName, fileSystem)
         {
-            FileBasicInformation fileBasicInformation = (FileBasicInformation)fileInformation;
+            CreationTime = fileInfo.CreationTime;
+            CreationTimeUtc = fileInfo.CreationTimeUtc;
+            LastAccessTime = fileInfo.LastAccessTime;
+            LastAccessTimeUtc = fileInfo.LastAccessTimeUtc;
+            LastWriteTime = fileInfo.LastWriteTime;
+            LastWriteTimeUtc = fileInfo.LastWriteTimeUtc;
+            Attributes = fileInfo.Attributes;
+            Directory = new DirectoryInfoWrapper(fileSystem, fileInfo.Directory);
+            DirectoryName = fileInfo.DirectoryName;
+            Exists = fileInfo.Exists;
+            IsReadOnly = fileInfo.IsReadOnly;
+            Length = fileInfo.Length;
+        }
+
+        internal SMBFileInfo(string path, IFileSystem fileSystem, FileBasicInformation fileBasicInformation, FileStandardInformation fileStandardInformation, ISMBCredential credential) : this(path, fileSystem)
+        {
             if (fileBasicInformation.CreationTime.Time.HasValue)
             {
                 CreationTime = fileBasicInformation.CreationTime.Time.Value;
@@ -47,7 +62,7 @@ namespace SmbAbstraction
             DirectoryName = Directory?.Name;
             Exists = true;
             IsReadOnly = fileBasicInformation.FileAttributes.HasFlag(SMBLibrary.FileAttributes.ReadOnly);
-            Length = fileBasicInformation.Length;
+            Length = fileStandardInformation.EndOfFile;
         }
 
         public IDirectoryInfo Directory { get; set; }

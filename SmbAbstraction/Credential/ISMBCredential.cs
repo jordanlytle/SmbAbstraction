@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace SmbAbstraction
 {
@@ -11,6 +10,5 @@ namespace SmbAbstraction
         string Path { get; }
         string Host { get; }
         string ShareName { get; }
-        void SetParentList(List<ISMBCredential> parentList);
     }
 }
