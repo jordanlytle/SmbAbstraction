@@ -96,5 +96,25 @@ namespace SmbAbstraction
         {
             throw new NotSupportedException();
         }
+
+        public Stream Create(IntPtr handle, FileAccess access)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Stream Create(IntPtr handle, FileAccess access, bool ownsHandle)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Stream Create(IntPtr handle, FileAccess access, bool ownsHandle, int bufferSize)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Stream Create(IntPtr handle, FileAccess access, bool ownsHandle, int bufferSize, bool isAsync)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

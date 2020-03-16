@@ -31,7 +31,6 @@ namespace SmbAbstraction
             }
         }
 
-
         public static string BuildSharePath(this string path, string shareName)
         {
             var uri = new Uri(path);

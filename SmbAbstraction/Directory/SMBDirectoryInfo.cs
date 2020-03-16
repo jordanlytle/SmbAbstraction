@@ -297,5 +297,10 @@ namespace SmbAbstraction
 
             return fileBasicInformation;
         }
+
+        public void Create(DirectorySecurity directorySecurity)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

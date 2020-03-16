@@ -3,22 +3,42 @@ using System.Security.AccessControl;
 using System.IO.Abstractions;
 using SMBLibrary;
 using System.IO;
+using SMBLibrary.Client;
 
 namespace SmbAbstraction
 {
-    public class SMBFileInfo : IFileInfo
+    public class SMBFileInfo : FileInfoWrapper, IFileInfo
     {
         private SMBFile _file => FileSystem.File as SMBFile;
         private SMBFileInfoFactory _fileInfoFactory => FileSystem.FileInfo as SMBFileInfoFactory;
         private SMBDirectoryInfoFactory _dirInfoFactory => FileSystem.DirectoryInfo as SMBDirectoryInfoFactory;
 
-        public SMBFileInfo(string path, IFileSystem fileSystem)
+        private IFileSystem _fileSystem;
+        private ISMBClientFactory _smbClientFactory;
+        private ISMBCredentialProvider _credentialProvider;
+        private readonly uint _maxBufferSize;
+        public SMBTransportType transport { get; set; }
+
+        public SMBFileInfo(string path, 
+                           IFileSystem fileSystem, 
+                           ISMBClientFactory smbClientFactory, 
+                           ISMBCredentialProvider credentialProvider,
+                           uint maxBufferSize): base(new FileSystem(), new FileInfo(path))
         {
             FullName = path;
-            FileSystem = fileSystem;
+            _fileSystem = fileSystem;
+
+            _smbClientFactory = smbClientFactory;
+            _credentialProvider = credentialProvider;
+            transport = SMBTransportType.DirectTCPTransport;
+            _maxBufferSize = maxBufferSize;
         }
 
-        internal SMBFileInfo(FileInfo fileInfo, IFileSystem fileSystem) : this(fileInfo.FullName, fileSystem)
+        internal SMBFileInfo(FileInfo fileInfo, 
+                             IFileSystem fileSystem,
+                             ISMBClientFactory smbClientFactory,
+                             ISMBCredentialProvider credentialProvider,
+                             uint maxBufferSize) : this(fileInfo.FullName, fileSystem, smbClientFactory, credentialProvider, maxBufferSize)
         {
             CreationTime = fileInfo.CreationTime;
             CreationTimeUtc = fileInfo.CreationTimeUtc;
@@ -34,7 +54,14 @@ namespace SmbAbstraction
             Length = fileInfo.Length;
         }
 
-        internal SMBFileInfo(string path, IFileSystem fileSystem, FileBasicInformation fileBasicInformation, FileStandardInformation fileStandardInformation, ISMBCredential credential) : this(path, fileSystem)
+        internal SMBFileInfo(string path, 
+                             IFileSystem fileSystem, 
+                             FileBasicInformation fileBasicInformation, 
+                             FileStandardInformation fileStandardInformation, 
+                             ISMBCredential credential,
+                             ISMBClientFactory smbClientFactory,
+                             ISMBCredentialProvider credentialProvider,
+                             uint maxBufferSize) : this(path, fileSystem, smbClientFactory, credentialProvider, maxBufferSize)
         {
             if (fileBasicInformation.CreationTime.Time.HasValue)
             {
@@ -65,17 +92,17 @@ namespace SmbAbstraction
             Length = fileStandardInformation.EndOfFile;
         }
 
-        public IDirectoryInfo Directory { get; set; }
+        public override IDirectoryInfo Directory { get; }
 
-        public string DirectoryName { get; internal set; }
+        public override string DirectoryName { get; }
 
-        public bool IsReadOnly { get; set; }
+        //public bool IsReadOnly { get; set; }
 
-        public long Length { get; internal set; }
+        public override long Length { get; }
 
-        public IFileSystem FileSystem { get; }
+        //public override IFileSystem FileSystem { get; }
 
-        public System.IO.FileAttributes Attributes { get; set; }
+        //public System.IO.FileAttributes Attributes { get; set; }
         public DateTime CreationTime { get; set; }
         public DateTime CreationTimeUtc { get; set; }
 
@@ -190,10 +217,10 @@ namespace SmbAbstraction
         {
             var fileInfo = _fileInfoFactory.FromFileName(FullName);
 
-            Directory = fileInfo.Directory;
-            DirectoryName = fileInfo.DirectoryName;
+            //Directory = fileInfo.Directory;
+            //DirectoryName = fileInfo.DirectoryName;
             IsReadOnly = fileInfo.IsReadOnly;
-            Length = fileInfo.Length;
+            //Length = fileInfo.Length;
             Attributes = fileInfo.Attributes;
             CreationTime = fileInfo.CreationTime;
             CreationTimeUtc = fileInfo.CreationTimeUtc;
@@ -230,6 +257,83 @@ namespace SmbAbstraction
             }
 
             return fileBasicInformation;
+        }
+
+        public void Decrypt()
+        {
+            if (!FullName.IsSmbPath())
+            {
+                base.Decrypt();
+            }
+
+            throw new NotImplementedException();
+        }
+
+        public void Encrypt()
+        {
+            if(!FullName.IsSmbPath())
+            {
+                base.Encrypt();
+            }
+
+            throw new NotImplementedException();
+        }
+
+        public IFileInfo Replace(string destinationFileName, string destinationBackupFileName)
+        {
+            return this.Replace(destinationFileName, destinationBackupFileName, false);
+        }
+
+        public IFileInfo Replace(string destinationFileName, string destinationBackupFileName, bool ignoreMetadataErrors)
+        {
+            var path = FullName;
+
+            if (!path.IsSmbPath())
+            {
+                return base.Replace(destinationBackupFileName, destinationBackupFileName, ignoreMetadataErrors);
+            }
+
+            try
+            {
+                if (!path.TryResolveHostnameFromPath(out var ipAddress))
+                {
+                    throw new ArgumentException($"Unable to resolve \"{path.Hostname()}\"");
+                }
+
+                NTStatus status = NTStatus.STATUS_SUCCESS;
+
+                var credential = _credentialProvider.GetSMBCredential(path);
+
+                using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize))
+                {
+                    var shareName = path.ShareName();
+                    var relativePath = path.RelativeSharePath();
+                    var directoryPath = Path.GetDirectoryName(relativePath);
+
+                    ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
+
+                    status.HandleStatus();
+
+                    status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, directoryPath, AccessMask.GENERIC_READ, 0, ShareAccess.Read,
+                        CreateDisposition.FILE_OPEN, CreateOptions., null);
+
+                    status.HandleStatus();
+
+                    
+
+
+                    fileStore.CloseFile(handle);
+                }
+
+                return default;
+            }
+            catch
+            {
+                return default;
+            }
+
+
+            throw new NotImplementedException();
         }
     }
 }
