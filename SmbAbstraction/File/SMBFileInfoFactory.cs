@@ -31,7 +31,7 @@ namespace SmbAbstraction
             if (!fileName.IsSmbPath())
             {
                 var fileInfo = new FileInfo(fileName);
-                return new SMBFileInfo(fileInfo, _fileSystem, _smbClientFactory, _credentialProvider, _maxBufferSize);
+                return new SMBFileInfo(fileInfo, _fileSystem);
             }
 
             return FromFileName(fileName, null);
@@ -80,7 +80,9 @@ namespace SmbAbstraction
             status = fileStore.GetFileInformation(out FileInformation fileStandardInfo, handle, FileInformationClass.FileStandardInformation);
             status.HandleStatus();
 
-            return new SMBFileInfo(path, _fileSystem, (FileBasicInformation)fileBasicInfo, (FileStandardInformation)fileStandardInfo, credential, _smbClientFactory, _credentialProvider, _maxBufferSize);
+            fileStore.CloseFile(handle);
+
+            return new SMBFileInfo(path, _fileSystem, (FileBasicInformation)fileBasicInfo, (FileStandardInformation)fileStandardInfo, credential);
         }
 
         internal void SaveFileInfo(SMBFileInfo fileInfo, ISMBCredential credential = null)

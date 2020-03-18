@@ -35,6 +35,8 @@ namespace SmbAbstraction.Tests.Integration
             var directoryInfo = FileSystem.Directory.CreateDirectory(createdTestDirectoryPath);
 
             Assert.True(FileSystem.Directory.Exists(createdTestDirectoryPath));
+
+            FileSystem.Directory.Delete(createdTestDirectoryPath);
         }
 
         [Fact]
@@ -53,6 +55,8 @@ namespace SmbAbstraction.Tests.Integration
             var directoryInfo = FileSystem.Directory.CreateDirectory(createdTestDirectoryPath);
 
             Assert.True(FileSystem.Directory.Exists(createdTestDirectoryPath));
+
+            FileSystem.Directory.Delete(createdTestDirectoryPath);
         }
 
         [Fact]

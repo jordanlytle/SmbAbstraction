@@ -20,7 +20,7 @@ namespace SmbAbstraction.Tests.Integration
             var testShare = TestSettings.Shares.First();
             var testRootUncPath = testShare.RootUncPath;
             var uncDirectory = Path.Combine(testRootUncPath, testShare.Directories.First());
-            var tempFilePath = Path.Combine(TestSettings.LocalTempFolder, tempFileName);
+            var tempFilePath = Path.Combine(LocalTempDirectory, tempFileName);
 
             var byteArray = new byte[100];
 
@@ -39,11 +39,15 @@ namespace SmbAbstraction.Tests.Integration
             
             var uncFileInfo = fileInfo.CopyTo(Path.Combine(uncDirectory, tempFileName));
             Assert.True(uncFileInfo.Exists);
-
-            using(var stream = uncFileInfo.OpenRead())
+            
+            using (var stream = uncFileInfo.OpenRead())
             {
+                //Assert.Equal(uncFileInfo.Length, fileSize);
                 Assert.Equal(stream.Length, fileSize);
             }
+                
+
+            FileSystem.File.Delete(uncFileInfo.FullName);
         }
     }
 }

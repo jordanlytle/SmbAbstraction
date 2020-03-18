@@ -287,6 +287,7 @@ namespace SmbAbstraction
                     var shareName = path.ShareName();
                     var relativePath = path.RelativeSharePath();
                     var directoryPath = Path.GetDirectoryName(relativePath);
+                    var fileName = Path.GetFileName(path);
 
                     ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
@@ -297,7 +298,7 @@ namespace SmbAbstraction
 
                     status.HandleStatus();
 
-                    fileStore.QueryDirectory(out List<QueryDirectoryFileInformation> queryDirectoryFileInformation, handle, string.IsNullOrEmpty(directoryPath) ? "*" : directoryPath, FileInformationClass.FileDirectoryInformation);
+                    fileStore.QueryDirectory(out List<QueryDirectoryFileInformation> queryDirectoryFileInformation, handle, string.IsNullOrEmpty(fileName) ? "*" : fileName, FileInformationClass.FileDirectoryInformation);
 
                     foreach (var file in queryDirectoryFileInformation)
                     {
@@ -575,11 +576,32 @@ namespace SmbAbstraction
                     break;
             }
 
-            status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativePath, accessMask, 0, shareAccess,
-                disposition, createOptions, null);
+            int getInfoAttempts = 0;
+            int getInfoAllowedRetrys = 5;
+            
+            object handle;
+            FileInformation fileInfo;
 
-            status.HandleStatus();
-            status = fileStore.GetFileInformation(out FileInformation fileInfo, handle, FileInformationClass.FileStandardInformation);
+            do
+            {
+                getInfoAttempts++;
+                int openAttempts = 0;
+                int openAllowedRetrys = 5;
+
+                do
+                {
+                    openAttempts++;
+
+                    status = fileStore.CreateFile(out handle, out FileStatus fileStatus, relativePath, accessMask, 0, shareAccess,
+                    disposition, createOptions, null);
+                }
+                while (status == NTStatus.STATUS_PENDING && openAttempts < openAllowedRetrys);
+
+                status.HandleStatus();
+                status = fileStore.GetFileInformation(out fileInfo, handle, FileInformationClass.FileStandardInformation);
+            }
+            while (status == NTStatus.STATUS_NETWORK_NAME_DELETED && getInfoAttempts < getInfoAllowedRetrys);
+            
             status.HandleStatus();
 
             var fileStandardInfo = (FileStandardInformation)fileInfo;
@@ -590,7 +612,7 @@ namespace SmbAbstraction
             {
                 s.Seek(0, SeekOrigin.End);
             }
-
+            
             return s;
         }
 

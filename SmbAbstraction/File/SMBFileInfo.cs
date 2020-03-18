@@ -12,33 +12,17 @@ namespace SmbAbstraction
         private SMBFile _file => FileSystem.File as SMBFile;
         private SMBFileInfoFactory _fileInfoFactory => FileSystem.FileInfo as SMBFileInfoFactory;
         private SMBDirectoryInfoFactory _dirInfoFactory => FileSystem.DirectoryInfo as SMBDirectoryInfoFactory;
-
-        private IFileSystem _fileSystem;
-        private ISMBClientFactory _smbClientFactory;
-        private ISMBCredentialProvider _credentialProvider;
-        private readonly uint _maxBufferSize;
-        public SMBTransportType transport { get; set; }
+        public IFileSystem FileSystem { get; }
 
         public SMBFileInfo(string path, 
-                           IFileSystem fileSystem, 
-                           ISMBClientFactory smbClientFactory, 
-                           ISMBCredentialProvider credentialProvider,
-                           uint maxBufferSize): base(new FileSystem(), new FileInfo(path))
+                           IFileSystem fileSystem): base(new FileSystem(), new FileInfo(path))
         {
-            FullName = path;
-            _fileSystem = fileSystem;
-
-            _smbClientFactory = smbClientFactory;
-            _credentialProvider = credentialProvider;
-            transport = SMBTransportType.DirectTCPTransport;
-            _maxBufferSize = maxBufferSize;
+            _fullName = path;
+            FileSystem = fileSystem;
         }
 
         internal SMBFileInfo(FileInfo fileInfo, 
-                             IFileSystem fileSystem,
-                             ISMBClientFactory smbClientFactory,
-                             ISMBCredentialProvider credentialProvider,
-                             uint maxBufferSize) : this(fileInfo.FullName, fileSystem, smbClientFactory, credentialProvider, maxBufferSize)
+                             IFileSystem fileSystem) : this(fileInfo.FullName, fileSystem/*, smbClientFactory, credentialProvider, maxBufferSize*/)
         {
             CreationTime = fileInfo.CreationTime;
             CreationTimeUtc = fileInfo.CreationTimeUtc;
@@ -47,21 +31,18 @@ namespace SmbAbstraction
             LastWriteTime = fileInfo.LastWriteTime;
             LastWriteTimeUtc = fileInfo.LastWriteTimeUtc;
             Attributes = fileInfo.Attributes;
-            Directory = new DirectoryInfoWrapper(fileSystem, fileInfo.Directory);
-            DirectoryName = fileInfo.DirectoryName;
-            Exists = fileInfo.Exists;
+            _directory = new DirectoryInfoWrapper(fileSystem, fileInfo.Directory);
+            _directoryName = fileInfo.DirectoryName;
+            _exists = fileInfo.Exists;
             IsReadOnly = fileInfo.IsReadOnly;
-            Length = fileInfo.Length;
+            _length = fileInfo.Length;
         }
 
         internal SMBFileInfo(string path, 
                              IFileSystem fileSystem, 
                              FileBasicInformation fileBasicInformation, 
-                             FileStandardInformation fileStandardInformation, 
-                             ISMBCredential credential,
-                             ISMBClientFactory smbClientFactory,
-                             ISMBCredentialProvider credentialProvider,
-                             uint maxBufferSize) : this(path, fileSystem, smbClientFactory, credentialProvider, maxBufferSize)
+                             FileStandardInformation fileStandardInformation,
+                             ISMBCredential credential) : this(path, fileSystem)
         {
             if (fileBasicInformation.CreationTime.Time.HasValue)
             {
@@ -85,154 +66,143 @@ namespace SmbAbstraction
             var parentUri = pathUri.AbsoluteUri.EndsWith('/') ? new Uri(pathUri, "..") : new Uri(pathUri, ".");
             var parentPathString = parentUri.IsUnc ? parentUri.LocalPath : parentUri.AbsoluteUri;
 
-            Directory = _dirInfoFactory.FromDirectoryName(parentPathString, credential);
-            DirectoryName = Directory?.Name;
-            Exists = true;
+            _directory = _dirInfoFactory.FromDirectoryName(parentPathString, credential);
+            _directoryName = Directory?.Name;
+            _exists = _file.Exists(path);
             IsReadOnly = fileBasicInformation.FileAttributes.HasFlag(SMBLibrary.FileAttributes.ReadOnly);
-            Length = fileStandardInformation.EndOfFile;
+            _length = fileStandardInformation.EndOfFile;
         }
 
-        public override IDirectoryInfo Directory { get; }
+        private IDirectoryInfo _directory;
+        public override IDirectoryInfo Directory { get => _directory; }
 
-        public override string DirectoryName { get; }
+        private string _directoryName;
+        public override string DirectoryName { get => _directoryName; }
 
-        //public bool IsReadOnly { get; set; }
+        private long _length;
+        public override long Length { get => _length; }
 
-        public override long Length { get; }
+        private bool _exists;
+        public override bool Exists { get => _exists; }
 
-        //public override IFileSystem FileSystem { get; }
 
-        //public System.IO.FileAttributes Attributes { get; set; }
-        public DateTime CreationTime { get; set; }
-        public DateTime CreationTimeUtc { get; set; }
+        private string _fullName;
+        public override string FullName { get => _fullName; }
 
-        public bool Exists { get; internal set; }
-
-        public string Extension => Path.GetExtension(FullName);
-
-        public string FullName { get; private set; }
-
-        public DateTime LastAccessTime { get; set; }
-        public DateTime LastAccessTimeUtc { get; set; }
-        public DateTime LastWriteTime { get; set; }
-        public DateTime LastWriteTimeUtc { get; set; }
-
-        public string Name => Path.GetFileName(FullName);
-
-        public StreamWriter AppendText()
+        public override StreamWriter AppendText()
         {
             return _file.AppendText(FullName);
         }
 
-        public IFileInfo CopyTo(string destFileName)
+        public override IFileInfo CopyTo(string destFileName)
         {
             _file.Copy(FullName, destFileName);
             return _fileInfoFactory.FromFileName(destFileName);
         }
 
-        public IFileInfo CopyTo(string destFileName, bool overwrite)
+        public override IFileInfo CopyTo(string destFileName, bool overwrite)
         {
             _file.Copy(FullName, destFileName, overwrite);
             return _fileInfoFactory.FromFileName(destFileName);
         }
 
-        public Stream Create()
+        public override Stream Create()
         {
             var stream = _file.Create(FullName);
-            Exists = true;
+            _exists = true;
             return stream;
         }
 
-        public StreamWriter CreateText()
+        public override StreamWriter CreateText()
         {
             var streamWriter = _file.CreateText(FullName);
-            Exists = true;
+            _exists = true;
             return streamWriter;
         }
 
-        public void Delete()
+        public override void Delete()
         {
             _file.Delete(FullName);
-            Exists = false;
+            _exists = false;
         }
 
-        public FileSecurity GetAccessControl()
+        public override FileSecurity GetAccessControl()
         {
             return _file.GetAccessControl(FullName);
         }
 
-        public FileSecurity GetAccessControl(AccessControlSections includeSections)
+        public override FileSecurity GetAccessControl(AccessControlSections includeSections)
         {
             return _file.GetAccessControl(FullName, includeSections);
         }
 
-        public void MoveTo(string destFileName)
+        public override void MoveTo(string destFileName)
         {
             _file.Move(FullName, destFileName);
         }
 
-        public Stream Open(FileMode mode)
+        public override Stream Open(FileMode mode)
         {
             var stream = _file.Open(FullName, mode);
-            Exists = true;
+            _exists = true;
             return stream;
         }
 
-        public Stream Open(FileMode mode, FileAccess access)
+        public override Stream Open(FileMode mode, FileAccess access)
         {
             var stream = _file.Open(FullName, mode, access);
-            Exists = true;
+            _exists = true;
             return stream;
         }
 
-        public Stream Open(FileMode mode, FileAccess access, FileShare share)
+        public override Stream Open(FileMode mode, FileAccess access, FileShare share)
         {
             var stream = _file.Open(FullName, mode, access, share);
-            Exists = true;
+            _exists = true;
             return stream;
         }
 
-        public Stream OpenRead()
+        public override Stream OpenRead()
         {
             var stream = _file.OpenRead(FullName);
-            Exists = true;
+            _exists = true;
             return stream;
         }
 
-        public StreamReader OpenText()
+        public override StreamReader OpenText()
         {
             var streamReader = _file.OpenText(FullName);
-            Exists = true;
+            _exists = true;
             return streamReader;
         }
 
-        public Stream OpenWrite()
+        public override Stream OpenWrite()
         {
             var stream = _file.OpenWrite(FullName);
-            Exists = true;
+            _exists = true;
             return stream;
         }
 
-        public void Refresh()
+        public override void Refresh()
         {
             var fileInfo = _fileInfoFactory.FromFileName(FullName);
 
-            //Directory = fileInfo.Directory;
-            //DirectoryName = fileInfo.DirectoryName;
+            _directory = fileInfo.Directory;
+            _directoryName = fileInfo.DirectoryName;
             IsReadOnly = fileInfo.IsReadOnly;
-            //Length = fileInfo.Length;
+            _length = fileInfo.Length;
             Attributes = fileInfo.Attributes;
             CreationTime = fileInfo.CreationTime;
             CreationTimeUtc = fileInfo.CreationTimeUtc;
-            Exists = fileInfo.Exists;
-            FullName = fileInfo.FullName;
+            _exists = fileInfo.Exists;
+            _fullName = fileInfo.FullName;
             LastAccessTime = fileInfo.LastAccessTime;
             LastAccessTimeUtc = fileInfo.LastAccessTimeUtc;
             LastWriteTime = fileInfo.LastWriteTime;
             LastWriteTimeUtc = fileInfo.LastWriteTimeUtc;
         }
 
-        public void SetAccessControl(FileSecurity fileSecurity)
+        public override void SetAccessControl(FileSecurity fileSecurity)
         {
             _file.SetAccessControl(FullName, fileSecurity);
         }
@@ -259,7 +229,7 @@ namespace SmbAbstraction
             return fileBasicInformation;
         }
 
-        public void Decrypt()
+        public override void Decrypt()
         {
             if (!FullName.IsSmbPath())
             {
@@ -269,7 +239,7 @@ namespace SmbAbstraction
             throw new NotImplementedException();
         }
 
-        public void Encrypt()
+        public override void Encrypt()
         {
             if(!FullName.IsSmbPath())
             {
@@ -279,61 +249,51 @@ namespace SmbAbstraction
             throw new NotImplementedException();
         }
 
-        public IFileInfo Replace(string destinationFileName, string destinationBackupFileName)
+        public override IFileInfo Replace(string destinationFilePath, string destinationBackupFilePath)
         {
-            return this.Replace(destinationFileName, destinationBackupFileName, false);
+            return Replace(destinationFilePath, destinationBackupFilePath, false);
         }
 
-        public IFileInfo Replace(string destinationFileName, string destinationBackupFileName, bool ignoreMetadataErrors)
+        public override IFileInfo Replace(string destinationFilePath, string destinationBackupFilePath, bool ignoreMetadataErrors)
         {
+            if (string.IsNullOrEmpty(destinationFilePath))
+            {
+                throw new ArgumentNullException(nameof(destinationFilePath));
+            }
+
             var path = FullName;
-
-            if (!path.IsSmbPath())
+            
+            if (!path.IsSmbPath() && !destinationFilePath.IsSmbPath())
             {
-                return base.Replace(destinationBackupFileName, destinationBackupFileName, ignoreMetadataErrors);
+                return base.Replace(destinationFilePath, destinationBackupFilePath, ignoreMetadataErrors);
             }
 
-            try
+            //Check if destination file exists, throw if doesnt
+            if (!_file.Exists(destinationFilePath))
             {
-                if (!path.TryResolveHostnameFromPath(out var ipAddress))
+                throw new FileNotFoundException($"Destination file {destinationFilePath} not found.");
+            }
+
+            // If backupPath is specified 
+            // delete the backupfile if it exits
+            // then copy destinatonFile to backupPath
+            if (!string.IsNullOrEmpty(destinationBackupFilePath))
+            {
+                if(_file.Exists(destinationBackupFilePath))
                 {
-                    throw new ArgumentException($"Unable to resolve \"{path.Hostname()}\"");
+                   _file.Delete(destinationBackupFilePath);
                 }
 
-                NTStatus status = NTStatus.STATUS_SUCCESS;
-
-                var credential = _credentialProvider.GetSMBCredential(path);
-
-                using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize))
-                {
-                    var shareName = path.ShareName();
-                    var relativePath = path.RelativeSharePath();
-                    var directoryPath = Path.GetDirectoryName(relativePath);
-
-                    ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
-
-                    status.HandleStatus();
-
-                    status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, directoryPath, AccessMask.GENERIC_READ, 0, ShareAccess.Read,
-                        CreateDisposition.FILE_OPEN, CreateOptions., null);
-
-                    status.HandleStatus();
-
-                    
-
-
-                    fileStore.CloseFile(handle);
-                }
-
-                return default;
-            }
-            catch
-            {
-                return default;
+                _file.Copy(destinationFilePath, destinationBackupFilePath);
             }
 
-
-            throw new NotImplementedException();
+            // Copy and overwrite destinationFile with current file
+            // then delete original file
+            _file.Copy(path, destinationFilePath, overwrite: true);
+            _file.Delete(path);
+            
+            var replacedFile = _fileInfoFactory.FromFileName(destinationFilePath);
+            return replacedFile;
         }
     }
 }

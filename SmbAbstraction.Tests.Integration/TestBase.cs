@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO.Abstractions;
+using System.Runtime.InteropServices;
 
 namespace SmbAbstraction.Tests.Integration
 {
@@ -28,6 +29,25 @@ namespace SmbAbstraction.Tests.Integration
         public IFileSystem FileSystem { get; }
 
         public ISMBCredentialProvider SMBCredentialProvider { get; }
+
+        public string LocalTempDirectory { 
+            get
+            {
+                if(!string.IsNullOrEmpty(_settings.LocalTempFolder))
+                {
+                    return _settings.LocalTempFolder;
+                }
+
+                if(RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    return $@"C:\temp";
+                }
+                else
+                {
+                    return $@"~/";
+                }
+            } 
+        }
 
         public virtual void Dispose()
         {

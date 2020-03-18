@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "SmbAbstraction.Tests.Integration": {
+      "commandName": "Project"
+    },
+    "Docker": {
+      "commandName": "Docker"
+    }
+  }
+}
