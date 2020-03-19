@@ -9,32 +9,32 @@ namespace SmbAbstraction
 {
     public class SMBFileInfo : FileInfoWrapper, IFileInfo
     {
-        private SMBFile _file => FileSystem.File as SMBFile;
-        private SMBFileInfoFactory _fileInfoFactory => FileSystem.FileInfo as SMBFileInfoFactory;
-        private SMBDirectoryInfoFactory _dirInfoFactory => FileSystem.DirectoryInfo as SMBDirectoryInfoFactory;
-        public IFileSystem FileSystem { get; }
+        private SMBFile _file => _fileSystem.File as SMBFile;
+        private SMBFileInfoFactory _fileInfoFactory => _fileSystem.FileInfo as SMBFileInfoFactory;
+        private SMBDirectoryInfoFactory _dirInfoFactory => _fileSystem.DirectoryInfo as SMBDirectoryInfoFactory;
+        private readonly IFileSystem _fileSystem;
 
         public SMBFileInfo(string path, 
                            IFileSystem fileSystem): base(new FileSystem(), new FileInfo(path))
         {
             _fullName = path;
-            FileSystem = fileSystem;
+            _fileSystem = fileSystem;
         }
 
         internal SMBFileInfo(FileInfo fileInfo, 
                              IFileSystem fileSystem) : this(fileInfo.FullName, fileSystem)
         {
-            CreationTime = fileInfo.CreationTime;
-            CreationTimeUtc = fileInfo.CreationTimeUtc;
-            LastAccessTime = fileInfo.LastAccessTime;
-            LastAccessTimeUtc = fileInfo.LastAccessTimeUtc;
-            LastWriteTime = fileInfo.LastWriteTime;
-            LastWriteTimeUtc = fileInfo.LastWriteTimeUtc;
-            Attributes = fileInfo.Attributes;
+            _creationTime = fileInfo.CreationTime;
+            _creationTimeUtc = fileInfo.CreationTimeUtc;
+            _lastAccessTime = fileInfo.LastAccessTime;
+            _lastAccessTimeUtc = fileInfo.LastAccessTimeUtc;
+            _lastWriteTime = fileInfo.LastWriteTime;
+            _lastWriteTimeUtc = fileInfo.LastWriteTimeUtc;
+            _attributes = fileInfo.Attributes;
             _directory = new DirectoryInfoWrapper(fileSystem, fileInfo.Directory);
             _directoryName = fileInfo.DirectoryName;
             _exists = fileInfo.Exists;
-            IsReadOnly = fileInfo.IsReadOnly;
+            _isReadOnly = fileInfo.IsReadOnly;
             _length = fileInfo.Length;
         }
 
@@ -46,21 +46,21 @@ namespace SmbAbstraction
         {
             if (fileBasicInformation.CreationTime.Time.HasValue)
             {
-                CreationTime = fileBasicInformation.CreationTime.Time.Value;
-                CreationTimeUtc = CreationTime.ToUniversalTime();
+                _creationTime = fileBasicInformation.CreationTime.Time.Value;
+                _creationTimeUtc = CreationTime.ToUniversalTime();
             }
             if (fileBasicInformation.LastAccessTime.Time.HasValue)
             {
-                LastAccessTime = fileBasicInformation.LastAccessTime.Time.Value;
-                LastAccessTimeUtc = LastAccessTime.ToUniversalTime();
+                _lastAccessTime = fileBasicInformation.LastAccessTime.Time.Value;
+                _lastAccessTimeUtc = LastAccessTime.ToUniversalTime();
             }
             if (fileBasicInformation.LastWriteTime.Time.HasValue)
             {
-                LastWriteTime = fileBasicInformation.LastWriteTime.Time.Value;
-                LastWriteTimeUtc = LastWriteTime.ToUniversalTime();
+                _lastWriteTime = fileBasicInformation.LastWriteTime.Time.Value;
+                _lastWriteTimeUtc = LastWriteTime.ToUniversalTime();
             }
 
-            Attributes = (System.IO.FileAttributes)fileBasicInformation.FileAttributes;
+            _attributes = (System.IO.FileAttributes)fileBasicInformation.FileAttributes;
 
             var pathUri = new Uri(path);
             var parentUri = pathUri.AbsoluteUri.EndsWith('/') ? new Uri(pathUri, "..") : new Uri(pathUri, ".");
@@ -69,25 +69,37 @@ namespace SmbAbstraction
             _directory = _dirInfoFactory.FromDirectoryName(parentPathString, credential);
             _directoryName = Directory?.Name;
             _exists = _file.Exists(path);
-            IsReadOnly = fileBasicInformation.FileAttributes.HasFlag(SMBLibrary.FileAttributes.ReadOnly);
+            _isReadOnly = fileBasicInformation.FileAttributes.HasFlag(SMBLibrary.FileAttributes.ReadOnly);
             _length = fileStandardInformation.EndOfFile;
         }
 
         private IDirectoryInfo _directory;
-        public override IDirectoryInfo Directory { get => _directory; }
-
         private string _directoryName;
-        public override string DirectoryName { get => _directoryName; }
-
+        private bool _isReadOnly;
         private long _length;
-        public override long Length { get => _length; }
-
+        private System.IO.FileAttributes _attributes;
+        private DateTime _creationTime;
+        private DateTime _creationTimeUtc;
         private bool _exists;
-        public override bool Exists { get => _exists; }
-
-
         private string _fullName;
+        private DateTime _lastAccessTime;
+        private DateTime _lastAccessTimeUtc;
+        private DateTime _lastWriteTime;
+        private DateTime _lastWriteTimeUtc;
+
+        public override IDirectoryInfo Directory { get => _directory; }
+        public override string DirectoryName { get => _directoryName; }
+        public override bool IsReadOnly { get => _isReadOnly; }
+        public override long Length { get => _length; }
+        public override System.IO.FileAttributes Attributes { get => _attributes; }
+        public override DateTime CreationTime { get => _creationTime; }
+        public override DateTime CreationTimeUtc { get => _creationTimeUtc; }
+        public override bool Exists { get => _exists; }
         public override string FullName { get => _fullName; }
+        public override DateTime LastAccessTime { get => _lastAccessTime; }
+        public override DateTime LastAccessTimeUtc { get => _lastAccessTimeUtc; }
+        public override DateTime LastWriteTime { get => _lastWriteTime; }
+        public override DateTime LastWriteTimeUtc { get => _lastWriteTimeUtc; }
 
         public override StreamWriter AppendText()
         {
@@ -189,17 +201,17 @@ namespace SmbAbstraction
 
             _directory = fileInfo.Directory;
             _directoryName = fileInfo.DirectoryName;
-            IsReadOnly = fileInfo.IsReadOnly;
+            _isReadOnly = fileInfo.IsReadOnly;
             _length = fileInfo.Length;
-            Attributes = fileInfo.Attributes;
-            CreationTime = fileInfo.CreationTime;
-            CreationTimeUtc = fileInfo.CreationTimeUtc;
+            _attributes = fileInfo.Attributes;
+            _creationTime = fileInfo.CreationTime;
+            _creationTimeUtc = fileInfo.CreationTimeUtc;
             _exists = fileInfo.Exists;
             _fullName = fileInfo.FullName;
-            LastAccessTime = fileInfo.LastAccessTime;
-            LastAccessTimeUtc = fileInfo.LastAccessTimeUtc;
-            LastWriteTime = fileInfo.LastWriteTime;
-            LastWriteTimeUtc = fileInfo.LastWriteTimeUtc;
+            _lastAccessTime = fileInfo.LastAccessTime;
+            _lastAccessTimeUtc = fileInfo.LastAccessTimeUtc;
+            _lastWriteTime = fileInfo.LastWriteTime;
+            _lastWriteTimeUtc = fileInfo.LastWriteTimeUtc;
         }
 
         public override void SetAccessControl(FileSecurity fileSecurity)

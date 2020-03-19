@@ -12,4 +12,4 @@ RUN dotnet build "SmbAbstraction.Tests.Integration/SmbAbstraction.Tests.Integrat
 COPY . .
 
 FROM build AS testrunner
-RUN dotnet test "SmbAbstraction.Tests.Integration/SmbAbstraction.Tests.Integration.csproj" --logger:trx
+RUN dotnet test "SmbAbstraction.Tests.Integration/SmbAbstraction.Tests.Integration.csproj"
