@@ -285,8 +285,7 @@ namespace SmbAbstraction
                 using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize))
                 {
                     var shareName = path.ShareName();
-                    var relativePath = path.RelativeSharePath();
-                    var directoryPath = _fileSystem.Path.GetDirectoryName(relativePath);
+                    var directoryPath = _fileSystem.Path.GetDirectoryName(path);
                     var fileName = _fileSystem.Path.GetFileName(path);
 
                     ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
@@ -305,7 +304,7 @@ namespace SmbAbstraction
                         if (file.FileInformationClass == FileInformationClass.FileDirectoryInformation)
                         {
                             FileDirectoryInformation fileDirectoryInformation = (FileDirectoryInformation)file;
-                            if (fileDirectoryInformation.FileName == _fileSystem.Path.GetFileName(relativePath))
+                            if (fileDirectoryInformation.FileName == fileName)
                             {
                                 fileStore.CloseFile(handle);
                                 return true;

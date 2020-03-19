@@ -138,7 +138,16 @@ namespace SmbAbstraction
                 return directoryName;
             }
 
-            directoryName = relativePath.Remove(relativePath.LastIndexOf(@"\"));
+            var segments = relativePath.Split(@"\");
+            if (!string.IsNullOrEmpty(GetExtension(segments.Last())))
+            {
+                directoryName = string.Join('\\',segments.Take(segments.Length - 1));
+            }
+            else
+            {
+                directoryName = relativePath;
+            }
+            
 
             return directoryName;
         }
