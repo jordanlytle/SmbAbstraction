@@ -1,21 +1,20 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO.Abstractions;
 using System.Runtime.InteropServices;
 
 namespace SmbAbstraction.Tests.Integration
 {
-    public class TestBase : IDisposable
+    public abstract class TestFixture : IDisposable
     {
-        private IntegrationTestSettings _settings = new IntegrationTestSettings();
+        private readonly IntegrationTestSettings _settings = new IntegrationTestSettings();
 
-        private readonly ISMBClientFactory _clientFactory;
-
-        public TestBase()
+        public TestFixture()
         {
             _settings.Initialize();
             SMBCredentialProvider = new SMBCredentialProvider();
-            _clientFactory = new SMB2ClientFactory();
-            FileSystem = new SMBFileSystem(_clientFactory, SMBCredentialProvider);
+            SMBClientFactory = new SMB2ClientFactory();
+            FileSystem = new SMBFileSystem(SMBClientFactory, SMBCredentialProvider);
         }
 
         public IntegrationTestSettings TestSettings
@@ -29,16 +28,19 @@ namespace SmbAbstraction.Tests.Integration
         public IFileSystem FileSystem { get; }
 
         public ISMBCredentialProvider SMBCredentialProvider { get; }
+        
+        public ISMBClientFactory SMBClientFactory { get; }
 
-        public string LocalTempDirectory { 
+
+        public string LocalTempDirectory {
             get
             {
-                if(!string.IsNullOrEmpty(_settings.LocalTempFolder))
+                if (!string.IsNullOrEmpty(_settings.LocalTempFolder))
                 {
                     return _settings.LocalTempFolder;
                 }
 
-                if(RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
                     return $@"C:\temp";
                 }
@@ -46,8 +48,14 @@ namespace SmbAbstraction.Tests.Integration
                 {
                     return $@"{Environment.GetEnvironmentVariable("HOME")}/";
                 }
-            } 
+            }
         }
+
+        public ShareCredentials ShareCredentials { get => _settings.ShareCredentials; }
+        public List<Share> Shares { get => _settings.Shares; }
+
+        public abstract PathType PathType { get; }
+
 
         public virtual void Dispose()
         {
