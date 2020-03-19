@@ -44,7 +44,7 @@ namespace SmbAbstraction.Tests.Integration
                 }
                 else
                 {
-                    return $@"~/";
+                    return $@"{Environment.GetEnvironmentVariable("HOME")}/";
                 }
             } 
         }

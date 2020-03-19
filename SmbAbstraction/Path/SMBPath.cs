@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO.Abstractions;
 using System.Text;
 
-namespace SmbAbstraction.Path
+namespace SmbAbstraction
 {
     public class SMBPath : PathWrapper, IPath
     {

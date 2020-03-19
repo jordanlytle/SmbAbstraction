@@ -19,8 +19,8 @@ namespace SmbAbstraction.Tests.Integration
             var testCredentials = TestSettings.ShareCredentials;
             var testShare = TestSettings.Shares.First();
             var testRootUncPath = testShare.RootUncPath;
-            var uncDirectory = Path.Combine(testRootUncPath, testShare.Directories.First());
-            var tempFilePath = Path.Combine(LocalTempDirectory, tempFileName);
+            var uncDirectory = FileSystem.Path.Combine(testRootUncPath, testShare.Directories.First());
+            var tempFilePath = FileSystem.Path.Combine(LocalTempDirectory, tempFileName);
 
             using var credential = new SMBCredential(testCredentials.Domain, testCredentials.Username, testCredentials.Password, uncDirectory, SMBCredentialProvider);
 
@@ -34,7 +34,7 @@ namespace SmbAbstraction.Tests.Integration
 
             var fileInfo = FileSystem.FileInfo.FromFileName(tempFilePath);
 
-            var uncFileInfo = fileInfo.CopyTo(Path.Combine(uncDirectory, tempFileName));
+            var uncFileInfo = fileInfo.CopyTo(FileSystem.Path.Combine(uncDirectory, tempFileName));
             Assert.True(uncFileInfo.Exists);
 
             FileSystem.File.Delete(tempFilePath);
@@ -49,8 +49,8 @@ namespace SmbAbstraction.Tests.Integration
             var testCredentials = TestSettings.ShareCredentials;
             var testShare = TestSettings.Shares.First();
             var testRootUncPath = testShare.RootUncPath;
-            var uncDirectory = Path.Combine(testRootUncPath, testShare.Directories.First());
-            var tempFilePath = Path.Combine(LocalTempDirectory, tempFileName);
+            var uncDirectory = FileSystem.Path.Combine(testRootUncPath, testShare.Directories.First());
+            var tempFilePath = FileSystem.Path.Combine(LocalTempDirectory, tempFileName);
 
             var byteArray = new byte[100];
 
@@ -83,8 +83,8 @@ namespace SmbAbstraction.Tests.Integration
             var testCredentials = TestSettings.ShareCredentials;
             var testShare = TestSettings.Shares.First();
             var testRootUncPath = testShare.RootUncPath;
-            var uncDirectory = Path.Combine(testRootUncPath, testShare.Directories.First());
-            var filePath = Path.Combine(testRootUncPath, testShare.Files.First());
+            var uncDirectory = FileSystem.Path.Combine(testRootUncPath, testShare.Directories.First());
+            var filePath = FileSystem.Path.Combine(testRootUncPath, testShare.Files.First());
 
             using var credential = new SMBCredential(testCredentials.Domain, testCredentials.Username, testCredentials.Password, uncDirectory, SMBCredentialProvider);
 
@@ -100,9 +100,9 @@ namespace SmbAbstraction.Tests.Integration
             var testCredentials = TestSettings.ShareCredentials;
             var testShare = TestSettings.Shares.First();
             var testRootUncPath = testShare.RootUncPath;
-            var uncDirectory = Path.Combine(testRootUncPath, testShare.Directories.First());
-            var filePath = Path.Combine(testRootUncPath, testShare.Files.First());
-            var fileExtension = Path.GetExtension(filePath);
+            var uncDirectory = FileSystem.Path.Combine(testRootUncPath, testShare.Directories.First());
+            var filePath = FileSystem.Path.Combine(testRootUncPath, testShare.Files.First());
+            var fileExtension = FileSystem.Path.GetExtension(filePath);
 
             using var credential = new SMBCredential(testCredentials.Domain, testCredentials.Username, testCredentials.Password, uncDirectory, SMBCredentialProvider);
 
@@ -118,8 +118,8 @@ namespace SmbAbstraction.Tests.Integration
             var testCredentials = TestSettings.ShareCredentials;
             var testShare = TestSettings.Shares.First();
             var testRootUncPath = testShare.RootUncPath;
-            var uncDirectory = Path.Combine(testRootUncPath, testShare.Directories.First());
-            var filePath = Path.Combine(testRootUncPath, testShare.Files.First());
+            var uncDirectory = FileSystem.Path.Combine(testRootUncPath, testShare.Directories.First());
+            var filePath = FileSystem.Path.Combine(testRootUncPath, testShare.Files.First());
 
             using var credential = new SMBCredential(testCredentials.Domain, testCredentials.Username, testCredentials.Password, uncDirectory, SMBCredentialProvider);
 
@@ -154,13 +154,13 @@ namespace SmbAbstraction.Tests.Integration
             var testCredentials = TestSettings.ShareCredentials;
             var testShare = TestSettings.Shares.First();
             var testRootUncPath = testShare.RootUncPath;
-            var uncDirectory = Path.Combine(testRootUncPath, testShare.Directories.First());
+            var uncDirectory = FileSystem.Path.Combine(testRootUncPath, testShare.Directories.First());
 
             using var credential = new SMBCredential(testCredentials.Domain, testCredentials.Username, testCredentials.Password, uncDirectory, SMBCredentialProvider);
 
             var originalFileTime = DateTime.Now.ToFileTimeUtc();
-            var originalFilePath = Path.Combine(uncDirectory, $"replace-file-{originalFileTime}.txt");
-            var originalFileBackupPath = Path.Combine(uncDirectory, $"replace-file-{originalFileTime}.bak");
+            var originalFilePath = FileSystem.Path.Combine(uncDirectory, $"replace-file-{originalFileTime}.txt");
+            var originalFileBackupPath = FileSystem.Path.Combine(uncDirectory, $"replace-file-{originalFileTime}.bak");
 
            if (!FileSystem.File.Exists(originalFilePath))
             {
@@ -171,7 +171,7 @@ namespace SmbAbstraction.Tests.Integration
             }
 
             var newFileTime = DateTime.Now.ToFileTimeUtc();
-            var newFilePath = Path.Combine(testRootUncPath, $"replace-file-{newFileTime}.txt");
+            var newFilePath = FileSystem.Path.Combine(testRootUncPath, $"replace-file-{newFileTime}.txt");
 
             if (!FileSystem.File.Exists(newFilePath))
             {
@@ -207,12 +207,12 @@ namespace SmbAbstraction.Tests.Integration
             var testCredentials = TestSettings.ShareCredentials;
             var testShare = TestSettings.Shares.First();
             var testRootUncPath = testShare.RootUncPath;
-            var uncDirectory = Path.Combine(testRootUncPath, testShare.Directories.First());
+            var uncDirectory = FileSystem.Path.Combine(testRootUncPath, testShare.Directories.First());
 
             using var credential = new SMBCredential(testCredentials.Domain, testCredentials.Username, testCredentials.Password, uncDirectory, SMBCredentialProvider);
 
             var originalFileTime = DateTime.Now.ToFileTimeUtc();
-            var originalFilePath = Path.Combine(uncDirectory, $"replace-file-{originalFileTime}.txt");
+            var originalFilePath = FileSystem.Path.Combine(uncDirectory, $"replace-file-{originalFileTime}.txt");
 
             if (!FileSystem.File.Exists(originalFilePath))
             {
@@ -223,7 +223,7 @@ namespace SmbAbstraction.Tests.Integration
             }
 
             var newFileTime = DateTime.Now.ToFileTimeUtc();
-            var newFilePath = Path.Combine(testRootUncPath, $"replace-file-{newFileTime}.txt");
+            var newFilePath = FileSystem.Path.Combine(testRootUncPath, $"replace-file-{newFileTime}.txt");
 
             if (!FileSystem.File.Exists(newFilePath))
             {
@@ -257,13 +257,13 @@ namespace SmbAbstraction.Tests.Integration
             var testCredentials = TestSettings.ShareCredentials;
             var testShare = TestSettings.Shares.First();
             var testRootSmbUri = testShare.RootSmbUri;
-            var smbDirectory = Path.Combine(testRootSmbUri, testShare.Directories.First());
+            var smbDirectory = FileSystem.Path.Combine(testRootSmbUri, testShare.Directories.First());
 
             using var credential = new SMBCredential(testCredentials.Domain, testCredentials.Username, testCredentials.Password, smbDirectory, SMBCredentialProvider);
 
             var originalFileTime = DateTime.Now.ToFileTimeUtc();
-            var originalFilePath = Path.Combine(smbDirectory, $"replace-file-{originalFileTime}.txt");
-            var originalFileBackupPath = Path.Combine(smbDirectory, $"replace-file-{originalFileTime}.bak");
+            var originalFilePath = FileSystem.Path.Combine(smbDirectory, $"replace-file-{originalFileTime}.txt");
+            var originalFileBackupPath = FileSystem.Path.Combine(smbDirectory, $"replace-file-{originalFileTime}.bak");
 
             if (!FileSystem.File.Exists(originalFilePath))
             {
@@ -274,7 +274,7 @@ namespace SmbAbstraction.Tests.Integration
             }
 
             var newFileTime = DateTime.Now.ToFileTimeUtc();
-            var newFilePath = Path.Combine(testRootSmbUri, $"replace-file-{newFileTime}.txt");
+            var newFilePath = FileSystem.Path.Combine(testRootSmbUri, $"replace-file-{newFileTime}.txt");
 
             if (!FileSystem.File.Exists(newFilePath))
             {
@@ -310,12 +310,12 @@ namespace SmbAbstraction.Tests.Integration
             var testCredentials = TestSettings.ShareCredentials;
             var testShare = TestSettings.Shares.First();
             var testRootSmbUri = testShare.RootSmbUri;
-            var smbDirectory = Path.Combine(testRootSmbUri, testShare.Directories.First());
+            var smbDirectory = FileSystem.Path.Combine(testRootSmbUri, testShare.Directories.First());
 
             using var credential = new SMBCredential(testCredentials.Domain, testCredentials.Username, testCredentials.Password, smbDirectory, SMBCredentialProvider);
 
             var originalFileTime = DateTime.Now.ToFileTimeUtc();
-            var originalFilePath = Path.Combine(smbDirectory, $"replace-file-{originalFileTime}.txt");
+            var originalFilePath = FileSystem.Path.Combine(smbDirectory, $"replace-file-{originalFileTime}.txt");
 
             if (!FileSystem.File.Exists(originalFilePath))
             {
@@ -326,7 +326,7 @@ namespace SmbAbstraction.Tests.Integration
             }
 
             var newFileTime = DateTime.Now.ToFileTimeUtc();
-            var newFilePath = Path.Combine(testRootSmbUri, $"replace-file-{newFileTime}.txt");
+            var newFilePath = FileSystem.Path.Combine(testRootSmbUri, $"replace-file-{newFileTime}.txt");
 
             if (!FileSystem.File.Exists(newFilePath))
             {
