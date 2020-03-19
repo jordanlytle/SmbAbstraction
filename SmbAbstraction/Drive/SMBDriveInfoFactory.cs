@@ -33,7 +33,7 @@ namespace SmbAbstraction
         public IDriveInfo FromDriveName(string driveName)
         {
             if (Uri.IsWellFormedUriString(driveName, UriKind.Absolute)
-                && !driveName.IsSmbPath())
+                && !driveName.IsSharePath())
             {
                 var driveInfo = new DriveInfo(driveName);
                 return new DriveInfoWrapper(new FileSystem(), driveInfo);

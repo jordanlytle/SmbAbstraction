@@ -15,29 +15,54 @@ namespace SmbAbstraction
             var uri = new Uri(path);
             var valid = uri.Segments.Length >= 2;
 
-            return valid;
+            return valid && path.IsSharePath();
         }
 
-        public static bool IsSmbPath(this string path)
+        public static bool IsSharePath(this string path)
         {
             try
             {
                 var uri = new Uri(path);
                 return uri.Scheme.Equals("smb") || uri.IsUnc;
             }
-            catch(Exception ex)
+            catch
             {
-                throw new Exception($"Unable to determine if '{path}' is an SMB path", ex);
+                return false;
             }
         }
 
+        public static bool IsSmbUri(this string path)
+        {
+            try
+            {
+                var uri = new Uri(path);
+                return uri.Scheme.Equals("smb");
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public static bool IsUncPath(this string path)
+        {
+            try
+            {
+                var uri = new Uri(path);
+                return uri.IsUnc;
+            }
+            catch
+            {
+                return false;
+            }
+        }
 
         public static string BuildSharePath(this string path, string shareName)
         {
             var uri = new Uri(path);
             if (!uri.IsUnc)
             {
-                return $"smb://{path.Hostname()}/{shareName}";
+                return $@"smb://{path.Hostname()}/{shareName}";
             }
             else
             {
@@ -79,7 +104,7 @@ namespace SmbAbstraction
 
                 return true;
             }
-            catch (Exception ex)
+            catch
             {
                 ipAddress = IPAddress.None;
                 return false;
