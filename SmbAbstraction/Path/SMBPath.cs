@@ -48,21 +48,6 @@ namespace SmbAbstraction
             return base.Combine(paths);
         }
 
-        //public override string Combine(params string[] paths)
-        //{
-        //    if (paths == null || paths.Any(p => p == null))
-        //    {
-        //        throw new ArgumentNullException(nameof(paths));
-        //    }
-
-        //    if (!paths[0].IsSharePath())
-        //    {
-        //        return base.Combine(paths);
-        //    }
-        //    //TODO: https://github.com/dotnet/coreclr/blob/a9f3fc16483eecfc47fb79c362811d870be02249/src/System.Private.CoreLib/shared/System/IO/Path.cs#L347
-        //    throw new NotImplementedException();
-        //}
-
         public override string Combine(string path1, string path2)
         {
             if (!path1.IsSharePath())
@@ -139,7 +124,7 @@ namespace SmbAbstraction
             }
 
             var segments = relativePath.Split(@"\");
-            if (!string.IsNullOrEmpty(GetExtension(segments.Last())))
+            if (HasExtension(segments.Last()))
             {
                 directoryName = string.Join('\\',segments.Take(segments.Length - 1));
             }
