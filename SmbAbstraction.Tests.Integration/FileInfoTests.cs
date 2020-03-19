@@ -79,7 +79,7 @@ namespace SmbAbstraction.Tests.Integration
 
         [Fact]
         [Trait("Category", "Integration")]
-        public void CheckFileExists()
+        public void CheckFileExists_ForUncPath()
         {
             var testCredentials = TestSettings.ShareCredentials;
             var testShare = TestSettings.Shares.First();
@@ -88,6 +88,23 @@ namespace SmbAbstraction.Tests.Integration
             var filePath = FileSystem.Path.Combine(testRootUncPath, testShare.Files.First());
 
             using var credential = new SMBCredential(testCredentials.Domain, testCredentials.Username, testCredentials.Password, uncDirectory, SMBCredentialProvider);
+
+            var exists = FileSystem.FileInfo.FromFileName(filePath).Exists;
+
+            Assert.True(exists);
+        }
+
+        [Fact]
+        [Trait("Category", "Integration")]
+        public void CheckFileExists_ForSmbUri()
+        {
+            var testCredentials = TestSettings.ShareCredentials;
+            var testShare = TestSettings.Shares.First();
+            var testRootSmbUri = testShare.RootSmbUri;
+            var smbUriDirectory = FileSystem.Path.Combine(testRootSmbUri, testShare.Directories.First());
+            var filePath = FileSystem.Path.Combine(testRootSmbUri, testShare.Files.First());
+
+            using var credential = new SMBCredential(testCredentials.Domain, testCredentials.Username, testCredentials.Password, smbUriDirectory, SMBCredentialProvider);
 
             var exists = FileSystem.FileInfo.FromFileName(filePath).Exists;
 

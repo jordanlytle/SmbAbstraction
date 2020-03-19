@@ -25,9 +25,9 @@ namespace SmbAbstraction
                 var uri = new Uri(path);
                 return uri.Scheme.Equals("smb") || uri.IsUnc;
             }
-            catch(Exception ex)
+            catch
             {
-                throw new Exception($"Unable to determine if '{path}' is an SMB path", ex);
+                return false;
             }
         }
 
@@ -38,9 +38,9 @@ namespace SmbAbstraction
                 var uri = new Uri(path);
                 return uri.Scheme.Equals("smb");
             }
-            catch (Exception ex)
+            catch
             {
-                throw new Exception($"Unable to determine if '{path}' is an SMB path", ex);
+                return false;
             }
         }
 
@@ -51,9 +51,9 @@ namespace SmbAbstraction
                 var uri = new Uri(path);
                 return uri.IsUnc;
             }
-            catch (Exception ex)
+            catch
             {
-                throw new Exception($"Unable to determine if '{path}' is an SMB path", ex);
+                return false;
             }
         }
 
@@ -104,7 +104,7 @@ namespace SmbAbstraction
 
                 return true;
             }
-            catch (Exception ex)
+            catch
             {
                 ipAddress = IPAddress.None;
                 return false;

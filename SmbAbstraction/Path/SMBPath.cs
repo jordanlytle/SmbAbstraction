@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO.Abstractions;
+using System.Linq;
 using System.Text;
 
 namespace SmbAbstraction
@@ -124,7 +125,22 @@ namespace SmbAbstraction
 
         public override string GetDirectoryName(string path)
         {
-            return base.GetDirectoryName(path);
+            if(!path.IsSharePath())
+            {
+                return base.GetDirectoryName(path);
+            }
+
+            var relativePath = path.RelativeSharePath();
+            string directoryName = "";
+
+            if (path == null || string.IsNullOrEmpty(relativePath))
+            {
+                return directoryName;
+            }
+
+            directoryName = relativePath.Remove(relativePath.LastIndexOf(@"\"));
+
+            return directoryName;
         }
 
         public override string GetExtension(string path)
@@ -134,7 +150,22 @@ namespace SmbAbstraction
 
         public override string GetFileName(string path)
         {
-            return base.GetFileName(path);
+            if (!path.IsSharePath())
+            {
+                return base.GetFileName(path);
+            }
+
+            var relativePath = path.RelativeSharePath();
+            string fileName = "";
+
+            if (path == null || string.IsNullOrEmpty(relativePath))
+            { 
+                return fileName;
+            }
+
+            fileName = relativePath.Split(@"\").Last();
+
+            return fileName;
         }
 
         public override string GetFileNameWithoutExtension(string path)
