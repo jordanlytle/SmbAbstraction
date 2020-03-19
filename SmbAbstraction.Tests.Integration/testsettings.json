@@ -1,19 +1,19 @@
 {
   "IntegrationTestSettings": {
     "ShareCredentials": {
-      "Domain": "VINWIN",
-      "Username": "slave",
-      "Password": "slavepw"
+      "Domain": "",
+      "Username": "",
+      "Password": ""
     },
     "Shares": [
       {
-        "HostName": "192.168.1.20",
-        "ShareName": "TestUncShare",
+        "HostName": "",
+        "ShareName": "",
         "Files": [
-          "Test.txt"
+          "file.txt"
         ],
         "Directories": [
-          "TestDir/NestedDir"
+          "Dir"
         ]
       }
     ],
