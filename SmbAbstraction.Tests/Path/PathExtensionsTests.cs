@@ -14,31 +14,75 @@ namespace SmbAbstraction.Tests.Path
         }
 
         [Fact]
-        public void IsSmb_ReturnsFalse_ForLocalUrl()
+        public void IsSharePath_ReturnsFalse_ForLocalUrl()
         {
             string path = "C:\\jordan\\lytle";
-            Assert.False(path.IsSmbPath());
+            Assert.False(path.IsSharePath());
         }
 
         [Fact]
-        public void IsSmb_ReturnsTrue_ForSmbUrl()
+        public void IsSharePath_ReturnsTrue_ForSmbUrl()
         {
             foreach (var property in _smbUriTestData.GetType().GetProperties())
             {
                 var path = (string)property.GetValue(_smbUriTestData);
 
-                Assert.True(path.IsSmbPath());
+                Assert.True(path.IsSharePath());
             }
         }
 
         [Fact]
-        public void IsSmb_ReturnsTrue_ForUncPath()
+        public void IsSharePath_ReturnsTrue_ForUncPath()
         {
             foreach (var property in _uncPathTestData.GetType().GetProperties())
             {
                 var path = (string)property.GetValue(_uncPathTestData);
 
-                Assert.True(path.IsSmbPath());
+                Assert.True(path.IsSharePath());
+            }
+        }
+
+        [Fact]
+        public void IsSmbUri_ReturnsTrue_ForSmbUrl()
+        {
+            foreach (var property in _smbUriTestData.GetType().GetProperties())
+            {
+                var path = (string)property.GetValue(_smbUriTestData);
+
+                Assert.True(path.IsSmbUri());
+            }
+        }
+
+        [Fact]
+        public void IsSmbUri_ReturnsFalse_ForUncPath()
+        {
+            foreach (var property in _uncPathTestData.GetType().GetProperties())
+            {
+                var path = (string)property.GetValue(_uncPathTestData);
+
+                Assert.False(path.IsSmbUri());
+            }
+        }
+
+        [Fact]
+        public void IsUncPath_ReturnsTrue_ForUncPath()
+        {
+            foreach (var property in _uncPathTestData.GetType().GetProperties())
+            {
+                var path = (string)property.GetValue(_uncPathTestData);
+
+                Assert.True(path.IsUncPath());
+            }
+        }
+
+        [Fact]
+        public void IsUncPath_ReturnsFalse_ForSmbUri()
+        {
+            foreach (var property in _smbUriTestData.GetType().GetProperties())
+            {
+                var path = (string)property.GetValue(_smbUriTestData);
+
+                Assert.False(path.IsUncPath());
             }
         }
 

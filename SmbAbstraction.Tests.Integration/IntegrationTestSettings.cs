@@ -26,24 +26,26 @@ namespace SmbAbstraction.Tests.Integration
         public string HostName { get; set; }
         public string ShareName { get; set; }
 
-        public string RootUncPath
-        {
-            get
-            {
-                return $@"\\{HostName}\{ShareName}";
-            }
-        }
-
-        public string RootSmbUri
-        {
-            get
-            {
-                return $@"smb://{HostName}/{ShareName}";
-            }
-        }
-
         public List<string> Files { get; set; }
         public List<string> Directories { get; set; }
+
+        public string GetRootPath(PathType pathType)
+        {
+            switch(pathType)
+            {
+                case PathType.SmbUri:
+                    return $@"smb://{HostName}/{ShareName}";
+                case PathType.UncPath:
+                default:
+                    return $@"\\{HostName}\{ShareName}";
+            }
+        }
+    }
+
+    public enum PathType 
+    { 
+        SmbUri,
+        UncPath
     }
 
     public static class IntegrationTestSettingsExtensions

@@ -28,7 +28,7 @@ namespace SmbAbstraction
 
         public IFileInfo FromFileName(string fileName)
         {
-            if (!fileName.IsSmbPath())
+            if (!fileName.IsSharePath())
             {
                 var fileInfo = new FileInfo(fileName);
                 return new SMBFileInfo(fileInfo, _fileSystem);
@@ -39,7 +39,7 @@ namespace SmbAbstraction
 
         internal IFileInfo FromFileName(string path, ISMBCredential credential)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return null;
             }
@@ -79,6 +79,8 @@ namespace SmbAbstraction
             status.HandleStatus();
             status = fileStore.GetFileInformation(out FileInformation fileStandardInfo, handle, FileInformationClass.FileStandardInformation);
             status.HandleStatus();
+
+            fileStore.CloseFile(handle);
 
             return new SMBFileInfo(path, _fileSystem, (FileBasicInformation)fileBasicInfo, (FileStandardInformation)fileStandardInfo, credential);
         }
