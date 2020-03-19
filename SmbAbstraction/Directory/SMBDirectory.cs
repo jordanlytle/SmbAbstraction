@@ -226,10 +226,10 @@ namespace SmbAbstraction
                             }
                             else if (fileDirectoryInformation.FileAttributes.HasFlag(SMBLibrary.FileAttributes.Directory))
                             {
-                                Delete(Path.Combine(path, fileDirectoryInformation.FileName), recursive, credential);
+                                Delete(_fileSystem.Path.Combine(path, fileDirectoryInformation.FileName), recursive, credential);
                             }
 
-                            _fileSystem.File.Delete(Path.Combine(path, fileDirectoryInformation.FileName));
+                            _fileSystem.File.Delete(_fileSystem.Path.Combine(path, fileDirectoryInformation.FileName));
                         }
                     }
                     fileStore.CloseFile(handle);
@@ -319,10 +319,10 @@ namespace SmbAbstraction
 
                         if (fileDirectoryInformation.FileAttributes.HasFlag(SMBLibrary.FileAttributes.Directory))
                         {
-                            files.Add(Path.Combine(path, fileDirectoryInformation.FileName));
+                            files.Add(_fileSystem.Path.Combine(path, fileDirectoryInformation.FileName));
                             if (searchOption == SearchOption.AllDirectories)
                             {
-                                files.AddRange(EnumerateDirectories(Path.Combine(path, fileDirectoryInformation.FileName), searchPattern, searchOption, credential));
+                                files.AddRange(EnumerateDirectories(_fileSystem.Path.Combine(path, fileDirectoryInformation.FileName), searchPattern, searchOption, credential));
                             }
                         }
                     }
@@ -412,12 +412,12 @@ namespace SmbAbstraction
                         {
                             if (searchOption == SearchOption.AllDirectories)
                             {
-                                files.AddRange(EnumerateFiles(Path.Combine(path, fileDirectoryInformation.FileName), searchPattern, searchOption, credential));
+                                files.AddRange(EnumerateFiles(_fileSystem.Path.Combine(path, fileDirectoryInformation.FileName), searchPattern, searchOption, credential));
                             }
                         }
                         else
                         {
-                            files.Add(Path.Combine(path, fileDirectoryInformation.FileName.RemoveAnySeperators()));
+                            files.Add(_fileSystem.Path.Combine(path, fileDirectoryInformation.FileName.RemoveAnySeperators()));
                         }
                     }
                 }
@@ -506,11 +506,11 @@ namespace SmbAbstraction
                         {
                             if (searchOption == SearchOption.AllDirectories)
                             {
-                                files.AddRange(EnumerateFileSystemEntries(Path.Combine(path, fileDirectoryInformation.FileName), searchPattern, searchOption, credential));
+                                files.AddRange(EnumerateFileSystemEntries(_fileSystem.Path.Combine(path, fileDirectoryInformation.FileName), searchPattern, searchOption, credential));
                             }
                         }
 
-                        files.Add(Path.Combine(path, fileDirectoryInformation.FileName));
+                        files.Add(_fileSystem.Path.Combine(path, fileDirectoryInformation.FileName));
                     }
                 }
                 fileStore.CloseFile(handle);
@@ -668,7 +668,7 @@ namespace SmbAbstraction
                 return base.GetDirectoryRoot(path);
             }
 
-            return Path.GetPathRoot(path);
+            return _fileSystem.Path.GetPathRoot(path);
         }
 
         public override string[] GetFiles(string path)
@@ -804,7 +804,7 @@ namespace SmbAbstraction
 
             foreach (var dir in dirs)
             {
-                var destDirPath = Path.Combine(destDirName, new Uri(dir).Segments.Last());
+                var destDirPath = _fileSystem.Path.Combine(destDirName, new Uri(dir).Segments.Last());
                 Move(dir, destDirPath, sourceCredential, destinationCredential);
             }
 
@@ -812,7 +812,7 @@ namespace SmbAbstraction
 
             foreach (var file in files)
             {
-                var destFilePath = Path.Combine(destDirName, new Uri(file).Segments.Last());
+                var destFilePath = _fileSystem.Path.Combine(destDirName, new Uri(file).Segments.Last());
                 SMBFile smbFile = _fileSystem.File as SMBFile;
                 smbFile.Move(file, destFilePath, sourceCredential, destinationCredential);
             }

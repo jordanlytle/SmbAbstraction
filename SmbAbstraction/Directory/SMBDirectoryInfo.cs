@@ -67,7 +67,7 @@ namespace SmbAbstraction
                 LastWriteTimeUtc = LastWriteTime.ToUniversalTime();
             }
             Parent = _smbDirectory.GetParent(fileName, credential);
-            var pathRoot = Path.GetPathRoot(fileName);
+            var pathRoot = FileSystem.Path.GetPathRoot(fileName);
             if (pathRoot != string.Empty && Parent != null)
             {
                 Root = _directoryInfoFactory.FromDirectoryName(pathRoot, credential);
@@ -110,7 +110,7 @@ namespace SmbAbstraction
 
         public IDirectoryInfo CreateSubdirectory(string path)
         {
-            return _smbDirectory.CreateDirectory(Path.Combine(FullName, path));
+            return _smbDirectory.CreateDirectory(FileSystem.Path.Combine(FullName, path));
         }
 
         public void Delete(bool recursive)
