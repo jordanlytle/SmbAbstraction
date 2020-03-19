@@ -22,7 +22,7 @@ namespace SmbAbstraction
         }
 
         internal SMBFileInfo(FileInfo fileInfo, 
-                             IFileSystem fileSystem) : this(fileInfo.FullName, fileSystem/*, smbClientFactory, credentialProvider, maxBufferSize*/)
+                             IFileSystem fileSystem) : this(fileInfo.FullName, fileSystem)
         {
             CreationTime = fileInfo.CreationTime;
             CreationTimeUtc = fileInfo.CreationTimeUtc;
@@ -231,7 +231,7 @@ namespace SmbAbstraction
 
         public override void Decrypt()
         {
-            if (!FullName.IsSmbPath())
+            if (!FullName.IsSharePath())
             {
                 base.Decrypt();
             }
@@ -241,7 +241,7 @@ namespace SmbAbstraction
 
         public override void Encrypt()
         {
-            if(!FullName.IsSmbPath())
+            if(!FullName.IsSharePath())
             {
                 base.Encrypt();
             }
@@ -263,7 +263,7 @@ namespace SmbAbstraction
 
             var path = FullName;
             
-            if (!path.IsSmbPath() && !destinationFilePath.IsSmbPath())
+            if (!path.IsSharePath() && !destinationFilePath.IsSharePath())
             {
                 return base.Replace(destinationFilePath, destinationBackupFilePath, ignoreMetadataErrors);
             }

@@ -17,7 +17,7 @@ namespace SmbAbstraction
 
         public Stream Create(string path, FileMode mode)
         {
-            if (path.IsSmbPath())
+            if (path.IsSharePath())
             {
                 return new FileStream(path, mode);
             }
@@ -27,7 +27,7 @@ namespace SmbAbstraction
 
         public Stream Create(string path, FileMode mode, FileAccess access)
         {
-            if (path.IsSmbPath())
+            if (path.IsSharePath())
             {
                 return new FileStream(path, mode, access);
             }
@@ -37,7 +37,7 @@ namespace SmbAbstraction
 
         public Stream Create(string path, FileMode mode, FileAccess access, FileShare share)
         {
-            if (path.IsSmbPath())
+            if (path.IsSharePath())
             {
                 return new FileStream(path, mode, access, share);
             }
@@ -47,7 +47,7 @@ namespace SmbAbstraction
 
         public Stream Create(string path, FileMode mode, FileAccess access, FileShare share, int bufferSize)
         {
-            if (path.IsSmbPath())
+            if (path.IsSharePath())
             {
                 return new FileStream(path, mode, access, share, bufferSize);
             }
@@ -57,7 +57,7 @@ namespace SmbAbstraction
 
         public Stream Create(string path, FileMode mode, FileAccess access, FileShare share, int bufferSize, FileOptions options)
         {
-            if (path.IsSmbPath())
+            if (path.IsSharePath())
             {
                 return new FileStream(path, mode, access, share, bufferSize, options);
             }
@@ -67,7 +67,7 @@ namespace SmbAbstraction
 
         public Stream Create(string path, FileMode mode, FileAccess access, FileShare share, int bufferSize, bool useAsync)
         {
-            if (path.IsSmbPath())
+            if (path.IsSharePath())
             {
                 return new FileStream(path, mode, access, share, bufferSize, useAsync);
             }

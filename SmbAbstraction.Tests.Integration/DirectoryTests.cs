@@ -26,9 +26,9 @@ namespace SmbAbstraction.Tests.Integration
         {
             var testCredentials = TestSettings.ShareCredentials;
             var testShare = TestSettings.Shares.First();
-            var testRootUncPath = Path.Combine(testShare.RootUncPath);
+            var testRootUncPath = FileSystem.Path.Combine(testShare.RootUncPath);
 
-            createdTestDirectoryPath = Path.Combine(testShare.RootUncPath, $"test_directory-{DateTime.Now.ToFileTimeUtc()}");
+            createdTestDirectoryPath = FileSystem.Path.Combine(testShare.RootUncPath, $"test_directory-{DateTime.Now.ToFileTimeUtc()}");
 
             using var credential = new SMBCredential(testCredentials.Domain, testCredentials.Username, testCredentials.Password, createdTestDirectoryPath, SMBCredentialProvider);
 
@@ -45,10 +45,10 @@ namespace SmbAbstraction.Tests.Integration
         {
             var testCredentials = TestSettings.ShareCredentials;
             var testShare = TestSettings.Shares.First();
-            var testRootUncPath = Path.Combine(testShare.RootUncPath);
+            var testRootUncPath = FileSystem.Path.Combine(testShare.RootUncPath);
 
-            var parentDirectoryPath = Path.Combine(testShare.RootUncPath, $"test_directory_parent-{DateTime.Now.ToFileTimeUtc()}");
-            createdTestDirectoryPath = Path.Combine(parentDirectoryPath, $"test_directory_child-{DateTime.Now.ToFileTimeUtc()}");
+            var parentDirectoryPath = FileSystem.Path.Combine(testShare.RootUncPath, $"test_directory_parent-{DateTime.Now.ToFileTimeUtc()}");
+            createdTestDirectoryPath = FileSystem.Path.Combine(parentDirectoryPath, $"test_directory_child-{DateTime.Now.ToFileTimeUtc()}");
 
             using var credential = new SMBCredential(testCredentials.Domain, testCredentials.Username, testCredentials.Password, createdTestDirectoryPath, SMBCredentialProvider);
 
@@ -65,7 +65,7 @@ namespace SmbAbstraction.Tests.Integration
         {
             var testCredentials = TestSettings.ShareCredentials;
             var testShare = TestSettings.Shares.First();
-            var testRootUncPath = Path.Combine(testShare.RootUncPath);
+            var testRootUncPath = FileSystem.Path.Combine(testShare.RootUncPath);
 
             using var credential = new SMBCredential(testCredentials.Domain, testCredentials.Username, testCredentials.Password, testRootUncPath, SMBCredentialProvider);
 
@@ -80,7 +80,7 @@ namespace SmbAbstraction.Tests.Integration
         {
             var testCredentials = TestSettings.ShareCredentials;
             var testShare = TestSettings.Shares.First();
-            var testRootSmbUri = Path.Combine(testShare.RootSmbUri);
+            var testRootSmbUri = FileSystem.Path.Combine(testShare.RootSmbUri);
 
             using var credential = new SMBCredential(testCredentials.Domain, testCredentials.Username, testCredentials.Password, testRootSmbUri, SMBCredentialProvider);
 

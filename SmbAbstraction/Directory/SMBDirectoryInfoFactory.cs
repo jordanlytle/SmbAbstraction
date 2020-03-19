@@ -30,7 +30,7 @@ namespace SmbAbstraction
 
         public IDirectoryInfo FromDirectoryName(string directoryName)
         {
-            if (!directoryName.IsSmbPath())
+            if (!directoryName.IsSharePath())
             {
                 var dirInfo = new DirectoryInfo(directoryName);
                 return new SMBDirectoryInfo(dirInfo, _smbDirectory, _smbFile, this, _fileInfoFactory, _fileSystem, _credentialProvider);
@@ -41,7 +41,7 @@ namespace SmbAbstraction
 
         internal IDirectoryInfo FromDirectoryName(string path, ISMBCredential credential)
         {
-            if (!path.IsSmbPath() || !path.IsValidSharePath())
+            if (!path.IsSharePath() || !path.IsValidSharePath())
             {
                 return null;
             }

@@ -67,7 +67,8 @@ namespace SmbAbstraction.Tests.Integration
             var fileInfo = FileSystem.FileInfo.FromFileName(tempFilePath);
             var fileSize = fileInfo.Length;
 
-            var uncFileInfo = fileInfo.CopyTo(Path.Combine(uncDirectory, tempFileName));
+            var destinationFilePath = FileSystem.Path.Combine(uncDirectory, tempFileName);
+            var uncFileInfo = fileInfo.CopyTo(destinationFilePath);
             
             Assert.True(uncFileInfo.Exists);
             Assert.Equal(fileSize, uncFileInfo.Length);

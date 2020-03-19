@@ -7,7 +7,7 @@ namespace SmbAbstraction
     {
         public new IFileSystemWatcher FromPath(string path)
         {
-            if (path.IsSmbPath())
+            if (path.IsSharePath())
             {
                 return base.FromPath(path);
             }

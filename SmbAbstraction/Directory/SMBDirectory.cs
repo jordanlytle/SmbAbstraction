@@ -36,7 +36,7 @@ namespace SmbAbstraction
 
         private IDirectoryInfo CreateDirectory(string path, ISMBCredential credential)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.CreateDirectory(path);
             }
@@ -106,7 +106,7 @@ namespace SmbAbstraction
 
         internal void Delete(string path, ISMBCredential credential)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 base.Delete(path);
                 return;
@@ -167,7 +167,7 @@ namespace SmbAbstraction
 
         public void Delete(string path, bool recursive, ISMBCredential credential)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 base.Delete(path, recursive);
                 return;
@@ -245,7 +245,7 @@ namespace SmbAbstraction
 
         public override IEnumerable<string> EnumerateDirectories(string path)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.EnumerateDirectories(path);
             }
@@ -255,7 +255,7 @@ namespace SmbAbstraction
 
         public override IEnumerable<string> EnumerateDirectories(string path, string searchPattern)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.EnumerateDirectories(path, searchPattern);
             }
@@ -270,7 +270,7 @@ namespace SmbAbstraction
 
         private IEnumerable<string> EnumerateDirectories(string path, string searchPattern, SearchOption searchOption, ISMBCredential credential)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.EnumerateDirectories(path, searchPattern, searchOption);
             }
@@ -335,7 +335,7 @@ namespace SmbAbstraction
 
         public override IEnumerable<string> EnumerateFiles(string path)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.EnumerateFiles(path);
             }
@@ -345,7 +345,7 @@ namespace SmbAbstraction
 
         public override IEnumerable<string> EnumerateFiles(string path, string searchPattern)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.EnumerateFiles(path, searchPattern);
             }
@@ -360,7 +360,7 @@ namespace SmbAbstraction
 
         private IEnumerable<string> EnumerateFiles(string path, string searchPattern, SearchOption searchOption, ISMBCredential credential)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.EnumerateFiles(path, searchPattern, searchOption);
             }
@@ -429,7 +429,7 @@ namespace SmbAbstraction
 
         public override IEnumerable<string> EnumerateFileSystemEntries(string path)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.EnumerateFileSystemEntries(path);
             }
@@ -439,7 +439,7 @@ namespace SmbAbstraction
 
         public override IEnumerable<string> EnumerateFileSystemEntries(string path, string searchPattern)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.EnumerateFileSystemEntries(path, searchPattern);
             }
@@ -455,7 +455,7 @@ namespace SmbAbstraction
 
         private IEnumerable<string> EnumerateFileSystemEntries(string path, string searchPattern, SearchOption searchOption, ISMBCredential credential)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.EnumerateFileSystemEntries(path, searchPattern, searchOption);
             }
@@ -521,7 +521,7 @@ namespace SmbAbstraction
 
         public override bool Exists(string path)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.Exists(path);
             }
@@ -588,7 +588,7 @@ namespace SmbAbstraction
 
         public override DirectorySecurity GetAccessControl(string path)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.GetAccessControl(path);
             }
@@ -598,7 +598,7 @@ namespace SmbAbstraction
 
         public override DirectorySecurity GetAccessControl(string path, AccessControlSections includeSections)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.GetAccessControl(path, includeSections);
             }
@@ -608,7 +608,7 @@ namespace SmbAbstraction
 
         public override DateTime GetCreationTime(string path)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.GetCreationTime(path);
             }
@@ -618,7 +618,7 @@ namespace SmbAbstraction
 
         public override DateTime GetCreationTimeUtc(string path)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.GetCreationTimeUtc(path);
             }
@@ -633,7 +633,7 @@ namespace SmbAbstraction
 
         public override string[] GetDirectories(string path)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.GetDirectories(path);
             }
@@ -643,7 +643,7 @@ namespace SmbAbstraction
 
         public override string[] GetDirectories(string path, string searchPattern)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.GetDirectories(path, searchPattern);
             }
@@ -653,7 +653,7 @@ namespace SmbAbstraction
 
         public override string[] GetDirectories(string path, string searchPattern, SearchOption searchOption)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.GetDirectories(path, searchPattern, searchOption);
             }
@@ -663,7 +663,7 @@ namespace SmbAbstraction
 
         public override string GetDirectoryRoot(string path)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.GetDirectoryRoot(path);
             }
@@ -673,7 +673,7 @@ namespace SmbAbstraction
 
         public override string[] GetFiles(string path)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.GetFiles(path);
             }
@@ -683,7 +683,7 @@ namespace SmbAbstraction
 
         public override string[] GetFiles(string path, string searchPattern)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.GetFiles(path, searchPattern);
             }
@@ -693,7 +693,7 @@ namespace SmbAbstraction
 
         public override string[] GetFiles(string path, string searchPattern, SearchOption searchOption)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.GetFiles(path, searchPattern, searchOption);
             }
@@ -703,7 +703,7 @@ namespace SmbAbstraction
 
         public override string[] GetFileSystemEntries(string path)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.GetFileSystemEntries(path);
             }
@@ -713,7 +713,7 @@ namespace SmbAbstraction
 
         public override string[] GetFileSystemEntries(string path, string searchPattern)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.GetFileSystemEntries(path, searchPattern);
             }
@@ -723,7 +723,7 @@ namespace SmbAbstraction
 
         public override DateTime GetLastAccessTime(string path)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.GetLastAccessTime(path);
             }
@@ -733,7 +733,7 @@ namespace SmbAbstraction
 
         public override DateTime GetLastAccessTimeUtc(string path)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.GetLastAccessTimeUtc(path);
             }
@@ -743,7 +743,7 @@ namespace SmbAbstraction
 
         public override DateTime GetLastWriteTime(string path)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.GetLastWriteTime(path);
             }
@@ -753,7 +753,7 @@ namespace SmbAbstraction
 
         public override DateTime GetLastWriteTimeUtc(string path)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.GetLastWriteTimeUtc(path);
             }
@@ -763,7 +763,7 @@ namespace SmbAbstraction
 
         public override IDirectoryInfo GetParent(string path)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.GetParent(path);
             }
@@ -773,7 +773,7 @@ namespace SmbAbstraction
 
         internal IDirectoryInfo GetParent(string path, ISMBCredential credential)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.GetParent(path);
             }
@@ -820,7 +820,7 @@ namespace SmbAbstraction
 
         public override void SetAccessControl(string path, DirectorySecurity directorySecurity)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 base.SetAccessControl(path, directorySecurity);
                 return;
@@ -831,7 +831,7 @@ namespace SmbAbstraction
 
         public override void SetCreationTime(string path, DateTime creationTime)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 base.SetCreationTime(path, creationTime);
                 return;
@@ -844,7 +844,7 @@ namespace SmbAbstraction
 
         public override void SetCreationTimeUtc(string path, DateTime creationTimeUtc)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 base.SetCreationTimeUtc(path, creationTimeUtc);
                 return;
@@ -857,7 +857,7 @@ namespace SmbAbstraction
 
         public override void SetCurrentDirectory(string path)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 base.SetCurrentDirectory(path);
                 return;
@@ -868,7 +868,7 @@ namespace SmbAbstraction
 
         public override void SetLastAccessTime(string path, DateTime lastAccessTime)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 base.SetLastAccessTime(path, lastAccessTime);
                 return;
@@ -881,7 +881,7 @@ namespace SmbAbstraction
 
         public override void SetLastAccessTimeUtc(string path, DateTime lastAccessTimeUtc)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 base.SetLastAccessTimeUtc(path, lastAccessTimeUtc);
                 return;
@@ -894,7 +894,7 @@ namespace SmbAbstraction
 
         public override void SetLastWriteTime(string path, DateTime lastWriteTime)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 base.SetLastWriteTime(path, lastWriteTime);
                 return;
@@ -907,7 +907,7 @@ namespace SmbAbstraction
 
         public override void SetLastWriteTimeUtc(string path, DateTime lastWriteTimeUtc)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 base.SetLastWriteTimeUtc(path, lastWriteTimeUtc);
                 return;

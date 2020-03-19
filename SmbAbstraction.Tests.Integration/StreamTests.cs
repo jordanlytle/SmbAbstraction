@@ -19,8 +19,8 @@ namespace SmbAbstraction.Tests.Integration
             var testCredentials = TestSettings.ShareCredentials;
             var testShare = TestSettings.Shares.First();
             var testRootUncPath = testShare.RootUncPath;
-            var uncDirectory = Path.Combine(testRootUncPath, testShare.Directories.First());
-            var tempFilePath = Path.Combine(LocalTempDirectory, tempFileName);
+            var uncDirectory = FileSystem.Path.Combine(testRootUncPath, testShare.Directories.First());
+            var tempFilePath = FileSystem.Path.Combine(LocalTempDirectory, tempFileName);
 
             var byteArray = new byte[100];
 
@@ -36,8 +36,9 @@ namespace SmbAbstraction.Tests.Integration
 
             var fileInfo = FileSystem.FileInfo.FromFileName(tempFilePath);
             var fileSize = fileInfo.Length;
-            
-            var uncFileInfo = fileInfo.CopyTo(Path.Combine(uncDirectory, tempFileName));
+
+            var destinationFilePath = FileSystem.Path.Combine(uncDirectory, tempFileName);
+            var uncFileInfo = fileInfo.CopyTo(destinationFilePath);
             Assert.True(uncFileInfo.Exists);
             
             using (var stream = uncFileInfo.OpenRead())

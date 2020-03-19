@@ -20,12 +20,13 @@ namespace SmbAbstraction.Tests.Integration
             var testCredentials = TestSettings.ShareCredentials;
             var testShare = TestSettings.Shares.First();
             var testRootUncPath = testShare.RootUncPath;
-            var uncDirectory = Path.Combine(testRootUncPath, testShare.Directories.First());
-            var newUncDirectory = Path.Combine(uncDirectory, $"{DateTime.Now.ToFileTimeUtc()}");
+            var uncDirectory = FileSystem.Path.Combine(testRootUncPath, testShare.Directories.First());
+            var newUncDirectory = FileSystem.Path.Combine(uncDirectory, $"{DateTime.Now.ToFileTimeUtc()}");
 
             using var credential = new SMBCredential(testCredentials.Domain, testCredentials.Username, testCredentials.Password, uncDirectory, SMBCredentialProvider);
 
-            var directoryInfo = FileSystem.Directory.CreateDirectory(@$"{Path.Combine(testRootUncPath, $"test-move-local-directory-{DateTime.Now.ToFileTimeUtc()}")}");
+            var createDirectoryPath = FileSystem.Path.Combine(testRootUncPath, $"test-move-local-directory-{DateTime.Now.ToFileTimeUtc()}");
+            var directoryInfo = FileSystem.Directory.CreateDirectory(createDirectoryPath);
             
 
             directoryInfo.MoveTo(newUncDirectory);

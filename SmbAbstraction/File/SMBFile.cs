@@ -34,7 +34,7 @@ namespace SmbAbstraction
 
         public override void AppendAllLines(string path, IEnumerable<string> contents)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 base.AppendAllLines(path, contents);
                 return;
@@ -52,7 +52,7 @@ namespace SmbAbstraction
 
         public override void AppendAllLines(string path, IEnumerable<string> contents, Encoding encoding)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 base.AppendAllLines(path, contents, encoding);
                 return;
@@ -70,7 +70,7 @@ namespace SmbAbstraction
 
         public override Task AppendAllLinesAsync(string path, IEnumerable<string> contents, CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.AppendAllLinesAsync(path, contents, cancellationToken);
             }
@@ -80,7 +80,7 @@ namespace SmbAbstraction
 
         public override Task AppendAllLinesAsync(string path, IEnumerable<string> contents, Encoding encoding, CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.AppendAllLinesAsync(path, contents, encoding, cancellationToken);
             }
@@ -90,7 +90,7 @@ namespace SmbAbstraction
 
         public override void AppendAllText(string path, string contents)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 base.AppendAllText(path, contents);
                 return;
@@ -108,7 +108,7 @@ namespace SmbAbstraction
 
         public override void AppendAllText(string path, string contents, Encoding encoding)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 base.AppendAllText(path, contents, encoding);
                 return;
@@ -126,7 +126,7 @@ namespace SmbAbstraction
 
         public override Task AppendAllTextAsync(string path, string contents, CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.AppendAllTextAsync(path, contents, cancellationToken);
             }
@@ -136,7 +136,7 @@ namespace SmbAbstraction
 
         public override Task AppendAllTextAsync(string path, string contents, Encoding encoding, CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.AppendAllTextAsync(path, contents, encoding, cancellationToken);
             }
@@ -146,7 +146,7 @@ namespace SmbAbstraction
 
         public override StreamWriter AppendText(string path)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.AppendText(path);
             }
@@ -179,7 +179,7 @@ namespace SmbAbstraction
 
         public override Stream Create(string path)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.Create(path);
             }
@@ -189,7 +189,7 @@ namespace SmbAbstraction
 
         public override Stream Create(string path, int bufferSize)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.Create(path, bufferSize);
             }
@@ -199,7 +199,7 @@ namespace SmbAbstraction
 
         public override Stream Create(string path, int bufferSize, FileOptions options)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.Create(path, bufferSize, options);
             }
@@ -209,7 +209,7 @@ namespace SmbAbstraction
 
         public override StreamWriter CreateText(string path)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.CreateText(path);
             }
@@ -219,7 +219,7 @@ namespace SmbAbstraction
 
         public override void Delete(string path)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 base.Delete(path);
                 return;
@@ -266,7 +266,7 @@ namespace SmbAbstraction
 
         public override bool Exists(string path)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.Exists(path);
             }
@@ -326,7 +326,7 @@ namespace SmbAbstraction
 
         public override FileSecurity GetAccessControl(string path)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.GetAccessControl(path);
             }
@@ -336,7 +336,7 @@ namespace SmbAbstraction
 
         public override FileSecurity GetAccessControl(string path, AccessControlSections includeSections)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.GetAccessControl(path, includeSections);
             }
@@ -346,7 +346,7 @@ namespace SmbAbstraction
 
         public override System.IO.FileAttributes GetAttributes(string path)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.GetAttributes(path);
             }
@@ -358,7 +358,7 @@ namespace SmbAbstraction
 
         public override DateTime GetCreationTime(string path)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.GetCreationTime(path);
             }
@@ -370,7 +370,7 @@ namespace SmbAbstraction
 
         public override DateTime GetCreationTimeUtc(string path)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.GetCreationTimeUtc(path);
             }
@@ -382,7 +382,7 @@ namespace SmbAbstraction
 
         public override DateTime GetLastAccessTime(string path)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.GetLastAccessTime(path);
             }
@@ -394,7 +394,7 @@ namespace SmbAbstraction
 
         public override DateTime GetLastAccessTimeUtc(string path)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.GetLastAccessTimeUtc(path);
             }
@@ -406,7 +406,7 @@ namespace SmbAbstraction
 
         public override DateTime GetLastWriteTime(string path)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.GetLastWriteTime(path);
             }
@@ -418,7 +418,7 @@ namespace SmbAbstraction
 
         public override DateTime GetLastWriteTimeUtc(string path)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.GetLastWriteTimeUtc(path);
             }
@@ -451,7 +451,7 @@ namespace SmbAbstraction
 
         private Stream Open(string path, FileMode mode, ISMBCredential credential)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.Open(path, mode);
             }
@@ -466,7 +466,7 @@ namespace SmbAbstraction
 
         private Stream Open(string path, FileMode mode, FileAccess access, ISMBCredential credential)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.Open(path, mode, access);
             }
@@ -481,7 +481,7 @@ namespace SmbAbstraction
 
         private Stream Open(string path, FileMode mode, FileAccess access, FileShare share, ISMBCredential credential)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.Open(path, mode, access, share);
             }
@@ -623,7 +623,7 @@ namespace SmbAbstraction
 
         private Stream OpenRead(string path, ISMBCredential credential)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.OpenRead(path);
             }
@@ -633,7 +633,7 @@ namespace SmbAbstraction
 
         public override StreamReader OpenText(string path)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.OpenText(path);
             }
@@ -648,7 +648,7 @@ namespace SmbAbstraction
 
         private Stream OpenWrite(string path, ISMBCredential credential)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.OpenWrite(path);
             }
@@ -658,7 +658,7 @@ namespace SmbAbstraction
 
         public override byte[] ReadAllBytes(string path)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.ReadAllBytes(path);
             }
@@ -676,7 +676,7 @@ namespace SmbAbstraction
 
         public override Task<byte[]> ReadAllBytesAsync(string path, CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.ReadAllBytesAsync(path, cancellationToken);
             }
@@ -686,7 +686,7 @@ namespace SmbAbstraction
 
         public override string[] ReadAllLines(string path)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.ReadAllLines(path);
             }
@@ -696,7 +696,7 @@ namespace SmbAbstraction
 
         public override string[] ReadAllLines(string path, Encoding encoding)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.ReadAllLines(path, encoding);
             }
@@ -706,7 +706,7 @@ namespace SmbAbstraction
 
         public override Task<string[]> ReadAllLinesAsync(string path, CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.ReadAllLinesAsync(path, cancellationToken);
             }
@@ -716,7 +716,7 @@ namespace SmbAbstraction
 
         public override Task<string[]> ReadAllLinesAsync(string path, Encoding encoding, CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.ReadAllLinesAsync(path, encoding, cancellationToken);
             }
@@ -726,7 +726,7 @@ namespace SmbAbstraction
 
         public override string ReadAllText(string path)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.ReadAllText(path);
             }
@@ -739,7 +739,7 @@ namespace SmbAbstraction
 
         public override string ReadAllText(string path, Encoding encoding)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.ReadAllText(path, encoding);
             }
@@ -752,7 +752,7 @@ namespace SmbAbstraction
 
         public override Task<string> ReadAllTextAsync(string path, CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.ReadAllTextAsync(path, cancellationToken);
             }
@@ -762,7 +762,7 @@ namespace SmbAbstraction
 
         public override Task<string> ReadAllTextAsync(string path, Encoding encoding, CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.ReadAllTextAsync(path, encoding, cancellationToken);
             }
@@ -772,7 +772,7 @@ namespace SmbAbstraction
 
         public override IEnumerable<string> ReadLines(string path)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.ReadLines(path);
             }
@@ -792,7 +792,7 @@ namespace SmbAbstraction
 
         public override IEnumerable<string> ReadLines(string path, Encoding encoding)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.ReadLines(path, encoding);
             }
@@ -812,7 +812,7 @@ namespace SmbAbstraction
 
         public override void SetAccessControl(string path, FileSecurity fileSecurity)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 base.SetAccessControl(path, fileSecurity);
                 return;
@@ -822,7 +822,7 @@ namespace SmbAbstraction
 
         public override void SetAttributes(string path, System.IO.FileAttributes fileAttributes)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 base.SetAttributes(path, fileAttributes);
                 return;
@@ -832,7 +832,7 @@ namespace SmbAbstraction
 
         public override void SetCreationTime(string path, DateTime creationTime)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 base.SetCreationTime(path, creationTime);
                 return;
@@ -845,7 +845,7 @@ namespace SmbAbstraction
 
         public override void SetCreationTimeUtc(string path, DateTime creationTimeUtc)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 base.SetCreationTimeUtc(path, creationTimeUtc);
                 return;
@@ -858,7 +858,7 @@ namespace SmbAbstraction
 
         public override void SetLastAccessTime(string path, DateTime lastAccessTime)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 base.SetLastAccessTime(path, lastAccessTime);
                 return;
@@ -871,7 +871,7 @@ namespace SmbAbstraction
 
         public override void SetLastAccessTimeUtc(string path, DateTime lastAccessTimeUtc)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 base.SetLastAccessTimeUtc(path, lastAccessTimeUtc);
                 return;
@@ -884,7 +884,7 @@ namespace SmbAbstraction
 
         public override void SetLastWriteTime(string path, DateTime lastWriteTime)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 base.SetLastWriteTime(path, lastWriteTime);
                 return;
@@ -897,7 +897,7 @@ namespace SmbAbstraction
 
         public override void SetLastWriteTimeUtc(string path, DateTime lastWriteTimeUtc)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 base.SetLastWriteTimeUtc(path, lastWriteTimeUtc);
                 return;
@@ -910,7 +910,7 @@ namespace SmbAbstraction
 
         public override void WriteAllBytes(string path, byte[] bytes)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 base.WriteAllBytes(path, bytes);
                 return;
@@ -924,7 +924,7 @@ namespace SmbAbstraction
 
         public override Task WriteAllBytesAsync(string path, byte[] bytes, CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.WriteAllBytesAsync(path, bytes, cancellationToken);
             }
@@ -934,7 +934,7 @@ namespace SmbAbstraction
 
         public override void WriteAllLines(string path, IEnumerable<string> contents)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 base.WriteAllLines(path, contents);
                 return;
@@ -945,7 +945,7 @@ namespace SmbAbstraction
 
         public override void WriteAllLines(string path, IEnumerable<string> contents, Encoding encoding)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 base.WriteAllLines(path, contents, encoding);
                 return;
@@ -956,7 +956,7 @@ namespace SmbAbstraction
 
         public override void WriteAllLines(string path, string[] contents)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 base.WriteAllLines(path, contents);
                 return;
@@ -970,7 +970,7 @@ namespace SmbAbstraction
 
         public override void WriteAllLines(string path, string[] contents, Encoding encoding)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 base.WriteAllLines(path, contents, encoding);
                 return;
@@ -984,7 +984,7 @@ namespace SmbAbstraction
 
         public override Task WriteAllLinesAsync(string path, IEnumerable<string> contents, CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.WriteAllLinesAsync(path, contents, cancellationToken);
             }
@@ -994,7 +994,7 @@ namespace SmbAbstraction
 
         public override Task WriteAllLinesAsync(string path, IEnumerable<string> contents, Encoding encoding, CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.WriteAllLinesAsync(path, contents, encoding, cancellationToken);
             }
@@ -1004,7 +1004,7 @@ namespace SmbAbstraction
 
         public override Task WriteAllLinesAsync(string path, string[] contents, CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.WriteAllLinesAsync(path, contents, cancellationToken);
             }
@@ -1014,7 +1014,7 @@ namespace SmbAbstraction
 
         public override Task WriteAllLinesAsync(string path, string[] contents, Encoding encoding, CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.WriteAllLinesAsync(path, contents, encoding, cancellationToken);
             }
@@ -1024,7 +1024,7 @@ namespace SmbAbstraction
 
         public override void WriteAllText(string path, string contents)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 base.WriteAllText(path, contents);
                 return;
@@ -1038,7 +1038,7 @@ namespace SmbAbstraction
 
         public override void WriteAllText(string path, string contents, Encoding encoding)
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 base.WriteAllText(path, contents, encoding);
                 return;
@@ -1052,7 +1052,7 @@ namespace SmbAbstraction
 
         public override Task WriteAllTextAsync(string path, string contents, CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.WriteAllTextAsync(path, contents, cancellationToken);
             }
@@ -1062,7 +1062,7 @@ namespace SmbAbstraction
 
         public override Task WriteAllTextAsync(string path, string contents, Encoding encoding, CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (!path.IsSmbPath())
+            if (!path.IsSharePath())
             {
                 return base.WriteAllTextAsync(path, contents, encoding, cancellationToken);
             }
