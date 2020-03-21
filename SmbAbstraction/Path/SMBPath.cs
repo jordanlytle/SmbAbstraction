@@ -22,12 +22,6 @@ namespace SmbAbstraction
             get { return base.DirectorySeparatorChar; }
         }
 
-        [Obsolete("Please use GetInvalidPathChars or GetInvalidFileNameChars instead.")]
-        public override char[] InvalidPathChars
-        {
-            get { return base.InvalidPathChars; }
-        }
-
         public override char PathSeparator
         {
             get { return base.PathSeparator; }

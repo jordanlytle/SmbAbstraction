@@ -338,10 +338,5 @@ namespace SmbAbstraction
 
             return fileBasicInformation;
         }
-
-        public override void Create(DirectorySecurity directorySecurity)
-        {
-            throw new NotImplementedException();
-        }
     }
 }
