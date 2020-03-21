@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <PackOnBuild>true</PackOnBuild>
-    <Authors>jordanlytle</Authors>
+    <Authors>jordanlytle,Jo0</Authors>
     <NeutralLanguage>en-US</NeutralLanguage>
     <Description>This library implements the System.IO.Abstractions interfaces for interacting with the filesystem, and adds support for interacting with UNC or SMB paths.</Description>
   </PropertyGroup>
@@ -12,7 +12,7 @@
     <PackageId>SmbAbstraction</PackageId>
     <RepositoryUrl>https://github.com/jordanlytle/SmbAbstraction</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageVersion>1.0.7</PackageVersion>
+    <PackageVersion>1.0.8</PackageVersion>
   </PropertyGroup>
 
   <PropertyGroup>
