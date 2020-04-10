@@ -78,5 +78,19 @@ namespace SmbAbstraction.Tests.Integration.Directory
 
             Assert.True(files.Count >= 0); //Include 0 in case directory is empty. If an exception is thrown, the test will fail.
         }
+
+        [Fact]
+        [Trait("Category", "Integration")]
+        public void CheckDirectoryExists()
+        {
+            var credentials = _fixture.ShareCredentials;
+            var share = _fixture.Shares.First();
+            var rootPath = share.GetRootPath(_fixture.PathType);
+            var directory = _fileSystem.Path.Combine(rootPath, share.Directories.First());
+
+            using var credential = new SMBCredential(credentials.Domain, credentials.Username, credentials.Password, rootPath, _fixture.SMBCredentialProvider);
+            
+            Assert.True(_fileSystem.Directory.Exists(directory));
+        }
     }
 }
