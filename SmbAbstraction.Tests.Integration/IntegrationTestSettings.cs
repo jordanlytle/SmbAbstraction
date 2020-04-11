@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace SmbAbstraction.Tests.Integration
@@ -36,8 +37,9 @@ namespace SmbAbstraction.Tests.Integration
                 case PathType.SmbUri:
                     return $@"smb://{HostName}/{ShareName}";
                 case PathType.UncPath:
-                default:
                     return $@"\\{HostName}\{ShareName}";
+                default:
+                    throw new ArgumentException($"PathType must be SmbUri or UncPath");
             }
         }
     }

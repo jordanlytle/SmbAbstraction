@@ -15,4 +15,9 @@ namespace SmbAbstraction.Tests.Integration.Stream
     {
         public SmbUriTests(SmbUriFixture fixture) : base(fixture) { }
     }
+
+    public class BaseFileSystemTests : StreamTests, IClassFixture<BaseFileSystemFixture>
+    {
+        public BaseFileSystemTests(BaseFileSystemFixture fixture) : base(fixture) { }
+    }
 }
