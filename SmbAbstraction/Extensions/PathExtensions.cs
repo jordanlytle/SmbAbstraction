@@ -144,7 +144,7 @@ namespace SmbAbstraction
             var pathUri = new Uri(path);
             var parentUri = pathUri.AbsoluteUri.EndsWith('/') ? new Uri(pathUri, "..") : new Uri(pathUri, ".");
             var pathString = parentUri.IsUnc ? parentUri.LocalPath : parentUri.AbsoluteUri;
-            return pathString;
+            return pathString.RemoveTrailingSeperators();
         }
 
         public static string GetLastPathSegment(this string path)
@@ -179,6 +179,19 @@ namespace SmbAbstraction
                 if (input.StartsWith(pathSeperator))
                 {
                     input = input.Remove(0, 1);
+                }
+            }
+
+            return input;
+        }
+
+        private static string RemoveTrailingSeperators(this string input)
+        {
+            foreach (var pathSeperator in pathSeperators)
+            {
+                if (input.EndsWith(pathSeperator))
+                {
+                    input = input.Remove(input.LastIndexOf(pathSeperator), 1);
                 }
             }
 

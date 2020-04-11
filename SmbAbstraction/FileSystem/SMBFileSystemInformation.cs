@@ -15,12 +15,10 @@ namespace SmbAbstraction
         public FileFsControlInformation ControlInformation { get; }
         public FileFsSectorSizeInformation SectorSizeInformation { get; }
 
-        public SMBFileSystemInformation(ISMBFileStore fileStore, string path)
+        public SMBFileSystemInformation(ISMBFileStore fileStore, string path, NTStatus status)
         {
             var shareName = path.ShareName();
             var relativePath = path.RelativeSharePath();
-
-            NTStatus status = NTStatus.STATUS_SUCCESS;
 
             if (status == NTStatus.STATUS_SUCCESS)
             {

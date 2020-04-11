@@ -15,4 +15,9 @@ namespace SmbAbstraction.Tests.Integration.DriveInfo
     {
         public SmbUriTests(SmbUriFixture fixture) : base(fixture) { }
     }
+
+    public class BaseFileSystemTests : DriveInfoTests, IClassFixture<BaseFileSystemFixture>
+    {
+        public BaseFileSystemTests(BaseFileSystemFixture fixture) : base(fixture) { }
+    }
 }

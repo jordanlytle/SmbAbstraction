@@ -10,27 +10,25 @@ namespace SmbAbstraction
 {
     public class SMBDirectoryInfo : DirectoryInfoWrapper, IDirectoryInfo
     {
-        private readonly SMBDirectory _smbDirectory;
-        private readonly SMBFile _smbFile;
-        private readonly SMBDirectoryInfoFactory _directoryInfoFactory;
-        private readonly SMBFileInfoFactory _fileInfoFactory;
+        private SMBDirectory _smbDirectory => _fileSystem.Directory as SMBDirectory;
+        private SMBFile _smbFile => _fileSystem.File as SMBFile;
+        private SMBDirectoryInfoFactory _directoryInfoFactory => _fileSystem.DirectoryInfo as SMBDirectoryInfoFactory;
+        private SMBFileInfoFactory _fileInfoFactory => _fileSystem.FileInfo as SMBFileInfoFactory;
         private readonly ISMBCredentialProvider _credentialProvider;
         private readonly IFileSystem _fileSystem;
 
-        public SMBDirectoryInfo(string fileName, SMBDirectory smbDirectory, SMBFile smbFile, SMBDirectoryInfoFactory directoryInfoFactory,
-            SMBFileInfoFactory fileInfoFactory, IFileSystem fileSystem, ISMBCredentialProvider credentialProvider) : base(new FileSystem(), new DirectoryInfo(fileName))
+        public SMBDirectoryInfo(string fileName, 
+                                IFileSystem fileSystem, 
+                                ISMBCredentialProvider credentialProvider) : base(new FileSystem(), new DirectoryInfo(fileName))
         {
             _fullName = fileName;
-            _smbDirectory = smbDirectory;
-            _smbFile = smbFile;
-            _directoryInfoFactory = directoryInfoFactory;
-            _fileInfoFactory = fileInfoFactory;
             _credentialProvider = credentialProvider;
             _fileSystem = fileSystem;
         }
 
-        internal SMBDirectoryInfo(DirectoryInfo directoryInfo, SMBDirectory smbDirectory, SMBFile smbFile, SMBDirectoryInfoFactory directoryInfoFactory, SMBFileInfoFactory fileInfoFactory, IFileSystem fileSystem, ISMBCredentialProvider credentialProvider)
-            : this(directoryInfo.FullName, smbDirectory, smbFile, directoryInfoFactory, fileInfoFactory, fileSystem, credentialProvider)
+        internal SMBDirectoryInfo(DirectoryInfo directoryInfo, 
+                                  IFileSystem fileSystem, 
+                                  ISMBCredentialProvider credentialProvider) : this(directoryInfo.FullName, fileSystem, credentialProvider)
         {
             _creationTime = directoryInfo.CreationTime;
             _creationTimeUtc = directoryInfo.CreationTimeUtc;
@@ -39,16 +37,18 @@ namespace SmbAbstraction
             _lastAccessTimeUtc = directoryInfo.LastAccessTimeUtc;
             _lastWriteTime = directoryInfo.LastWriteTime;
             _lastWriteTimeUtc = directoryInfo.LastWriteTimeUtc;
-            _parent = _directoryInfoFactory.FromDirectoryName(directoryInfo.Parent.FullName);
-            _root = _directoryInfoFactory.FromDirectoryName(directoryInfo.Root.FullName);
+            _parent = (directoryInfo.Parent != null) ? _directoryInfoFactory.FromDirectoryName(directoryInfo.Parent.FullName) : null;
+            _root = new SMBDirectoryInfo(directoryInfo.Root.FullName, fileSystem, credentialProvider);
             _exists = directoryInfo.Exists;
             _extension = directoryInfo.Extension;
             _name = directoryInfo.Name;
         }
 
-        internal SMBDirectoryInfo(string fileName, SMBDirectory smbDirectory, SMBFile smbFile, SMBDirectoryInfoFactory directoryInfoFactory,
-            SMBFileInfoFactory fileInfoFactory, FileInformation fileInfo, IFileSystem fileSystem, ISMBCredentialProvider credentialProvider, ISMBCredential credential)
-            : this(fileName, smbDirectory, smbFile, directoryInfoFactory, fileInfoFactory, fileSystem, credentialProvider)
+        internal SMBDirectoryInfo(string fileName,
+                                  FileInformation fileInfo, 
+                                  IFileSystem fileSystem, 
+                                  ISMBCredentialProvider credentialProvider, 
+                                  ISMBCredential credential): this(fileName, fileSystem, credentialProvider)
         {
             FileBasicInformation fileDirectoryInformation = (FileBasicInformation)fileInfo;
             if (fileDirectoryInformation.CreationTime.Time.HasValue)
@@ -70,10 +70,15 @@ namespace SmbAbstraction
             _parent = _smbDirectory.GetParent(fileName, credential);
             _fileSystem = fileSystem;
             var pathRoot = _fileSystem.Path.GetPathRoot(fileName);
-            if (pathRoot != string.Empty && Parent != null)
+
+            if(pathRoot != fileName)
             {
                 _root = _directoryInfoFactory.FromDirectoryName(pathRoot, credential);
             }
+            else
+            {
+                _root = this;
+            }           
 
             _exists = _fileSystem.Directory.Exists(FullName);
             _extension = string.Empty;
@@ -177,6 +182,11 @@ namespace SmbAbstraction
 
         public override IEnumerable<IDirectoryInfo> EnumerateDirectories(string searchPattern, SearchOption searchOption)
         {
+            if(!_fullName.IsSharePath())
+            {
+                return base.EnumerateDirectories(searchPattern, searchOption);
+            }
+
             var paths = _smbDirectory.EnumerateDirectories(_fullName, searchPattern, searchOption);
 
             var rootCredential = _credentialProvider.GetSMBCredential(_fullName);
@@ -202,6 +212,11 @@ namespace SmbAbstraction
 
         public override IEnumerable<IFileInfo> EnumerateFiles(string searchPattern, SearchOption searchOption)
         {
+            if(!_fullName.IsSharePath())
+            {
+                return base.EnumerateFiles(searchPattern, searchOption);
+            }
+
             var paths = _smbDirectory.EnumerateFiles(FullName, searchPattern, searchOption);
 
             var rootCredential = _credentialProvider.GetSMBCredential(FullName);
@@ -227,6 +242,11 @@ namespace SmbAbstraction
 
         public override IEnumerable<IFileSystemInfo> EnumerateFileSystemInfos(string searchPattern, SearchOption searchOption)
         {
+            if(!_fullName.IsSharePath())
+            {
+                return base.EnumerateFileSystemInfos(searchPattern, searchOption);
+            }
+
             var paths = _smbDirectory.EnumerateFileSystemEntries(_fullName, searchPattern, searchOption);
 
             var rootCredential = _credentialProvider.GetSMBCredential(_fullName);
@@ -305,6 +325,7 @@ namespace SmbAbstraction
         public override void MoveTo(string destDirName)
         {
             _smbDirectory.Move(_fullName, destDirName);
+            _smbDirectory.Delete(_fullName);
         }
 
         public override void Refresh()

@@ -18,26 +18,38 @@ namespace SmbAbstraction.Tests.Integration.DirectoryInfo
             _fileSystem = _fixture.FileSystem;
         }
 
+
         [Fact]
         [Trait("Category", "Integration")]
-        public void MoveLocalDirectoryToUncShare()
+        public void CanCreateNewDirectoryInfo()
         {
             var credentials = _fixture.ShareCredentials;
-            var share = _fixture.Shares.First();
-            var rootPath = share.GetRootPath(_fixture.PathType);
-            var directory = _fileSystem.Path.Combine(rootPath, share.Directories.First());
+            var directory = _fileSystem.Path.Combine(_fixture.RootPath, _fixture.Directories.First());
+
+            using var credential = new SMBCredential(credentials.Domain, credentials.Username, credentials.Password, directory, _fixture.SMBCredentialProvider);
+
+            var directoryInfo = _fileSystem.DirectoryInfo.FromDirectoryName(directory);
+
+            Assert.NotNull(directoryInfo);
+        }
+
+        [Fact]
+        [Trait("Category", "Integration")]
+        public void CheckMoveDirectory()
+        {
+            var credentials = _fixture.ShareCredentials;
+            var directory = _fileSystem.Path.Combine(_fixture.RootPath, _fixture.Directories.First());
             var newDirectory = _fileSystem.Path.Combine(directory, $"{DateTime.Now.ToFileTimeUtc()}");
 
             using var credential = new SMBCredential(credentials.Domain, credentials.Username, credentials.Password, directory, _fixture.SMBCredentialProvider);
 
-            var createDirectoryPath = _fileSystem.Path.Combine(rootPath, $"test-move-local-directory-{DateTime.Now.ToFileTimeUtc()}");
+            var createDirectoryPath = _fileSystem.Path.Combine(_fixture.RootPath, $"test-move-local-directory-{DateTime.Now.ToFileTimeUtc()}");
             var directoryInfo = _fileSystem.Directory.CreateDirectory(createDirectoryPath);
             
             directoryInfo.MoveTo(newDirectory);
 
             Assert.True(_fileSystem.Directory.Exists(newDirectory));
 
-            _fileSystem.Directory.Delete(directoryInfo.FullName);
             _fileSystem.Directory.Delete(newDirectory);
         }
     }

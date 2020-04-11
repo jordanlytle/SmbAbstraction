@@ -31,7 +31,7 @@ namespace SmbAbstraction
             _lastWriteTime = fileInfo.LastWriteTime;
             _lastWriteTimeUtc = fileInfo.LastWriteTimeUtc;
             _attributes = fileInfo.Attributes;
-            _directory = new DirectoryInfoWrapper(fileSystem, fileInfo.Directory);
+            _directory = _dirInfoFactory.FromDirectoryName(fileInfo.Directory.FullName);
             _directoryName = fileInfo.DirectoryName;
             _exists = fileInfo.Exists;
             _isReadOnly = fileInfo.IsReadOnly;
@@ -271,6 +271,13 @@ namespace SmbAbstraction
             if (string.IsNullOrEmpty(destinationFilePath))
             {
                 throw new ArgumentNullException(nameof(destinationFilePath));
+            }
+
+            if(destinationBackupFilePath == string.Empty)
+            {
+                ///https://docs.microsoft.com/en-us/dotnet/api/system.io.fileinfo.replace?view=netcore-3.1
+                throw new ArgumentNullException(nameof(destinationBackupFilePath), 
+                                                $"Destination backup path cannot be empty. Pass null if you do not want to create backup of file being replaced.");
             }
 
             var path = FullName;

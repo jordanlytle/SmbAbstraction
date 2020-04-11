@@ -19,13 +19,26 @@ namespace SmbAbstraction.Tests.Integration.FileInfo
 
         [Fact]
         [Trait("Category", "Integration")]
+        public void CanCreateFileInfo()
+        {
+            var credentials = _fixture.ShareCredentials;
+            var directory = _fileSystem.Path.Combine(_fixture.RootPath, _fixture.Directories.First());
+            var filePath = _fileSystem.Path.Combine(_fixture.RootPath, _fixture.Files.First());
+
+            using var credential = new SMBCredential(credentials.Domain, credentials.Username, credentials.Password, directory, _fixture.SMBCredentialProvider);
+
+            var fileInfo = _fileSystem.FileInfo.FromFileName(filePath);
+
+            Assert.NotNull(fileInfo);
+        }
+
+        [Fact]
+        [Trait("Category", "Integration")]
         public void CopyFromLocalDirectoryToShareDirectory()
         {
             var tempFileName = $"temp-{DateTime.Now.ToFileTimeUtc()}.txt";
             var credentials = _fixture.ShareCredentials;
-            var share = _fixture.Shares.First();
-            var rootPath = share.GetRootPath(_fixture.PathType);
-            var directory = _fileSystem.Path.Combine(rootPath, share.Directories.First());
+            var directory = _fileSystem.Path.Combine(_fixture.RootPath, _fixture.Directories.First());
             var tempFilePath = _fileSystem.Path.Combine(_fixture.LocalTempDirectory, tempFileName);
 
             using var credential = new SMBCredential(credentials.Domain, credentials.Username, credentials.Password, directory, _fixture.SMBCredentialProvider);
@@ -53,9 +66,7 @@ namespace SmbAbstraction.Tests.Integration.FileInfo
         {
             var tempFileName = $"temp-{DateTime.Now.ToFileTimeUtc()}.txt";
             var credentials = _fixture.ShareCredentials;
-            var share = _fixture.Shares.First();
-            var rootPath = share.GetRootPath(_fixture.PathType);
-            var directory = _fileSystem.Path.Combine(rootPath, share.Directories.First());
+            var directory = _fileSystem.Path.Combine(_fixture.RootPath, _fixture.Directories.First());
             var tempFilePath = _fileSystem.Path.Combine(_fixture.LocalTempDirectory, tempFileName);
 
             var byteArray = new byte[100];
@@ -88,10 +99,8 @@ namespace SmbAbstraction.Tests.Integration.FileInfo
         public void CheckFileExists()
         {
             var credentials = _fixture.ShareCredentials;
-            var share = _fixture.Shares.First();
-            var rootPath = share.GetRootPath(_fixture.PathType);
-            var directory = _fileSystem.Path.Combine(rootPath, share.Directories.First());
-            var filePath = _fileSystem.Path.Combine(rootPath, share.Files.First());
+            var directory = _fileSystem.Path.Combine(_fixture.RootPath, _fixture.Directories.First());
+            var filePath = _fileSystem.Path.Combine(_fixture.RootPath, _fixture.Files.First());
 
             using var credential = new SMBCredential(credentials.Domain, credentials.Username, credentials.Password, directory, _fixture.SMBCredentialProvider);
 
@@ -105,10 +114,8 @@ namespace SmbAbstraction.Tests.Integration.FileInfo
         public void CheckFileExtensionMatches()
         {
             var credentials = _fixture.ShareCredentials;
-            var share = _fixture.Shares.First();
-            var rootPath = share.GetRootPath(_fixture.PathType);
-            var directory = _fileSystem.Path.Combine(rootPath, share.Directories.First());
-            var filePath = _fileSystem.Path.Combine(rootPath, share.Files.First());
+            var directory = _fileSystem.Path.Combine(_fixture.RootPath, _fixture.Directories.First());
+            var filePath = _fileSystem.Path.Combine(_fixture.RootPath, _fixture.Files.First());
             var fileExtension = _fileSystem.Path.GetExtension(filePath);
 
             using var credential = new SMBCredential(credentials.Domain, credentials.Username, credentials.Password, directory, _fixture.SMBCredentialProvider);
@@ -123,10 +130,8 @@ namespace SmbAbstraction.Tests.Integration.FileInfo
         public void CheckFullNameMatches()
         {
             var credentials = _fixture.ShareCredentials;
-            var share = _fixture.Shares.First();
-            var rootPath = share.GetRootPath(_fixture.PathType);
-            var directory = _fileSystem.Path.Combine(rootPath, share.Directories.First());
-            var filePath = _fileSystem.Path.Combine(rootPath, share.Files.First());
+            var directory = _fileSystem.Path.Combine(_fixture.RootPath, _fixture.Directories.First());
+            var filePath = _fileSystem.Path.Combine(_fixture.RootPath, _fixture.Files.First());
 
             using var credential = new SMBCredential(credentials.Domain, credentials.Username, credentials.Password, directory, _fixture.SMBCredentialProvider);
 
@@ -140,9 +145,7 @@ namespace SmbAbstraction.Tests.Integration.FileInfo
         public void CheckReplaceWithBackup()
         {
             var credentials = _fixture.ShareCredentials;
-            var share = _fixture.Shares.First();
-            var rootPath = share.GetRootPath(_fixture.PathType);
-            var directory = _fileSystem.Path.Combine(rootPath, share.Directories.First());
+            var directory = _fileSystem.Path.Combine(_fixture.RootPath, _fixture.Directories.First());
 
             using var credential = new SMBCredential(credentials.Domain, credentials.Username, credentials.Password, directory, _fixture.SMBCredentialProvider);
 
@@ -159,7 +162,7 @@ namespace SmbAbstraction.Tests.Integration.FileInfo
             }
 
             var newFileTime = DateTime.Now.ToFileTimeUtc();
-            var newFilePath = _fileSystem.Path.Combine(rootPath, $"replace-file-{newFileTime}.txt");
+            var newFilePath = _fileSystem.Path.Combine(_fixture.RootPath, $"replace-file-{newFileTime}.txt");
 
             if (!_fileSystem.File.Exists(newFilePath))
             {
@@ -193,9 +196,7 @@ namespace SmbAbstraction.Tests.Integration.FileInfo
         public void CheckReplaceWithoutBackup()
         {
             var credentials = _fixture.ShareCredentials;
-            var share = _fixture.Shares.First();
-            var rootPath = share.GetRootPath(_fixture.PathType);
-            var directory = _fileSystem.Path.Combine(rootPath, share.Directories.First());
+            var directory = _fileSystem.Path.Combine(_fixture.RootPath, _fixture.Directories.First());
 
             using var credential = new SMBCredential(credentials.Domain, credentials.Username, credentials.Password, directory, _fixture.SMBCredentialProvider);
 
@@ -211,7 +212,7 @@ namespace SmbAbstraction.Tests.Integration.FileInfo
             }
 
             var newFileTime = DateTime.Now.ToFileTimeUtc();
-            var newFilePath = _fileSystem.Path.Combine(rootPath, $"replace-file-{newFileTime}.txt");
+            var newFilePath = _fileSystem.Path.Combine(_fixture.RootPath, $"replace-file-{newFileTime}.txt");
 
             if (!_fileSystem.File.Exists(newFilePath))
             {
@@ -223,7 +224,7 @@ namespace SmbAbstraction.Tests.Integration.FileInfo
 
             var newFileInfo = _fileSystem.FileInfo.FromFileName(newFilePath);
 
-            newFileInfo = newFileInfo.Replace(originalFilePath, "");
+            newFileInfo = newFileInfo.Replace(originalFilePath, null);
 
             Assert.Equal(originalFilePath, newFileInfo.FullName);
             Assert.False(_fileSystem.File.Exists(newFilePath));
