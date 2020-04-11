@@ -22,9 +22,7 @@ namespace SmbAbstraction.Tests.Integration.Stream
         {
             var tempFileName = $"temp-CheckStreamLength-{DateTime.Now.ToFileTimeUtc()}.txt";
             var credentials = _fixture.ShareCredentials;
-            var share = _fixture.Shares.First();
-            var rootPath = share.GetRootPath(_fixture.PathType);
-            var directory = _fileSystem.Path.Combine(rootPath, share.Directories.First());
+            var directory = _fileSystem.Path.Combine(_fixture.RootPath, _fixture.Directories.First());
             var tempFilePath = _fileSystem.Path.Combine(_fixture.LocalTempDirectory, tempFileName);
 
             var byteArray = new byte[100];

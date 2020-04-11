@@ -4,19 +4,19 @@ using System.Collections.Generic;
 using System.Text;
 using Xunit;
 
-namespace SmbAbstraction.Tests.Integration.FileInfo
+namespace SmbAbstraction.Tests.Integration.File
 {
-    public class UncPathTests : FileInfoTests, IClassFixture<UncPathFixture>
+    public class UncPathTests : FileTests, IClassFixture<UncPathFixture>
     {
         public UncPathTests(UncPathFixture fixture) : base(fixture) { }
     }
 
-    public class SmbUriTests : FileInfoTests, IClassFixture<SmbUriFixture>
+    public class SmbUriTests : FileTests, IClassFixture<SmbUriFixture>
     {
         public SmbUriTests(SmbUriFixture fixture) : base(fixture) { }
     }
 
-    public class BaseFileSystemTests : FileInfoTests, IClassFixture<BaseFileSystemFixture>
+    public class BaseFileSystemTests : FileTests, IClassFixture<BaseFileSystemFixture>
     {
         public BaseFileSystemTests(BaseFileSystemFixture fixture) : base(fixture) { }
     }

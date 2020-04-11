@@ -178,7 +178,13 @@ namespace SmbAbstraction
 
         public override string GetPathRoot(string path)
         {
-            return base.GetPathRoot(path);
+            if (!path.IsSharePath())
+            {
+                return base.GetPathRoot(path);
+            }
+            
+            var pathRoot = path.SharePath();
+            return pathRoot;               
         }
 
         public override string GetRandomFileName()
