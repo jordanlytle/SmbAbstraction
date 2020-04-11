@@ -25,9 +25,7 @@ namespace SmbAbstraction.Tests.Integration.File
         {
             var tempFileName = $"temp-{DateTime.Now.ToFileTimeUtc()}.txt";
             var credentials = _fixture.ShareCredentials;
-            var share = _fixture.Shares.First();
-            var rootPath = share.GetRootPath(_fixture.PathType);
-            var directory = _fileSystem.Path.Combine(rootPath, share.Directories.First());
+            var directory = _fileSystem.Path.Combine(_fixture.RootPath, _fixture.Directories.First());
             var tempFilePath = _fileSystem.Path.Combine(_fixture.LocalTempDirectory, tempFileName);
 
             using var credential = new SMBCredential(credentials.Domain, credentials.Username, credentials.Password, directory, _fixture.SMBCredentialProvider);

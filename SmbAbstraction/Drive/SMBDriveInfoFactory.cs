@@ -32,8 +32,12 @@ namespace SmbAbstraction
 
         public IDriveInfo FromDriveName(string driveName)
         {
-            if (Uri.IsWellFormedUriString(driveName, UriKind.Absolute)
-                && !driveName.IsSharePath())
+            if(string.IsNullOrEmpty(driveName))
+            {
+                throw new ArgumentException("Drive name cannot be null or empty.", nameof(driveName));
+            }
+
+            if (IsDriveLetter(driveName))
             {
                 var driveInfo = new DriveInfo(driveName);
                 return new DriveInfoWrapper(new FileSystem(), driveInfo);
@@ -70,7 +74,7 @@ namespace SmbAbstraction
 
             status.HandleStatus();
 
-            var smbFileSystemInformation = new SMBFileSystemInformation(fileStore, path);
+            var smbFileSystemInformation = new SMBFileSystemInformation(fileStore, path, status);
 
             var smbDriveInfo = new SMBDriveInfo(path, _fileSystem, smbFileSystemInformation, credential);
 
@@ -92,12 +96,12 @@ namespace SmbAbstraction
             var credentialsToCheck = new List<ISMBCredential>();
             credentialsToCheck = _smbCredentialProvider.GetSMBCredentials().ToList();
 
+            List<IDriveInfo> driveInfos = new List<IDriveInfo>();
+
             if (smbCredential == null && credentialsToCheck.Count == 0)
             {
-                return null;
+                return driveInfos.ToArray();
             }
-
-            List<IDriveInfo> driveInfos = new List<IDriveInfo>();
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
 
@@ -142,11 +146,15 @@ namespace SmbAbstraction
 
                         status.HandleStatus();
 
-                        var smbFileSystemInformation = new SMBFileSystemInformation(fileStore, sharePath);
+                        var smbFileSystemInformation = new SMBFileSystemInformation(fileStore, sharePath, status);
 
                         var smbDriveInfo = new SMBDriveInfo(sharePath, _fileSystem, smbFileSystemInformation, credential);
 
                         driveInfos.Add(smbDriveInfo);
+                    }
+                    catch(IOException ioEx)
+                    {
+                        throw new AggregateException($"Unable to connect to {shareName}", ioEx);
                     }
                     catch (Exception)
                     {
@@ -157,6 +165,11 @@ namespace SmbAbstraction
             }
 
             return driveInfos.ToArray();
+        }
+
+        private bool IsDriveLetter(string driveName)
+        {
+            return ((driveName.Length == 1 || driveName.EndsWith(@":\")) && Char.IsLetter(driveName, 0));
         }
     }
 }

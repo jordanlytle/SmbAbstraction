@@ -15,4 +15,9 @@ namespace SmbAbstraction.Tests.Integration.File
     {
         public SmbUriTests(SmbUriFixture fixture) : base(fixture) { }
     }
+
+    public class BaseFileSystemTests : FileTests, IClassFixture<BaseFileSystemFixture>
+    {
+        public BaseFileSystemTests(BaseFileSystemFixture fixture) : base(fixture) { }
+    }
 }

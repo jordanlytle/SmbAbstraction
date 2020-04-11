@@ -20,27 +20,36 @@ namespace SmbAbstraction.Tests.Integration.DriveInfo
         public void FromDriveName_ReturnsNotNull()
         {
             var credentials = _fixture.ShareCredentials;
-            var share = _fixture.Shares.FirstOrDefault();
-            var rootPath = share.GetRootPath(_fixture.PathType);
 
-            _fixture.SMBCredentialProvider.AddSMBCredential(new SMBCredential(credentials.Domain, credentials.Username, credentials.Password, rootPath, _fixture.SMBCredentialProvider));
+            _fixture.SMBCredentialProvider.AddSMBCredential(new SMBCredential(credentials.Domain, credentials.Username, credentials.Password, _fixture.RootPath, _fixture.SMBCredentialProvider));
 
             var smbDriveInfoFactory = new SMBDriveInfoFactory(_fileSystem, _fixture.SMBCredentialProvider, _fixture.SMBClientFactory, 65536);
 
-            var shareInfo = smbDriveInfoFactory.FromDriveName(share.ShareName);
+            var shareInfo = smbDriveInfoFactory.FromDriveName(_fixture.ShareName);
 
             Assert.NotNull(shareInfo);
         }
 
         [Fact]
         [Trait("Category", "Integration")]
-        public void GetDrives_ReturnsNotNull()
+        public void GetDrives_WithCredentials_ReturnsNotNull()
         {
             var credentials = _fixture.ShareCredentials;
-            var share = _fixture.Shares.FirstOrDefault();
-            var rootPath = share.GetRootPath(_fixture.PathType);
+            
+            _fixture.SMBCredentialProvider.AddSMBCredential(new SMBCredential(credentials.Domain, credentials.Username, credentials.Password, _fixture.RootPath, _fixture.SMBCredentialProvider));
 
-            _fixture.SMBCredentialProvider.AddSMBCredential(new SMBCredential(credentials.Domain, credentials.Username, credentials.Password, rootPath, _fixture.SMBCredentialProvider));
+            var smbDriveInfoFactory = new SMBDriveInfoFactory(_fileSystem, _fixture.SMBCredentialProvider, _fixture.SMBClientFactory, 65536);
+
+            var shares = smbDriveInfoFactory.GetDrives();
+
+            Assert.NotNull(shares);
+        }
+
+        [Fact]
+        [Trait("Category", "Integration")]
+        public void GetDrives_WithNoCredentials_ReturnsNotNull()
+        {
+            var credentials = _fixture.ShareCredentials;
 
             var smbDriveInfoFactory = new SMBDriveInfoFactory(_fileSystem, _fixture.SMBCredentialProvider, _fixture.SMBClientFactory, 65536);
 
