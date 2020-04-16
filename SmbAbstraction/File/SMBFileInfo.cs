@@ -62,11 +62,10 @@ namespace SmbAbstraction
 
             _attributes = (System.IO.FileAttributes)fileBasicInformation.FileAttributes;
 
-            var pathUri = new Uri(path);
-            var parentUri = pathUri.AbsoluteUri.EndsWith('/') ? new Uri(pathUri, "..") : new Uri(pathUri, ".");
-            var parentPathString = parentUri.IsUnc ? parentUri.LocalPath : parentUri.AbsoluteUri;
+            var parentPath = _fileSystem.Path.Combine(path.SharePath(), _fileSystem.Path.GetDirectoryName(path));
+            
 
-            _directory = _dirInfoFactory.FromDirectoryName(parentPathString, credential);
+            _directory = _dirInfoFactory.FromDirectoryName(parentPath, credential);
             _directoryName = Directory?.Name;
             _exists = _file.Exists(path);
             _isReadOnly = fileBasicInformation.FileAttributes.HasFlag(SMBLibrary.FileAttributes.ReadOnly);
