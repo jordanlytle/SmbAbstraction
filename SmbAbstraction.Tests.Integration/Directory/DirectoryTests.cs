@@ -75,6 +75,19 @@ namespace SmbAbstraction.Tests.Integration.Directory
 
         [Fact]
         [Trait("Category", "Integration")]
+        public void CanEnumerateFileSystemEntries()
+        {
+            var credentials = _fixture.ShareCredentials;
+
+            using var credential = new SMBCredential(credentials.Domain, credentials.Username, credentials.Password, _fixture.RootPath, _fixture.SMBCredentialProvider);
+
+            var fileSystemEntries = _fileSystem.Directory.EnumerateFileSystemEntries(_fixture.RootPath).ToList();
+
+            Assert.True(fileSystemEntries.Count >= 0);
+        }
+
+        [Fact]
+        [Trait("Category", "Integration")]
         public void CheckDirectoryExists()
         {
             var credentials = _fixture.ShareCredentials;
