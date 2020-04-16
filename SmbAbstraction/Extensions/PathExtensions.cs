@@ -143,14 +143,14 @@ namespace SmbAbstraction
         {
             var pathUri = new Uri(path);
             var parentUri = pathUri.AbsoluteUri.EndsWith('/') ? new Uri(pathUri, "..") : new Uri(pathUri, ".");
-            var pathString = parentUri.IsUnc ? parentUri.LocalPath : parentUri.AbsoluteUri;
+            var pathString = parentUri.IsUnc ? parentUri.LocalPath : Uri.UnescapeDataString(parentUri.AbsoluteUri);
             return pathString.RemoveTrailingSeperators();
         }
 
         public static string GetLastPathSegment(this string path)
         {
             var uri = new Uri(path);
-            return uri.Segments.Last().Replace("%20", " ");
+            return Uri.UnescapeDataString(uri.Segments.Last());
         }
 
         public static string RemoveAnySeperators(this string input)

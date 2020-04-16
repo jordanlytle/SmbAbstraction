@@ -120,7 +120,15 @@ namespace SmbAbstraction
             var segments = relativePath.Split(@"\");
             if (HasExtension(segments.Last()))
             {
-                directoryName = string.Join('\\',segments.Take(segments.Length - 1));
+                if(path.IsSmbUri())
+                {
+                    directoryName = string.Join('/', segments.Take(segments.Length - 1));
+                }
+
+                if (path.IsUncPath())
+                {
+                    directoryName = string.Join('\\', segments.Take(segments.Length - 1));
+                }
             }
             else
             {
