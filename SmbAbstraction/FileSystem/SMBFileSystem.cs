@@ -11,7 +11,7 @@ namespace SmbAbstraction
         {
             File = new SMBFile(ismbClientfactory, credentialProvider, this, maxBufferSize, loggerFactory);
             Directory = new SMBDirectory(ismbClientfactory, credentialProvider, this, maxBufferSize, loggerFactory);
-            DirectoryInfo = new SMBDirectoryInfoFactory(this, credentialProvider, ismbClientfactory, maxBufferSize);
+            DirectoryInfo = new SMBDirectoryInfoFactory(this, credentialProvider, ismbClientfactory, maxBufferSize, loggerFactory);
             FileInfo = new SMBFileInfoFactory(this, credentialProvider, ismbClientfactory, maxBufferSize);
             FileStream = new SMBFileStreamFactory(this);
             Path = new SMBPath(this);

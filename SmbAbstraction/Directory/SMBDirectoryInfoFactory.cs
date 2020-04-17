@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.IO.Abstractions;
+using Microsoft.Extensions.Logging;
 using SMBLibrary;
 using SMBLibrary.Client;
 
@@ -8,6 +9,8 @@ namespace SmbAbstraction
 {
     public class SMBDirectoryInfoFactory : IDirectoryInfoFactory
     {
+        private readonly ILoggerFactory _loggerFactory;
+        private readonly ILogger<SMBDirectoryInfoFactory> _logger;
         private readonly IFileSystem _fileSystem;
         private readonly ISMBCredentialProvider _credentialProvider;
         private readonly ISMBClientFactory _smbClientFactory;
@@ -19,8 +22,10 @@ namespace SmbAbstraction
         public SMBTransportType transport { get; set; }
 
         public SMBDirectoryInfoFactory(IFileSystem fileSystem, ISMBCredentialProvider credentialProvider,
-            ISMBClientFactory smbClientFactory, uint maxBufferSize)
+            ISMBClientFactory smbClientFactory, uint maxBufferSize, ILoggerFactory loggerFactory = null)
         {
+            _loggerFactory = loggerFactory;
+            _logger = _loggerFactory?.CreateLogger<SMBDirectoryInfoFactory>();
             _fileSystem = fileSystem;
             _credentialProvider = credentialProvider;
             _smbClientFactory = smbClientFactory;
@@ -48,7 +53,7 @@ namespace SmbAbstraction
 
             if (!path.TryResolveHostnameFromPath(out var ipAddress))
             {
-                throw new ArgumentException($"Unable to resolve \"{path.Hostname()}\"");
+                throw new SMBException($"Failed FromDirectoryName for {path}", new ArgumentException($"Unable to resolve \"{path.Hostname()}\""));
             }
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
@@ -60,31 +65,40 @@ namespace SmbAbstraction
 
             if (credential == null)
             {
-                throw new Exception($"Unable to find credential for path: {path}");
+                throw new SMBException($"Failed FromDirectoryName for {path}", new InvalidCredentialException($"Unable to find credential for path: {path}"));
             }
 
-            using var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize);
-
-            var shareName = path.ShareName();
-            var relativePath = path.RelativeSharePath();
-
-            ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
-
-            status.HandleStatus();
-
-            status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativePath, AccessMask.GENERIC_READ, 0, ShareAccess.Read,
-                    CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
-
-            status.HandleStatus();
-
-            status = fileStore.GetFileInformation(out FileInformation fileInfo, handle, FileInformationClass.FileBasicInformation); // If you call this with any other FileInformationClass value
-                                                                                                                                    // it doesn't work for some reason
-            if (status != NTStatus.STATUS_SUCCESS)
+            try
             {
-                return null;
-            }
+                var shareName = path.ShareName();
+                var relativePath = path.RelativeSharePath();
 
-            return new SMBDirectoryInfo(path, fileInfo,_fileSystem, _credentialProvider, credential);
+                _logger?.LogTrace($"Trying FromDirectoryName {{RelativePath: {relativePath}}} for {{ShareName: {shareName}}}");
+
+                using var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize);
+                
+                ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
+
+                status.HandleStatus();
+
+                status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativePath, AccessMask.GENERIC_READ, 0, ShareAccess.Read,
+                        CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
+
+                status.HandleStatus();
+
+                status = fileStore.GetFileInformation(out FileInformation fileInfo, handle, FileInformationClass.FileBasicInformation); // If you call this with any other FileInformationClass value
+                                                                                                                                        // it doesn't work for some reason
+                if (status != NTStatus.STATUS_SUCCESS)
+                {
+                    return null;
+                }
+
+                return new SMBDirectoryInfo(path, fileInfo, _fileSystem, _credentialProvider, credential);
+            }
+            catch (Exception ex)
+            {
+                throw new SMBException($"Failed FromDirectoryName for {path}", ex);
+            }
         }
 
         internal void SaveDirectoryInfo(SMBDirectoryInfo dirInfo, ISMBCredential credential = null)
@@ -93,7 +107,7 @@ namespace SmbAbstraction
 
             if (!path.TryResolveHostnameFromPath(out var ipAddress))
             {
-                throw new ArgumentException($"Unable to resolve \"{path.Hostname()}\"");
+                throw new SMBException($"Failed to SaveDirectoryInfo for {path}", new ArgumentException($"Unable to resolve \"{path.Hostname()}\""));
             }
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
@@ -105,27 +119,36 @@ namespace SmbAbstraction
 
             if (credential == null)
             {
-                throw new Exception($"Unable to find credential for path: {path}");
+                throw new SMBException($"Failed to SaveDirectoryInfo for {path}", new InvalidCredentialException($"Unable to find credential for path: {path}"));
             }
 
-            using var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize);
+            try
+            {
+                var shareName = path.ShareName();
+                var relativePath = path.RelativeSharePath();
 
-            var shareName = path.ShareName();
-            var relativePath = path.RelativeSharePath();
+                _logger?.LogTrace($"Trying to SaveDirectoryInfo {{RelativePath: {relativePath}}} for {{ShareName: {shareName}}}");
 
-            ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
+                using var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize);
 
-            status.HandleStatus();
+                ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
-            status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativePath, AccessMask.GENERIC_WRITE, 0, ShareAccess.Read,
-                    CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
+                status.HandleStatus();
 
-            status.HandleStatus();
+                status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativePath, AccessMask.GENERIC_WRITE, 0, ShareAccess.Read,
+                        CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
 
-            var fileInfo = dirInfo.ToSMBFileInformation(credential);
-            status = fileStore.SetFileInformation(handle, fileInfo);
+                status.HandleStatus();
 
-            status.HandleStatus();
+                var fileInfo = dirInfo.ToSMBFileInformation(credential);
+                status = fileStore.SetFileInformation(handle, fileInfo);
+
+                status.HandleStatus();
+            }
+            catch (Exception ex)
+            {
+                throw new SMBException($"Failed to SaveDirectoryInfo for {path}", ex);
+            }
         }
     }
 }

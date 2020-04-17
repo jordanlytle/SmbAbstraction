@@ -4,6 +4,7 @@ using System.IO.Abstractions;
 using System.Linq;
 using System.Runtime.InteropServices;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace SmbAbstraction.Tests.Integration.DirectoryInfo
 {
@@ -12,9 +13,9 @@ namespace SmbAbstraction.Tests.Integration.DirectoryInfo
         readonly TestFixture _fixture;
         readonly IFileSystem _fileSystem;
 
-        public DirectoryInfoTests(TestFixture fixture)
+        public DirectoryInfoTests(TestFixture fixture, ITestOutputHelper outputHelper)
         {
-            _fixture = fixture;
+            _fixture = fixture.WithLoggerFactory(outputHelper.ToLoggerFactory());
             _fileSystem = _fixture.FileSystem;
         }
 
