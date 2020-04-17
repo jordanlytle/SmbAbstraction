@@ -9,7 +9,6 @@ namespace SmbAbstraction
 {
     public class SMBDirectoryInfoFactory : IDirectoryInfoFactory
     {
-        private readonly ILoggerFactory _loggerFactory;
         private readonly ILogger<SMBDirectoryInfoFactory> _logger;
         private readonly IFileSystem _fileSystem;
         private readonly ISMBCredentialProvider _credentialProvider;
@@ -24,8 +23,7 @@ namespace SmbAbstraction
         public SMBDirectoryInfoFactory(IFileSystem fileSystem, ISMBCredentialProvider credentialProvider,
             ISMBClientFactory smbClientFactory, uint maxBufferSize, ILoggerFactory loggerFactory = null)
         {
-            _loggerFactory = loggerFactory;
-            _logger = _loggerFactory?.CreateLogger<SMBDirectoryInfoFactory>();
+            _logger = loggerFactory?.CreateLogger<SMBDirectoryInfoFactory>();
             _fileSystem = fileSystem;
             _credentialProvider = credentialProvider;
             _smbClientFactory = smbClientFactory;
