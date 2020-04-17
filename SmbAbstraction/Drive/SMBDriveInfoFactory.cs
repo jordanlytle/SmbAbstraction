@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
+using Microsoft.Extensions.Logging;
 using SMBLibrary;
 using SMBLibrary.Client;
 
@@ -10,6 +11,7 @@ namespace SmbAbstraction
 {
     public class SMBDriveInfoFactory : IDriveInfoFactory
     {
+        private readonly ILogger<SMBDriveInfoFactory> _logger;
         private readonly IFileSystem _fileSystem;
         private readonly ISMBCredentialProvider _smbCredentialProvider;
         private readonly ISMBClientFactory _smbClientFactory;
@@ -20,8 +22,9 @@ namespace SmbAbstraction
 
 
         public SMBDriveInfoFactory(IFileSystem fileSystem, ISMBCredentialProvider smbCredentialProvider,
-            ISMBClientFactory smbClientFactory, uint maxBufferSize)
+            ISMBClientFactory smbClientFactory, uint maxBufferSize, ILoggerFactory loggerFactory = null)
         {
+            _logger = loggerFactory?.CreateLogger<SMBDriveInfoFactory>();
             _fileSystem = fileSystem;
             _smbCredentialProvider = smbCredentialProvider;
             _smbClientFactory = smbClientFactory;
@@ -34,7 +37,7 @@ namespace SmbAbstraction
         {
             if(string.IsNullOrEmpty(driveName))
             {
-                throw new ArgumentException("Drive name cannot be null or empty.", nameof(driveName));
+                throw new SMBException($"Failed FromDriveName", new ArgumentException("Drive name cannot be null or empty.", nameof(driveName)));
             }
 
             if (IsDriveLetter(driveName))
@@ -54,6 +57,7 @@ namespace SmbAbstraction
 
                 if (credential == null)
                 {
+                    _logger?.LogTrace($"Unable to find credential in SMBCredentialProvider for path: {shareName}");
                     return null;
                 }
             }
@@ -61,24 +65,30 @@ namespace SmbAbstraction
             var path = credential.Path;
             if (!path.TryResolveHostnameFromPath(out var ipAddress))
             {
-                throw new ArgumentException($"Unable to resolve \"{path.Hostname()}\"");
+                throw new SMBException($"Failed FromDriveName for {shareName}", new ArgumentException($"Unable to resolve \"{path.Hostname()}\""));
             }
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
+            try
+            {
+                using var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize);
 
-            using var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize);
+                var relativePath = path.RelativeSharePath();
 
-            var relativePath = path.RelativeSharePath();
+                ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
-            ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
+                status.HandleStatus();
 
-            status.HandleStatus();
+                var smbFileSystemInformation = new SMBFileSystemInformation(fileStore, path, status);
 
-            var smbFileSystemInformation = new SMBFileSystemInformation(fileStore, path, status);
+                var smbDriveInfo = new SMBDriveInfo(path, _fileSystem, smbFileSystemInformation, credential);
 
-            var smbDriveInfo = new SMBDriveInfo(path, _fileSystem, smbFileSystemInformation, credential);
-
-            return smbDriveInfo;
+                return smbDriveInfo;
+            }
+            catch (Exception ex)
+            {
+                throw new SMBException($"Failed FromDriveName for {shareName}", ex);
+            }
         }
 
         public IDriveInfo[] GetDrives()
@@ -100,6 +110,7 @@ namespace SmbAbstraction
 
             if (smbCredential == null && credentialsToCheck.Count == 0)
             {
+                _logger?.LogTrace($"No provided credentials and no credentials stored credentials in SMBCredentialProvider.");
                 return driveInfos.ToArray();
             }
 
@@ -123,44 +134,54 @@ namespace SmbAbstraction
             foreach (var shareHost in shareHostNames)
             {
                 var credential = credentialsToCheck.Where(smbCredential => smbCredential.Path.Hostname().Equals(shareHost)).First();
-
-                var path = credential.Path;
-                if (!path.TryResolveHostnameFromPath(out var ipAddress))
+                try
                 {
-                    throw new ArgumentException($"Unable to resolve \"{path.Hostname()}\"");
+                    var path = credential.Path;
+                    if (!path.TryResolveHostnameFromPath(out var ipAddress))
+                    {
+                        throw new SMBException($"Failed to connect to {path.Hostname()}", new ArgumentException($"Unable to resolve \"{path.Hostname()}\""));
+                    }
+
+                    using var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize);
+
+                    var shareNames = connection.SMBClient.ListShares(out status);
+                    var shareDirectoryInfoFactory = new SMBDirectoryInfoFactory(_fileSystem, _smbCredentialProvider, _smbClientFactory, _maxBufferSize);
+
+                    foreach (var shareName in shareNames)
+                    {
+                        var sharePath = path.BuildSharePath(shareName);
+                        var relativeSharePath = sharePath.RelativeSharePath();
+
+                        _logger?.LogTrace($"Trying to get drive info for {shareName}");
+
+                        try
+                        {
+                            ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
+
+                            status.HandleStatus();
+
+                            var smbFileSystemInformation = new SMBFileSystemInformation(fileStore, sharePath, status);
+
+                            var smbDriveInfo = new SMBDriveInfo(sharePath, _fileSystem, smbFileSystemInformation, credential);
+
+                            driveInfos.Add(smbDriveInfo);
+                        }
+                        catch (IOException ioEx)
+                        {
+                            _logger?.LogTrace(ioEx, $"Failed to get drive info for {shareName}");
+                            throw new SMBException($"Failed to get drive info for {shareName}", new AggregateException($"Unable to connect to {shareName}", ioEx));
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger?.LogTrace(ex, $"Failed to get drive info for {shareName}");
+                            continue;
+                        }
+                    }
                 }
-
-                using var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize);
-
-                var shareNames = connection.SMBClient.ListShares(out status);
-                var shareDirectoryInfoFactory = new SMBDirectoryInfoFactory(_fileSystem, _smbCredentialProvider, _smbClientFactory, _maxBufferSize);
-
-                foreach (var shareName in shareNames)
+                catch (Exception ex)
                 {
-                    var sharePath = path.BuildSharePath(shareName);
-                    var relativeSharePath = sharePath.RelativeSharePath();
-
-                    try
-                    {
-                        ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
-
-                        status.HandleStatus();
-
-                        var smbFileSystemInformation = new SMBFileSystemInformation(fileStore, sharePath, status);
-
-                        var smbDriveInfo = new SMBDriveInfo(sharePath, _fileSystem, smbFileSystemInformation, credential);
-
-                        driveInfos.Add(smbDriveInfo);
-                    }
-                    catch(IOException ioEx)
-                    {
-                        throw new AggregateException($"Unable to connect to {shareName}", ioEx);
-                    }
-                    catch (Exception)
-                    {
-                        continue;
-                    }
-
+                    _logger?.LogTrace(ex,$"Failed to GetDrives for {shareHost}.");
+                    continue;
                 }
             }
 
