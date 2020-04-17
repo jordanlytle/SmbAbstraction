@@ -3,6 +3,7 @@ using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace SmbAbstraction.Tests.Integration.FileInfo
 {
@@ -11,9 +12,9 @@ namespace SmbAbstraction.Tests.Integration.FileInfo
         readonly TestFixture _fixture;
         readonly IFileSystem _fileSystem;
 
-        public FileInfoTests(TestFixture fixture)
+        public FileInfoTests(TestFixture fixture, ITestOutputHelper outputHelper)
         {
-            _fixture = fixture;
+            _fixture = fixture.WithLoggerFactory(outputHelper.ToLoggerFactory());
             _fileSystem = _fixture.FileSystem;
         }
 

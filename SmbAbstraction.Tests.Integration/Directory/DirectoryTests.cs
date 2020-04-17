@@ -5,6 +5,7 @@ using SmbAbstraction;
 using System.Linq;
 using System.IO;
 using System.IO.Abstractions;
+using Xunit.Abstractions;
 
 namespace SmbAbstraction.Tests.Integration.Directory
 {
@@ -14,9 +15,9 @@ namespace SmbAbstraction.Tests.Integration.Directory
         readonly TestFixture _fixture;
         readonly IFileSystem _fileSystem;
 
-        public DirectoryTests(TestFixture fixture)
+        public DirectoryTests(TestFixture fixture, ITestOutputHelper outputHelper)
         {
-            _fixture = fixture;
+            _fixture = fixture.WithLoggerFactory(outputHelper.ToLoggerFactory());
             _fileSystem = _fixture.FileSystem;
         }
 
@@ -38,8 +39,23 @@ namespace SmbAbstraction.Tests.Integration.Directory
             var directoryInfo = _fileSystem.Directory.CreateDirectory(createdTestDirectoryPath);
 
             Assert.True(_fileSystem.Directory.Exists(createdTestDirectoryPath));
+        }
 
-            
+        [Fact]
+        [Trait("Category", "Integration")]
+        public void CheckCreateDirectoryForExistingDirectory()
+        {
+            var credentials = _fixture.ShareCredentials;
+
+            var existingDirectory = _fileSystem.Path.Combine(_fixture.RootPath, _fixture.Directories.First());
+
+            using var credential = new SMBCredential(credentials.Domain, credentials.Username, credentials.Password, existingDirectory, _fixture.SMBCredentialProvider);
+
+            var existingDirectoryInfo = _fileSystem.DirectoryInfo.FromDirectoryName(existingDirectory);
+
+            var directoryInfo = _fileSystem.Directory.CreateDirectory(existingDirectory);
+
+            Assert.Equal(existingDirectoryInfo.FullName, directoryInfo.FullName);
         }
 
         [Fact]

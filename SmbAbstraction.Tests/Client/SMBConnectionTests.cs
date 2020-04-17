@@ -8,10 +8,6 @@ namespace SmbAbstraction.Tests.Path
 {
     public class SMBConnectionTests
     {
-        private readonly string domain = "domain";
-        private readonly string userName = "user";
-        private readonly string path = "\\\\host\\sharename";
-
         public SMBConnectionTests()
         {
         }
@@ -22,6 +18,7 @@ namespace SmbAbstraction.Tests.Path
             var domain = "domain";
             var userName = "user";
             var password = "password";
+            var path = "\\\\host\\sharename";
             var ipAddress = IPAddress.Parse("127.0.0.1");
 
             var credentials = new List<SMBCredential>() {

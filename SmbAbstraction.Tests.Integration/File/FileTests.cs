@@ -5,6 +5,7 @@ using System.IO.Abstractions;
 using System.Linq;
 using System.Text;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace SmbAbstraction.Tests.Integration.File
 {
@@ -13,9 +14,9 @@ namespace SmbAbstraction.Tests.Integration.File
         readonly TestFixture _fixture;
         private IFileSystem _fileSystem;
 
-        public FileTests(TestFixture fixture)
+        public FileTests(TestFixture fixture, ITestOutputHelper outputHelper)
         {
-            _fixture = fixture;
+            _fixture = fixture.WithLoggerFactory(outputHelper.ToLoggerFactory());
             _fileSystem = _fixture.FileSystem;
         }
 
