@@ -686,7 +686,7 @@ namespace SmbAbstraction
             }
             catch (Exception ex)
             {
-                _logger?.LogTrace($"Failed to determine if {path} exists due to. {ex}");
+                _logger?.LogTrace(ex, $"Failed to determine if {path} exists.");
                 return false;
             }
         }

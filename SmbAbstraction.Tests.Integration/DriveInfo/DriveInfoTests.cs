@@ -1,6 +1,7 @@
 ﻿using System.IO.Abstractions;
 using System.Linq;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace SmbAbstraction.Tests.Integration.DriveInfo
 {
@@ -9,9 +10,9 @@ namespace SmbAbstraction.Tests.Integration.DriveInfo
         readonly TestFixture _fixture;
         private IFileSystem _fileSystem;
 
-        public DriveInfoTests(TestFixture fixture)
+        public DriveInfoTests(TestFixture fixture, ITestOutputHelper outputHelper)
         {
-            _fixture = fixture;
+            _fixture = fixture.WithLoggerFactory(outputHelper.ToLoggerFactory());
             _fileSystem = _fixture.FileSystem;
         }
 
