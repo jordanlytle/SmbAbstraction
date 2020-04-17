@@ -7,6 +7,7 @@ using System.Security.AccessControl;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using SMBLibrary;
 using SMBLibrary.Client;
 
@@ -14,6 +15,7 @@ namespace SmbAbstraction
 {
     public class SMBFile : FileWrapper, IFile
     {
+        private readonly ILogger<SMBFile> _logger;
         private readonly ISMBClientFactory _smbClientFactory;
         private readonly ISMBCredentialProvider _credentialProvider;
         private readonly IFileSystem _fileSystem;
@@ -23,8 +25,9 @@ namespace SmbAbstraction
         public SMBTransportType transport { get; set; }
 
         public SMBFile(ISMBClientFactory smbclientFactory, ISMBCredentialProvider credentialProvider,
-            IFileSystem fileSystem, uint maxBufferSize = 65536) : base(new FileSystem())
+            IFileSystem fileSystem, uint maxBufferSize = 65536, ILoggerFactory loggerFactory = null) : base(new FileSystem())
         {
+            _logger = loggerFactory?.CreateLogger<SMBFile>();
             _smbClientFactory = smbclientFactory;
             _credentialProvider = credentialProvider;
             _fileSystem = fileSystem;
@@ -227,41 +230,57 @@ namespace SmbAbstraction
 
             if (!path.TryResolveHostnameFromPath(out var ipAddress))
             {
-                throw new ArgumentException($"Unable to resolve \"{path.Hostname()}\"");
+                throw new SMBException($"Failed to Delete {path}", new ArgumentException($"Unable to resolve \"{path.Hostname()}\""));
             }
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
 
             var credential = _credentialProvider.GetSMBCredential(path);
 
-            using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize))
+            if (credential == null)
+            {
+                throw new SMBException($"Failed to Delete {path}", new InvalidCredentialException($"Unable to find credential in SMBCredentialProvider for path: {path}"));
+            }
+
+            try
             {
                 var shareName = path.ShareName();
                 var relativePath = path.RelativeSharePath();
-                var directoryPath = _fileSystem.Path.GetDirectoryName(relativePath);
 
-                ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
+                _logger?.LogTrace($"Trying to Delete {{RelativePath: {relativePath}}} for {{ShareName: {shareName}}}");
 
-                status.HandleStatus();
-
-                int attempts = 0;
-                int allowedRetrys = 3;
-                object handle;
-
-                do
+                using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize))
                 {
-                    attempts++;
+                    ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
-                    status = fileStore.CreateFile(out handle, out FileStatus fileStatus, relativePath, AccessMask.DELETE, 0, ShareAccess.Read,
-                        CreateDisposition.FILE_OPEN, CreateOptions.FILE_DELETE_ON_CLOSE, null);
+                    status.HandleStatus();
+
+                    int attempts = 0;
+                    int allowedRetrys = 3;
+                    object handle;
+
+                    do
+                    {
+                        attempts++;
+
+                        _logger?.LogTrace($"Attempt {attempts} to Delete {path}");
+
+                        status = fileStore.CreateFile(out handle, out FileStatus fileStatus, relativePath, AccessMask.DELETE, 0, ShareAccess.Read,
+                            CreateDisposition.FILE_OPEN, CreateOptions.FILE_DELETE_ON_CLOSE, null);
+                    }
+                    while (status == NTStatus.STATUS_PENDING && attempts < allowedRetrys);
+
+                    status.HandleStatus();
+
+                    // There should be a seperate option to delete, but it doesn't seem to exsist in the library we are using, so this should work for now. Really hacky though.
+                    fileStore.CloseFile(handle);
                 }
-                while (status == NTStatus.STATUS_PENDING && attempts < allowedRetrys);
-
-                status.HandleStatus();
-
-                // There should be a seperate option to delete, but it doesn't seem to exsist in the library we are using, so this should work for now. Really hacky though.
-                fileStore.CloseFile(handle);
             }
+            catch (Exception ex)
+            {
+                throw new SMBException($"Failed to Delete {path}", ex);
+            }
+           
         }
 
         public override bool Exists(string path)
@@ -275,7 +294,7 @@ namespace SmbAbstraction
             {
                 if (!path.TryResolveHostnameFromPath(out var ipAddress))
                 {
-                    throw new ArgumentException($"Unable to resolve \"{path.Hostname()}\"");
+                    throw new SMBException($"Failed to determine if {path} exists", new ArgumentException($"Unable to resolve \"{path.Hostname()}\""));
                 }
 
                 NTStatus status = NTStatus.STATUS_SUCCESS;
@@ -287,6 +306,8 @@ namespace SmbAbstraction
                     var shareName = path.ShareName();
                     var directoryPath = _fileSystem.Path.GetDirectoryName(path);
                     var fileName = _fileSystem.Path.GetFileName(path);
+
+                    _logger?.LogTrace($"Trying to determine if {{DirectoryPath: {directoryPath}}} {{FileName: {fileName}}} Exists for {{ShareName: {shareName}}}");
 
                     ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
@@ -317,7 +338,7 @@ namespace SmbAbstraction
 
                 return false;
             }
-            catch
+            catch (Exception ex)
             {
                 return false;
             }
@@ -492,7 +513,7 @@ namespace SmbAbstraction
         {
             if (!path.TryResolveHostnameFromPath(out var ipAddress))
             {
-                throw new ArgumentException($"Unable to resolve \"{path.Hostname()}\"");
+                throw new SMBException($"Failed to Open {path}", new ArgumentException($"Unable to resolve \"{path.Hostname()}\""));
             }
 
             NTStatus status = NTStatus.STATUS_SUCCESS;
@@ -547,72 +568,79 @@ namespace SmbAbstraction
 
             if (credential == null)
             {
-                throw new Exception($"Unable to find credential for path: {path}");
+                throw new SMBException($"Failed to Open {path}", new InvalidCredentialException($"Unable to find credential in SMBCredentialProvider for path: {path}"));
             }
 
-            var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize);
-
-            var shareName = path.ShareName();
-            var relativePath = path.RelativeSharePath();
-
-            ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
-
-            status.HandleStatus();
-
-            switch (mode)
+            try
             {
-                case FileMode.Create:
-                    disposition = CreateDisposition.FILE_CREATE;
-                    break;
-                case FileMode.CreateNew:
-                    disposition = CreateDisposition.FILE_OVERWRITE;
-                    break;
-                case FileMode.Open:
-                    disposition = CreateDisposition.FILE_OPEN;
-                    break;
-                case FileMode.OpenOrCreate:
-                    disposition = Exists(path) ? CreateDisposition.FILE_OPEN : CreateDisposition.FILE_CREATE;
-                    break;
-            }
+                var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize);
 
-            int getInfoAttempts = 0;
-            int getInfoAllowedRetrys = 5;
-            
-            object handle;
-            FileInformation fileInfo;
+                var shareName = path.ShareName();
+                var relativePath = path.RelativeSharePath();
 
-            do
-            {
-                getInfoAttempts++;
-                int openAttempts = 0;
-                int openAllowedRetrys = 5;
+                ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
+
+                status.HandleStatus();
+
+                switch (mode)
+                {
+                    case FileMode.Create:
+                        disposition = CreateDisposition.FILE_CREATE;
+                        break;
+                    case FileMode.CreateNew:
+                        disposition = CreateDisposition.FILE_OVERWRITE;
+                        break;
+                    case FileMode.Open:
+                        disposition = CreateDisposition.FILE_OPEN;
+                        break;
+                    case FileMode.OpenOrCreate:
+                        disposition = Exists(path) ? CreateDisposition.FILE_OPEN : CreateDisposition.FILE_CREATE;
+                        break;
+                }
+
+                int getInfoAttempts = 0;
+                int getInfoAllowedRetrys = 5;
+
+                object handle;
+                FileInformation fileInfo;
 
                 do
                 {
-                    openAttempts++;
+                    getInfoAttempts++;
+                    int openAttempts = 0;
+                    int openAllowedRetrys = 5;
 
-                    status = fileStore.CreateFile(out handle, out FileStatus fileStatus, relativePath, accessMask, 0, shareAccess,
-                    disposition, createOptions, null);
+                    do
+                    {
+                        openAttempts++;
+
+                        status = fileStore.CreateFile(out handle, out FileStatus fileStatus, relativePath, accessMask, 0, shareAccess,
+                        disposition, createOptions, null);
+                    }
+                    while (status == NTStatus.STATUS_PENDING && openAttempts < openAllowedRetrys);
+
+                    status.HandleStatus();
+                    status = fileStore.GetFileInformation(out fileInfo, handle, FileInformationClass.FileStandardInformation);
                 }
-                while (status == NTStatus.STATUS_PENDING && openAttempts < openAllowedRetrys);
+                while (status == NTStatus.STATUS_NETWORK_NAME_DELETED && getInfoAttempts < getInfoAllowedRetrys);
 
                 status.HandleStatus();
-                status = fileStore.GetFileInformation(out fileInfo, handle, FileInformationClass.FileStandardInformation);
+
+                var fileStandardInfo = (FileStandardInformation)fileInfo;
+
+                Stream s = new SMBStream(fileStore, handle, connection, fileStandardInfo.EndOfFile);
+
+                if (mode == FileMode.Append)
+                {
+                    s.Seek(0, SeekOrigin.End);
+                }
+
+                return s;
             }
-            while (status == NTStatus.STATUS_NETWORK_NAME_DELETED && getInfoAttempts < getInfoAllowedRetrys);
-            
-            status.HandleStatus();
-
-            var fileStandardInfo = (FileStandardInformation)fileInfo;
-
-            Stream s = new SMBStream(fileStore, handle, connection, fileStandardInfo.EndOfFile);
-
-            if (mode == FileMode.Append)
+            catch (Exception ex)
             {
-                s.Seek(0, SeekOrigin.End);
+                throw new SMBException($"Failed to Open {path}", ex);
             }
-            
-            return s;
         }
 
         public override Stream OpenRead(string path)
