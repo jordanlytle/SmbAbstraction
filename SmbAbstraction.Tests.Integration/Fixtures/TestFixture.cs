@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.IO.Abstractions;
 using System.Runtime.InteropServices;
@@ -14,7 +15,13 @@ namespace SmbAbstraction.Tests.Integration
             FileSystem = new SMBFileSystem(SMBClientFactory, SMBCredentialProvider);
         }
 
-        public IFileSystem FileSystem { get; }
+        public TestFixture WithLoggerFactory(ILoggerFactory loggerFactory)
+        {
+            FileSystem = new SMBFileSystem(SMBClientFactory, SMBCredentialProvider, loggerFactory: loggerFactory);
+            return this;
+        }
+
+        public IFileSystem FileSystem { get; set; }
 
         public ISMBCredentialProvider SMBCredentialProvider { get; }
 
