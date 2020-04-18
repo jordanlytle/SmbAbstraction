@@ -153,7 +153,38 @@ namespace SmbAbstraction
             return Uri.UnescapeDataString(uri.Segments.Last());
         }
 
-        public static string RemoveAnySeperators(this string input)
+        public static string RemoveLeadingAndTrailingSeperators(this string input)
+        {
+            return input.RemoveLeadingSeperators().RemoveLeadingSeperators();
+        }
+
+        public static string RemoveLeadingSeperators(this string input)
+        {
+            foreach (var pathSeperator in pathSeperators)
+            {
+                if (input.StartsWith(pathSeperator))
+                {
+                    input = input.Remove(0, 1);
+                }
+            }
+
+            return input;
+        }
+
+        public static string RemoveTrailingSeperators(this string input)
+        {
+            foreach (var pathSeperator in pathSeperators)
+            {
+                if (input.EndsWith(pathSeperator))
+                {
+                    input = input.Remove(input.LastIndexOf(pathSeperator), 1);
+                }
+            }
+
+            return input;
+        }
+
+        private static string RemoveAnySeperators(this string input)
         {
             foreach (var pathSeperator in pathSeperators)
             {
@@ -168,32 +199,6 @@ namespace SmbAbstraction
             var sharePath = input.SharePath();
 
             input = input.Replace(sharePath, "", StringComparison.InvariantCultureIgnoreCase);
-
-            return input;
-        }
-
-        private static string RemoveLeadingSeperators(this string input)
-        {
-            foreach (var pathSeperator in pathSeperators)
-            {
-                if (input.StartsWith(pathSeperator))
-                {
-                    input = input.Remove(0, 1);
-                }
-            }
-
-            return input;
-        }
-
-        private static string RemoveTrailingSeperators(this string input)
-        {
-            foreach (var pathSeperator in pathSeperators)
-            {
-                if (input.EndsWith(pathSeperator))
-                {
-                    input = input.Remove(input.LastIndexOf(pathSeperator), 1);
-                }
-            }
 
             return input;
         }

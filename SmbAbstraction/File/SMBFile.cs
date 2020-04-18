@@ -304,7 +304,7 @@ namespace SmbAbstraction
                 using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize))
                 {
                     var shareName = path.ShareName();
-                    var directoryPath = _fileSystem.Path.GetDirectoryName(path);
+                    var directoryPath = _fileSystem.Path.GetDirectoryName(path).Replace(path.SharePath(), "").RemoveLeadingAndTrailingSeperators();
                     var fileName = _fileSystem.Path.GetFileName(path);
 
                     _logger?.LogTrace($"Trying to determine if {{DirectoryPath: {directoryPath}}} {{FileName: {fileName}}} Exists for {{ShareName: {shareName}}}");

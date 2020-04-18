@@ -499,7 +499,7 @@ namespace SmbAbstraction
                             }
                             else
                             {
-                                files.Add(_fileSystem.Path.Combine(path, fileDirectoryInformation.FileName.RemoveAnySeperators()));
+                                files.Add(_fileSystem.Path.Combine(path, fileDirectoryInformation.FileName.RemoveLeadingAndTrailingSeperators()));
                             }
                         }
                     }
@@ -653,7 +653,7 @@ namespace SmbAbstraction
 
                     var parentFullPath = path.GetParentPath();
                     var parentPath = parentFullPath.RelativeSharePath();
-                    var directoryName = path.GetLastPathSegment().RemoveAnySeperators();
+                    var directoryName = path.GetLastPathSegment().RemoveLeadingAndTrailingSeperators();
 
                     ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
