@@ -122,12 +122,12 @@ namespace SmbAbstraction
             {
                 if(path.IsSmbUri())
                 {
-                    directoryName = string.Join('/', segments.Take(segments.Length - 1));
+                    directoryName = Combine(path.SharePath(),string.Join('/', segments.Take(segments.Length - 1)));
                 }
 
                 if (path.IsUncPath())
                 {
-                    directoryName = string.Join('\\', segments.Take(segments.Length - 1));
+                    directoryName = Combine(path.SharePath(), string.Join('\\', segments.Take(segments.Length - 1)));
                 }
             }
             else

@@ -62,7 +62,7 @@ namespace SmbAbstraction
 
             _attributes = (System.IO.FileAttributes)fileBasicInformation.FileAttributes;
 
-            var parentPath = _fileSystem.Path.Combine(path.SharePath(), _fileSystem.Path.GetDirectoryName(path));
+            var parentPath = _fileSystem.Path.GetDirectoryName(path);
             
 
             _directory = _dirInfoFactory.FromDirectoryName(parentPath, credential);

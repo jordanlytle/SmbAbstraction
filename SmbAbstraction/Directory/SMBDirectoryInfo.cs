@@ -82,7 +82,7 @@ namespace SmbAbstraction
 
             _exists = _fileSystem.Directory.Exists(FullName);
             _extension = string.Empty;
-            _name = _fullName.GetLastPathSegment().RemoveAnySeperators();
+            _name = _fullName.GetLastPathSegment().RemoveLeadingAndTrailingSeperators();
         }
 
         private IDirectoryInfo _root;
