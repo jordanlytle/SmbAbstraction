@@ -40,20 +40,27 @@ namespace SmbAbstraction
                 throw new SMBException($"Failed FromDriveName", new ArgumentException("Drive name cannot be null or empty.", nameof(driveName)));
             }
 
-            if (IsDriveLetter(driveName))
+            if (driveName.IsSharePath() || PossibleShareName(driveName))
             {
-                var driveInfo = new DriveInfo(driveName);
-                return new DriveInfoWrapper(new FileSystem(), driveInfo);
+                return FromDriveName(driveName, null);
             }
 
-            return FromDriveName(driveName, null);
+            var driveInfo = new DriveInfo(driveName);
+            return new DriveInfoWrapper(new FileSystem(), driveInfo);
         }
 
         internal IDriveInfo FromDriveName(string shareName, ISMBCredential credential)
         {
             if (credential == null)
             {
-                credential = _smbCredentialProvider.GetSMBCredentials().Where(c => c.Path.ShareName().Equals(shareName)).FirstOrDefault();
+                if(shareName.IsValidSharePath())
+                {
+                    credential = _smbCredentialProvider.GetSMBCredentials().Where(c => c.Path.SharePath().Equals(shareName)).FirstOrDefault();
+                }
+                else
+                {
+                    credential = _smbCredentialProvider.GetSMBCredentials().Where(c => c.Path.ShareName().Equals(shareName)).FirstOrDefault();
+                }
 
                 if (credential == null)
                 {
@@ -191,6 +198,11 @@ namespace SmbAbstraction
         private bool IsDriveLetter(string driveName)
         {
             return ((driveName.Length == 1 || driveName.EndsWith(@":\")) && Char.IsLetter(driveName, 0));
+        }
+
+        private bool PossibleShareName(string input)
+        {
+            return DriveInfo.GetDrives().All(d => (d.Name != input) && !IsDriveLetter(input));
         }
     }
 }

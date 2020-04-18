@@ -38,7 +38,7 @@ namespace SmbAbstraction.Tests.Integration.Fixtures
         }
 
         public override ShareCredentials ShareCredentials => _settings.ShareCredentials;
-        public override string ShareName => System.IO.Path.GetPathRoot(RootPath);
+        public override string ShareName => RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? System.IO.Path.GetPathRoot(RootPath) : "/";
         public override string RootPath => RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? $@"C:\temp" : $@"{Environment.GetEnvironmentVariable("HOME")}/temp";
 
         public override List<string> Files
