@@ -8,7 +8,7 @@ namespace SmbAbstraction
 {
     public class SMBPath : PathWrapper, IPath
     {
-        public SMBPath(IFileSystem fileSystem): base(new FileSystem())
+        public SMBPath(IFileSystem fileSystem) : base(new FileSystem())
         {
         }
 
@@ -104,7 +104,12 @@ namespace SmbAbstraction
 
         public override string GetDirectoryName(string path)
         {
-            if(!path.IsSharePath())
+            if (path == null)
+            {
+                return null;
+            }
+
+            if (!path.IsSharePath())
             {
                 return base.GetDirectoryName(path);
             }
@@ -112,7 +117,7 @@ namespace SmbAbstraction
             var relativePath = path.RelativeSharePath();
             string directoryName = "";
 
-            if (path == null || string.IsNullOrEmpty(relativePath))
+            if (string.IsNullOrEmpty(relativePath))
             {
                 return directoryName;
             }
@@ -120,9 +125,9 @@ namespace SmbAbstraction
             var segments = relativePath.Split(@"\");
             if (HasExtension(segments.Last()))
             {
-                if(path.IsSmbUri())
+                if (path.IsSmbUri())
                 {
-                    directoryName = Combine(path.SharePath(),string.Join('/', segments.Take(segments.Length - 1)));
+                    directoryName = Combine(path.SharePath(), string.Join('/', segments.Take(segments.Length - 1)));
                 }
 
                 if (path.IsUncPath())
@@ -134,7 +139,7 @@ namespace SmbAbstraction
             {
                 directoryName = relativePath;
             }
-            
+
 
             return directoryName;
         }
@@ -146,6 +151,11 @@ namespace SmbAbstraction
 
         public override string GetFileName(string path)
         {
+            if (path == null)
+            {
+                return null;
+            }
+
             if (!path.IsSharePath())
             {
                 return base.GetFileName(path);
@@ -154,8 +164,8 @@ namespace SmbAbstraction
             var relativePath = path.RelativeSharePath();
             string fileName = "";
 
-            if (path == null || string.IsNullOrEmpty(relativePath))
-            { 
+            if (string.IsNullOrEmpty(relativePath))
+            {
                 return fileName;
             }
 
@@ -191,8 +201,7 @@ namespace SmbAbstraction
                 return base.GetPathRoot(path);
             }
             
-            var pathRoot = path.SharePath();
-            return pathRoot;               
+            return path.SharePath();
         }
 
         public override string GetRandomFileName()
@@ -229,6 +238,16 @@ namespace SmbAbstraction
 
         public override bool IsPathRooted(string path)
         {
+            if (path == null)
+            {
+                return false;
+            }
+
+            if (path.IsValidSharePath())
+            {
+                return true;
+            }
+
             return base.IsPathRooted(path);
         }
     }
