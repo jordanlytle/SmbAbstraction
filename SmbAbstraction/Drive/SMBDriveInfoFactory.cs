@@ -56,6 +56,7 @@ namespace SmbAbstraction
                 if(shareName.IsValidSharePath())
                 {
                     credential = _smbCredentialProvider.GetSMBCredentials().Where(c => c.Path.SharePath().Equals(shareName)).FirstOrDefault();
+                    shareName = shareName.ShareName();
                 }
                 else
                 {
