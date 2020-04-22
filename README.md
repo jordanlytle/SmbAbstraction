@@ -10,7 +10,7 @@ your specific application.
 
 ## Examples
 
-Example projects are available to view in `SMBAbstractions.Examples`
+Example projects are available to view in `SmbAbstraction.Examples`
 
 ## Dependency Injection
 
