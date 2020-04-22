@@ -6,15 +6,15 @@ with the filesystem, and adds support for interacting with UNC or SMB paths.
 The project is curretly a work in progress and is not guaranteed to work for
 your specific application.
 
-## Usage
+# Usage
 
-### Examples
+## Examples
 
 Example projects are available to view in `SMBAbstractions.Examples`
 
-### Dependency Injection
+## Dependency Injection
 
-#### Registering Services
+### Registering Services
 ```CSharp
 public static IHostBuilder CreateHostBuilder(string[] args) =>
     Host.CreateDefaultBuilder(args)
@@ -39,9 +39,9 @@ public static IHostBuilder CreateHostBuilder(string[] args) =>
         });
 ```
 
-#### Making calls
+### Making calls
 
-##### With IDisposable 
+#### With IDisposable 
 ```CSharp
 public void FileOpsInContext()
 {
@@ -63,7 +63,37 @@ public void FileOpsInContext()
 }
 ```
 
-### Raw
+#### With Stored Credentials 
+You can add/cache credentials for a share so that you can operate them from raw IFileSystem calls
+```CSharp
+public void StoreCredentialsForShare(NetworkCredential credential)
+{
+    var domain = credential.Domain;
+    var username = credential.UserName;
+    var password = credential.Password;
+
+    var sharePath = "valid_unc/smb_sharepath"; //ie. \\host\sharename or smb://host/sharename
+
+    _credentialProvider.AddSMBCredential(new SMBCredential(domain, username, password, sharePath, _credentialProvider));
+}
+
+public void UseStoredCredentialsForFileOp()
+{
+    //FileInfo
+    //_fileSystem.FileInfo.FromFileName(path)
+
+    //DirectoryInfo
+    //_fileSystem.DirectoryInfo.FromDirectoryName(path)
+
+    //Stream
+    //using (var stream = _fileSystem.File.Open(path, System.IO.FileMode.Open))
+    //{
+
+    //}
+}
+```
+
+## Raw
 
 ```CSharp
  static void Main(string[] args)
@@ -97,38 +127,8 @@ public void FileOpsInContext()
 }
 ```
 
-##### With Stored Credentials 
-You can add/cache credentials for a share so that you can operate them from raw IFileSystem calls
-```CSharp
-public void StoreCredentialsForShare(NetworkCredential credential)
-{
-    var domain = credential.Domain;
-    var username = credential.UserName;
-    var password = credential.Password;
 
-    var sharePath = "valid_unc/smb_sharepath"; //ie. \\host\sharename or smb://host/sharename
-
-    _credentialProvider.AddSMBCredential(new SMBCredential(domain, username, password, sharePath, _credentialProvider));
-}
-
-public void UseStoredCredentialsForFileOp()
-{
-    //FileInfo
-    //_fileSystem.FileInfo.FromFileName(path)
-
-    //DirectoryInfo
-    //_fileSystem.DirectoryInfo.FromDirectoryName(path)
-
-    //Stream
-    //using (var stream = _fileSystem.File.Open(path, System.IO.FileMode.Open))
-    //{
-
-    //}
-}
-```
-
-
-## Notes
+# Notes
 
 Currently the maxBufferSize needs to be set to the default, which is 65536. The server *should* be using
 the buffer size that it sends back to the client, but doesn't seem to be honoring that. 
