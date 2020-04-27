@@ -46,5 +46,88 @@ namespace SmbAbstraction.Tests.Integration.File
 
             _fileSystem.File.Delete(tempFilePath);
         }
+
+        [Fact]
+        [Trait("Category", "Integration")]
+        public void TestMove()
+        {
+            var tempFileName = $"temp-{DateTime.Now.ToFileTimeUtc()}.txt";
+            var credentials = _fixture.ShareCredentials;
+            var directory = _fileSystem.Path.Combine(_fixture.RootPath, _fixture.Directories.First());
+            var tempFilePath = _fileSystem.Path.Combine(_fixture.RootPath, tempFileName);
+
+            using var credential = new SMBCredential(credentials.Domain, credentials.Username, credentials.Password, directory, _fixture.SMBCredentialProvider);
+
+            if (!_fileSystem.File.Exists(tempFilePath))
+            {
+                using (var streamWriter = new StreamWriter(_fileSystem.File.Create(tempFilePath)))
+                {
+                    streamWriter.WriteLine("Test");
+                }
+            }
+
+            var moveToFilePath = _fileSystem.Path.Combine(directory, tempFileName);
+
+            _fileSystem.File.Move(tempFilePath, moveToFilePath);
+
+            Assert.True(_fileSystem.File.Exists(moveToFilePath));
+            Assert.False(_fileSystem.File.Exists(tempFilePath));
+
+        }
+
+        [Fact]
+        [Trait("Category", "Integration")]
+        public void TestMove_WhereSourceIsLocal()
+        {
+            var tempFileName = $"temp-{DateTime.Now.ToFileTimeUtc()}.txt";
+            var credentials = _fixture.ShareCredentials;
+            var directory = _fileSystem.Path.Combine(_fixture.RootPath, _fixture.Directories.First());
+            var tempFilePath = _fileSystem.Path.Combine(_fixture.LocalTempDirectory, tempFileName);
+
+            using var credential = new SMBCredential(credentials.Domain, credentials.Username, credentials.Password, directory, _fixture.SMBCredentialProvider);
+
+            if (!_fileSystem.File.Exists(tempFilePath))
+            {
+                using (var streamWriter = new StreamWriter(_fileSystem.File.Create(tempFilePath)))
+                {
+                    streamWriter.WriteLine("Test");
+                }
+            }
+
+            var moveToFilePath = _fileSystem.Path.Combine(directory, tempFileName);
+
+            _fileSystem.File.Move(tempFilePath, moveToFilePath);
+
+            Assert.True(_fileSystem.File.Exists(moveToFilePath));
+            Assert.False(_fileSystem.File.Exists(tempFilePath));
+
+        }
+
+        [Fact]
+        [Trait("Category", "Integration")]
+        public void TestMoveBetweenFileSystems_WhereSourceIsShare()
+        {
+            var tempFileName = $"temp-{DateTime.Now.ToFileTimeUtc()}.txt";
+            var credentials = _fixture.ShareCredentials;
+            var directory = _fileSystem.Path.Combine(_fixture.RootPath, _fixture.Directories.First());
+            var tempFilePath = _fileSystem.Path.Combine(_fixture.RootPath, tempFileName);
+
+            using var credential = new SMBCredential(credentials.Domain, credentials.Username, credentials.Password, directory, _fixture.SMBCredentialProvider);
+
+            if (!_fileSystem.File.Exists(tempFilePath))
+            {
+                using (var streamWriter = new StreamWriter(_fileSystem.File.Create(tempFilePath)))
+                {
+                    streamWriter.WriteLine("Test");
+                }
+            }
+
+            var moveToFilePath = _fileSystem.Path.Combine(directory, tempFileName);
+
+            _fileSystem.File.Move(tempFilePath, moveToFilePath);
+
+            Assert.True(_fileSystem.File.Exists(moveToFilePath));
+            Assert.False(_fileSystem.File.Exists(tempFilePath));
+        }
     }
 }

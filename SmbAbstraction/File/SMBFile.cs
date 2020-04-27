@@ -451,7 +451,14 @@ namespace SmbAbstraction
 
         public override void Move(string sourceFileName, string destFileName)
         {
-            Move(sourceFileName, destFileName, null, null);
+            if(!sourceFileName.IsSharePath() && !destFileName.IsSharePath())
+            {
+                base.Move(sourceFileName, destFileName);
+            }
+            else
+            {
+                Move(sourceFileName, destFileName, null, null);
+            }
         }
 
         internal void Move(string sourceFileName, string destFileName, ISMBCredential sourceCredential, ISMBCredential destinationCredential)
@@ -463,6 +470,8 @@ namespace SmbAbstraction
                     sourceStream.CopyTo(destStream, Convert.ToInt32(_maxBufferSize));
                 }
             }
+
+            _fileSystem.File.Delete(sourceFileName);
         }
 
         public override Stream Open(string path, FileMode mode)
