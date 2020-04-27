@@ -10,6 +10,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SmbAbstraction.Tests", "Smb
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{A6B8D0D4-A8E5-4949-B619-D8A76916725E}"
 	ProjectSection(SolutionItems) = preProject
+		CHANGELOG.md = CHANGELOG.md
 		README.md = README.md
 		SmbAbstraction.sln = SmbAbstraction.sln
 	EndProjectSection
