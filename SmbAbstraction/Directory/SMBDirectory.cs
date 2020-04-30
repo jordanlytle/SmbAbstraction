@@ -49,13 +49,6 @@ namespace SmbAbstraction
                 throw new SMBException($"Failed to CreateDirectory {path}", new ArgumentException($"Unable to resolve \"{path.Hostname()}\""));
             }
 
-            NTStatus status = NTStatus.STATUS_SUCCESS;
-
-            AccessMask accessMask = AccessMask.MAXIMUM_ALLOWED;
-            ShareAccess shareAccess = ShareAccess.Read;
-            CreateDisposition disposition = CreateDisposition.FILE_OPEN_IF;
-            CreateOptions createOptions = CreateOptions.FILE_DIRECTORY_FILE;
-
             if (credential == null)
             {
                 credential = _credentialProvider.GetSMBCredential(path);
@@ -66,7 +59,7 @@ namespace SmbAbstraction
                 throw new SMBException($"Failed to CreateDirectory {path}", new InvalidCredentialException($"Unable to find credential in SMBCredentialProvider for path: {path}"));
             }
 
-            if(Exists(path))
+            if (Exists(path))
             {
                 return _directoryInfoFactory.FromDirectoryName(path);
             }
@@ -80,9 +73,14 @@ namespace SmbAbstraction
 
                 using var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize);
 
-                ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
+                ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out var status);
 
                 status.HandleStatus();
+
+                AccessMask accessMask = AccessMask.SYNCHRONIZE | AccessMask.MAXIMUM_ALLOWED;
+                ShareAccess shareAccess = ShareAccess.Read | ShareAccess.Write;
+                CreateDisposition disposition = CreateDisposition.FILE_OPEN_IF;
+                CreateOptions createOptions = CreateOptions.FILE_SYNCHRONOUS_IO_NONALERT | CreateOptions.FILE_DIRECTORY_FILE;
 
                 int attempts = 0;
                 int allowedRetrys = 3;
@@ -112,7 +110,7 @@ namespace SmbAbstraction
 
                 return _directoryInfoFactory.FromDirectoryName(path, credential);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw new SMBException($"Failed to CreateDirectory {path}", ex);
             }
@@ -171,6 +169,11 @@ namespace SmbAbstraction
 
                     status.HandleStatus();
 
+                    AccessMask accessMask = AccessMask.SYNCHRONIZE | AccessMask.DELETE;
+                    ShareAccess shareAccess = ShareAccess.Delete;
+                    CreateDisposition disposition = CreateDisposition.FILE_OPEN;
+                    CreateOptions createOptions = CreateOptions.FILE_SYNCHRONOUS_IO_NONALERT | CreateOptions.FILE_DELETE_ON_CLOSE;
+
                     int attempts = 0;
                     int allowedRetrys = 3;
                     object handle;
@@ -181,8 +184,8 @@ namespace SmbAbstraction
 
                         _logger?.LogTrace($"Attempt {attempts} to Delete {path}");
 
-                        status = fileStore.CreateFile(out handle, out FileStatus fileStatus, relativePath, AccessMask.DELETE, 0, ShareAccess.Delete,
-                        CreateDisposition.FILE_OPEN, CreateOptions.FILE_DELETE_ON_CLOSE, null);
+                        status = fileStore.CreateFile(out handle, out FileStatus fileStatus, relativePath, accessMask, 0, shareAccess,
+                        disposition, createOptions, null);
                     }
                     while (status == NTStatus.STATUS_PENDING && attempts < allowedRetrys);
 
@@ -194,7 +197,7 @@ namespace SmbAbstraction
                     fileStore.CloseFile(handle);
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw new SMBException($"Failed to Delete {path}", ex);
             }
@@ -220,8 +223,6 @@ namespace SmbAbstraction
                     throw new SMBException($"Failed to Delete {path}", new ArgumentException($"Unable to resolve \"{path.Hostname()}\""));
                 }
 
-                NTStatus status = NTStatus.STATUS_SUCCESS;
-
                 if (credential == null)
                 {
                     credential = _credentialProvider.GetSMBCredential(path);
@@ -241,9 +242,14 @@ namespace SmbAbstraction
 
                     using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize))
                     {
-                        ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
+                        ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out var status);
 
                         status.HandleStatus();
+
+                        AccessMask accessMask = AccessMask.SYNCHRONIZE | AccessMask.GENERIC_READ;
+                        ShareAccess shareAccess = ShareAccess.Delete;
+                        CreateDisposition disposition = CreateDisposition.FILE_OPEN;
+                        CreateOptions createOptions = CreateOptions.FILE_SYNCHRONOUS_IO_NONALERT | CreateOptions.FILE_DIRECTORY_FILE;
 
                         int attempts = 0;
                         int allowedRetrys = 3;
@@ -255,8 +261,8 @@ namespace SmbAbstraction
 
                             _logger?.LogTrace($"Attempt {attempts} to Delete {path}");
 
-                            status = fileStore.CreateFile(out handle, out FileStatus fileStatus, relativePath, AccessMask.GENERIC_READ, 0, ShareAccess.Delete,
-                                CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
+                            status = fileStore.CreateFile(out handle, out FileStatus fileStatus, relativePath, accessMask, 0, shareAccess,
+                                disposition, createOptions, null);
                         }
                         while (status == NTStatus.STATUS_PENDING && attempts < allowedRetrys);
 
@@ -288,7 +294,7 @@ namespace SmbAbstraction
                         Delete(path, credential);
                     }
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     throw new SMBException($"Failed to Delete {path}", ex);
                 }
@@ -399,7 +405,7 @@ namespace SmbAbstraction
                     return files;
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw new SMBException($"Failed to EnumerateDirectories for {path}", ex);
             }

@@ -233,8 +233,6 @@ namespace SmbAbstraction
                 throw new SMBException($"Failed to Delete {path}", new ArgumentException($"Unable to resolve \"{path.Hostname()}\""));
             }
 
-            NTStatus status = NTStatus.STATUS_SUCCESS;
-
             var credential = _credentialProvider.GetSMBCredential(path);
 
             if (credential == null)
@@ -251,9 +249,14 @@ namespace SmbAbstraction
 
                 using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize))
                 {
-                    ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
+                    ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out var status);
 
                     status.HandleStatus();
+
+                    AccessMask accessMask = AccessMask.SYNCHRONIZE | AccessMask.DELETE;
+                    ShareAccess shareAccess = ShareAccess.Read | ShareAccess.Delete;
+                    CreateDisposition disposition = CreateDisposition.FILE_OPEN;
+                    CreateOptions createOptions = CreateOptions.FILE_SYNCHRONOUS_IO_NONALERT | CreateOptions.FILE_DELETE_ON_CLOSE;
 
                     int attempts = 0;
                     int allowedRetrys = 3;
@@ -265,8 +268,8 @@ namespace SmbAbstraction
 
                         _logger?.LogTrace($"Attempt {attempts} to Delete {path}");
 
-                        status = fileStore.CreateFile(out handle, out FileStatus fileStatus, relativePath, AccessMask.DELETE, 0, ShareAccess.Read,
-                            CreateDisposition.FILE_OPEN, CreateOptions.FILE_DELETE_ON_CLOSE, null);
+                        status = fileStore.CreateFile(out handle, out FileStatus fileStatus, relativePath, accessMask, 0, shareAccess,
+                            disposition, createOptions, null);
                     }
                     while (status == NTStatus.STATUS_PENDING && attempts < allowedRetrys);
 
@@ -280,7 +283,7 @@ namespace SmbAbstraction
             {
                 throw new SMBException($"Failed to Delete {path}", ex);
             }
-           
+
         }
 
         public override bool Exists(string path)
@@ -313,8 +316,13 @@ namespace SmbAbstraction
 
                     status.HandleStatus();
 
-                    status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, directoryPath, AccessMask.GENERIC_READ, 0, ShareAccess.Read,
-                        CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
+                    AccessMask accessMask = AccessMask.SYNCHRONIZE | AccessMask.GENERIC_READ;
+                    ShareAccess shareAccess = ShareAccess.Read;
+                    CreateDisposition disposition = CreateDisposition.FILE_OPEN;
+                    CreateOptions createOptions = CreateOptions.FILE_SYNCHRONOUS_IO_NONALERT | CreateOptions.FILE_DIRECTORY_FILE;
+
+                    status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, directoryPath, accessMask, 0, shareAccess,
+                        disposition, createOptions, null);
 
                     status.HandleStatus();
 
@@ -451,7 +459,7 @@ namespace SmbAbstraction
 
         public override void Move(string sourceFileName, string destFileName)
         {
-            if(!sourceFileName.IsSharePath() && !destFileName.IsSharePath())
+            if (!sourceFileName.IsSharePath() && !destFileName.IsSharePath())
             {
                 base.Move(sourceFileName, destFileName);
             }
@@ -501,7 +509,7 @@ namespace SmbAbstraction
                 return base.Open(path, mode, access);
             }
 
-            return Open(path, mode, access, FileShare.Read, credential);
+            return Open(path, mode, access, FileShare.None, credential);
         }
 
         public override Stream Open(string path, FileMode mode, FileAccess access, FileShare share)
@@ -536,38 +544,38 @@ namespace SmbAbstraction
             switch (fileOptions)
             {
                 case FileOptions.DeleteOnClose:
-                    createOptions = CreateOptions.FILE_DELETE_ON_CLOSE;
+                    createOptions = CreateOptions.FILE_SYNCHRONOUS_IO_NONALERT | CreateOptions.FILE_DELETE_ON_CLOSE;
                     break;
                 case FileOptions.RandomAccess:
-                    createOptions = CreateOptions.FILE_RANDOM_ACCESS;
+                    createOptions = CreateOptions.FILE_SYNCHRONOUS_IO_NONALERT | CreateOptions.FILE_RANDOM_ACCESS;
                     break;
                 case FileOptions.SequentialScan:
-                    createOptions = CreateOptions.FILE_SEQUENTIAL_ONLY;
+                    createOptions = CreateOptions.FILE_SYNCHRONOUS_IO_NONALERT | CreateOptions.FILE_SEQUENTIAL_ONLY;
                     break;
                 case FileOptions.WriteThrough:
-                    createOptions = CreateOptions.FILE_WRITE_THROUGH;
+                    createOptions = CreateOptions.FILE_SYNCHRONOUS_IO_NONALERT | CreateOptions.FILE_WRITE_THROUGH;
                     break;
                 case FileOptions.None:
                 case FileOptions.Encrypted:     // These two are not suported unless I am missing something 
                 case FileOptions.Asynchronous:  //
                 default:
-                    createOptions = CreateOptions.FILE_NON_DIRECTORY_FILE;
+                    createOptions = CreateOptions.FILE_SYNCHRONOUS_IO_NONALERT | CreateOptions.FILE_NON_DIRECTORY_FILE;
                     break;
             }
 
             switch (access)
             {
                 case FileAccess.Read:
-                    accessMask = AccessMask.GENERIC_READ;
+                    accessMask = AccessMask.SYNCHRONIZE | AccessMask.GENERIC_READ;
                     shareAccess = ShareAccess.Read;
                     break;
                 case FileAccess.Write:
-                    accessMask = AccessMask.GENERIC_WRITE;
+                    accessMask = AccessMask.SYNCHRONIZE | AccessMask.GENERIC_WRITE;
                     shareAccess = ShareAccess.Write;
                     break;
                 case FileAccess.ReadWrite:
-                    accessMask = AccessMask.GENERIC_ALL;
-                    shareAccess = ShareAccess.Write;
+                    accessMask = AccessMask.SYNCHRONIZE | AccessMask.GENERIC_READ | AccessMask.GENERIC_WRITE;
+                    shareAccess = ShareAccess.Read | ShareAccess.Write;
                     break;
             }
 
@@ -595,16 +603,16 @@ namespace SmbAbstraction
                 switch (mode)
                 {
                     case FileMode.Create:
-                        disposition = CreateDisposition.FILE_CREATE;
+                        disposition = CreateDisposition.FILE_OVERWRITE_IF;
                         break;
                     case FileMode.CreateNew:
-                        disposition = CreateDisposition.FILE_OVERWRITE;
+                        disposition = CreateDisposition.FILE_CREATE;
                         break;
                     case FileMode.Open:
                         disposition = CreateDisposition.FILE_OPEN;
                         break;
                     case FileMode.OpenOrCreate:
-                        disposition = Exists(path) ? CreateDisposition.FILE_OPEN : CreateDisposition.FILE_CREATE;
+                        disposition = CreateDisposition.FILE_OPEN_IF;
                         break;
                 }
 
@@ -876,7 +884,7 @@ namespace SmbAbstraction
             }
 
             var fileInfo = _fileInfoFactory.FromFileName(path);
-            fileInfo.CreationTime = creationTime.ToUniversalTime();
+            fileInfo.CreationTime = creationTime;
             _fileInfoFactory.SaveFileInfo((SMBFileInfo)fileInfo);
         }
 
@@ -889,7 +897,7 @@ namespace SmbAbstraction
             }
 
             var fileInfo = _fileInfoFactory.FromFileName(path);
-            fileInfo.CreationTime = creationTimeUtc;
+            fileInfo.CreationTimeUtc = creationTimeUtc.ToUniversalTime();
             _fileInfoFactory.SaveFileInfo((SMBFileInfo)fileInfo);
         }
 
@@ -902,7 +910,7 @@ namespace SmbAbstraction
             }
 
             var fileInfo = _fileInfoFactory.FromFileName(path);
-            fileInfo.LastAccessTime = lastAccessTime.ToUniversalTime();
+            fileInfo.LastAccessTime = lastAccessTime;
             _fileInfoFactory.SaveFileInfo((SMBFileInfo)fileInfo);
         }
 
@@ -915,7 +923,7 @@ namespace SmbAbstraction
             }
 
             var fileInfo = _fileInfoFactory.FromFileName(path);
-            fileInfo.LastAccessTime = lastAccessTimeUtc;
+            fileInfo.LastAccessTime = lastAccessTimeUtc.ToUniversalTime();
             _fileInfoFactory.SaveFileInfo((SMBFileInfo)fileInfo);
         }
 
@@ -928,7 +936,7 @@ namespace SmbAbstraction
             }
 
             var fileInfo = _fileInfoFactory.FromFileName(path);
-            fileInfo.LastWriteTime = lastWriteTime.ToUniversalTime();
+            fileInfo.LastWriteTime = lastWriteTime;
             _fileInfoFactory.SaveFileInfo((SMBFileInfo)fileInfo);
         }
 
@@ -941,7 +949,7 @@ namespace SmbAbstraction
             }
 
             var fileInfo = _fileInfoFactory.FromFileName(path);
-            fileInfo.LastWriteTime = lastWriteTimeUtc;
+            fileInfo.LastWriteTime = lastWriteTimeUtc.ToUniversalTime();
             _fileInfoFactory.SaveFileInfo((SMBFileInfo)fileInfo);
         }
 

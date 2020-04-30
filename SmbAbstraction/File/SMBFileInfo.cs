@@ -66,7 +66,7 @@ namespace SmbAbstraction
             
 
             _directory = _dirInfoFactory.FromDirectoryName(parentPath, credential);
-            _directoryName = Directory?.Name;
+            _directoryName = parentPath;
             _exists = _file.Exists(path);
             _isReadOnly = fileBasicInformation.FileAttributes.HasFlag(SMBLibrary.FileAttributes.ReadOnly);
             _length = fileStandardInformation.EndOfFile;
@@ -91,14 +91,14 @@ namespace SmbAbstraction
         public override bool IsReadOnly { get => _isReadOnly; }
         public override long Length { get => _length; }
         public override System.IO.FileAttributes Attributes { get => _attributes; }
-        public override DateTime CreationTime { get => _creationTime; }
-        public override DateTime CreationTimeUtc { get => _creationTimeUtc; }
+        public override DateTime CreationTime { get => _creationTime; set => _creationTime = value; }
+        public override DateTime CreationTimeUtc { get => _creationTimeUtc; set => _creationTimeUtc = value; }
         public override bool Exists { get => _exists; }
         public override string FullName { get => _fullName; }
-        public override DateTime LastAccessTime { get => _lastAccessTime; }
-        public override DateTime LastAccessTimeUtc { get => _lastAccessTimeUtc; }
-        public override DateTime LastWriteTime { get => _lastWriteTime; }
-        public override DateTime LastWriteTimeUtc { get => _lastWriteTimeUtc; }
+        public override DateTime LastAccessTime { get => _lastAccessTime; set => _lastAccessTime = value; }
+        public override DateTime LastAccessTimeUtc { get => _lastAccessTimeUtc; set => _lastAccessTimeUtc = value; }
+        public override DateTime LastWriteTime { get => _lastWriteTime; set => _lastWriteTime = value; }
+        public override DateTime LastWriteTimeUtc { get => _lastWriteTimeUtc; set => _lastWriteTimeUtc = value; }
 
         public override StreamWriter AppendText()
         {
