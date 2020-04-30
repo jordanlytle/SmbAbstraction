@@ -77,8 +77,13 @@ namespace SmbAbstraction
 
                 status.HandleStatus();
 
-                status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativePath, AccessMask.GENERIC_READ, 0, ShareAccess.Read,
-                        CreateDisposition.FILE_OPEN, CreateOptions.FILE_NON_DIRECTORY_FILE, null);
+                AccessMask accessMask = AccessMask.SYNCHRONIZE | AccessMask.GENERIC_READ;
+                ShareAccess shareAccess = ShareAccess.Read;
+                CreateDisposition disposition = CreateDisposition.FILE_OPEN;
+                CreateOptions createOptions = CreateOptions.FILE_SYNCHRONOUS_IO_NONALERT | CreateOptions.FILE_NON_DIRECTORY_FILE;
+
+                status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativePath, accessMask, 0, shareAccess,
+                    disposition, createOptions, null);
 
                 status.HandleStatus();
 
@@ -129,8 +134,15 @@ namespace SmbAbstraction
 
                 ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
-                status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativePath, AccessMask.GENERIC_WRITE, 0, ShareAccess.Read,
-                        CreateDisposition.FILE_OPEN, CreateOptions.FILE_NON_DIRECTORY_FILE, null);
+                status.HandleStatus();
+
+                AccessMask accessMask = AccessMask.SYNCHRONIZE | AccessMask.GENERIC_WRITE;
+                ShareAccess shareAccess = ShareAccess.Read;
+                CreateDisposition disposition = CreateDisposition.FILE_OPEN;
+                CreateOptions createOptions = CreateOptions.FILE_SYNCHRONOUS_IO_NONALERT | CreateOptions.FILE_NON_DIRECTORY_FILE;
+
+                status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativePath, accessMask, 0, shareAccess,
+                    disposition, createOptions, null);
 
                 status.HandleStatus();
 

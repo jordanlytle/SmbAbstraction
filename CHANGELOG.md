@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project tries to adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.7] - 2020-04-30
+
+### Changed
+- Apply `AccessMask.SYNCHRONIZE` and `CreateOptions.FILE_SYNCHRONOUS_IO_NONALERT` to all `fileStore.CreateFile` calls to ensure synchrony on operations.
+	- Left retry logic in place for now, `STATUS_PENDING` seems to no longer occur
+- Set explicit `ShareAccess.Read`  and `ShareAccess.Write` to `fileStore.CreateFile` calls for better Samba compabitility.
+	- Windows Share ACL was fine with how we were defining `ShareAccess` on calls. Samba shares seem to be picky about it.
+- Remove calls to `ToUniversalTime()`  from `Set*Time` in SMBFile
+- Add tests in `FileTests` for `IFile.Open` operations  
+### Fixed 
+- Fix `Set*TimeUtc` calls to use `ToUniversalTime()`  in SMBFile
+- Match `DirectoryName` behavior in `SMBFIleInfo` with `base.FileInfo`
+
 ## [1.1.6] - 2020-04-26
 
 ### Fixed
