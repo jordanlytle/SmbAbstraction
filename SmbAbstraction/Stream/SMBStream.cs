@@ -1,11 +1,14 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
+using SMBLibrary;
 using SMBLibrary.Client;
 
 namespace SmbAbstraction
 {
     public class SMBStream : Stream
     {
+        private readonly ISmbFileSystemSettings _smbFileSystemSettings;
         private readonly ISMBFileStore _fileStore;
         private readonly object _fileHandle;
         private readonly SMBConnection _connection;
@@ -22,8 +25,10 @@ namespace SmbAbstraction
         public override long Position { get { return _position; } set { _position = value; } }
 
 
-        public SMBStream(ISMBFileStore fileStore, object fileHandle, SMBConnection connection, long fileLength)
+        public SMBStream(ISMBFileStore fileStore, object fileHandle, SMBConnection connection, long fileLength,
+                         ISmbFileSystemSettings smbFileSystemSettings = null)
         {
+            _smbFileSystemSettings = smbFileSystemSettings ?? new SmbFileSystemSettings();
             _fileStore = fileStore;
             _fileHandle = fileHandle;
             _connection = connection;
@@ -38,21 +43,37 @@ namespace SmbAbstraction
 
         public override int Read(byte[] buffer, int offset, int count)
         {
-            var status = _fileStore.ReadFile(out byte[] data, _fileHandle, _position, count);
-            switch (status)
+            NTStatus status;
+            var stopwatch = new Stopwatch();
+            
+            stopwatch.Start();
+
+            do
             {
-                case SMBLibrary.NTStatus.STATUS_SUCCESS:
-                    for (int i = offset, i2 = 0; i2 < data.Length; i++, i2++)
-                    {
-                        buffer[i] = data[i2];
-                    }
-                    _position += data.Length;
-                    return data.Length;
-                case SMBLibrary.NTStatus.STATUS_END_OF_FILE:
-                    return 0;
-                default:
-                    throw new IOException($"Unable to read file; Status: {status}");
+                status = _fileStore.ReadFile(out byte[] data, _fileHandle, _position, count);
+
+                switch (status)
+                {
+                    case NTStatus.STATUS_SUCCESS:
+                        for (int i = offset, i2 = 0; i2 < data.Length; i++, i2++)
+                        {
+                            buffer[i] = data[i2];
+                        }
+                        _position += data.Length;
+                        return data.Length;
+                    case NTStatus.STATUS_END_OF_FILE:
+                        return 0;
+                    case NTStatus.STATUS_PENDING:
+                        break;
+                    default:
+                        throw new SMBException($"Unable to read file; Status: {status}");
+                }
             }
+            while (status == NTStatus.STATUS_PENDING && stopwatch.Elapsed.TotalSeconds <= _smbFileSystemSettings.ClientSessionTimeout);
+
+            stopwatch.Stop();
+
+            throw new SMBException($"Unable to read file; Status: {status}");
         }
 
         public override long Seek(long offset, SeekOrigin origin)
@@ -65,11 +86,11 @@ namespace SmbAbstraction
                 case SeekOrigin.Current:
                     break;
                 case SeekOrigin.End:
-                    var status = _fileStore.GetFileInformation(out SMBLibrary.FileInformation result, _fileHandle, SMBLibrary.FileInformationClass.FileStreamInformation);
+                    var status = _fileStore.GetFileInformation(out FileInformation result, _fileHandle, FileInformationClass.FileStreamInformation);
 
                     status.HandleStatus();
 
-                    SMBLibrary.FileStreamInformation fileStreamInformation = (SMBLibrary.FileStreamInformation)result;
+                    FileStreamInformation fileStreamInformation = (FileStreamInformation)result;
                     _position += fileStreamInformation.Entries[0].StreamSize;
 
                     return _position;
@@ -92,8 +113,19 @@ namespace SmbAbstraction
                 data[i2] = buffer[i];
             }
 
-            var status = _fileStore.WriteFile(out int bytesWritten, _fileHandle, _position, data);
+            NTStatus status;
+            int bytesWritten = 0;
 
+            var stopwatch = new Stopwatch();
+
+            stopwatch.Start();
+            do
+            {
+                status = _fileStore.WriteFile(out bytesWritten, _fileHandle, _position, data);
+            }
+            while (status == NTStatus.STATUS_PENDING && stopwatch.Elapsed.TotalSeconds <= _smbFileSystemSettings.ClientSessionTimeout);
+            stopwatch.Stop();
+            
             status.HandleStatus();
 
             _position += bytesWritten;

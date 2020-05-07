@@ -9,7 +9,7 @@ namespace SmbAbstraction
     {
         private readonly IFileSystem _fileSystem;
         private SMBFile _smbFile => _fileSystem.File as SMBFile;
-
+        
         public SMBFileStreamFactory(IFileSystem fileSystem)
         {
             _fileSystem = fileSystem;

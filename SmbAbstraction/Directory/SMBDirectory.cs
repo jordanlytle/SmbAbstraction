@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
@@ -13,6 +14,7 @@ namespace SmbAbstraction
     public class SMBDirectory : DirectoryWrapper, IDirectory
     {
         private readonly ILogger<SMBDirectory> _logger;
+        private readonly ISmbFileSystemSettings _smbFileSystemSettings;
         private readonly ISMBClientFactory _smbClientFactory;
         private readonly IFileSystem _fileSystem;
         private readonly ISMBCredentialProvider _credentialProvider;
@@ -22,9 +24,11 @@ namespace SmbAbstraction
         public SMBTransportType transport { get; set; }
 
         public SMBDirectory(ISMBClientFactory smbclientFactory, ISMBCredentialProvider credentialProvider,
-                    IFileSystem fileSystem, uint maxBufferSize, ILoggerFactory loggerFactory = null) : base(new FileSystem())
+                    IFileSystem fileSystem, uint maxBufferSize, 
+                    ISmbFileSystemSettings smbFileSystemSettings = null, ILoggerFactory loggerFactory = null) : base(new FileSystem())
         {
             _logger = loggerFactory?.CreateLogger<SMBDirectory>();
+            _smbFileSystemSettings = smbFileSystemSettings ?? new SmbFileSystemSettings();
             _smbClientFactory = smbclientFactory;
             _credentialProvider = credentialProvider;
             _fileSystem = fileSystem;
@@ -82,15 +86,14 @@ namespace SmbAbstraction
                 CreateDisposition disposition = CreateDisposition.FILE_OPEN_IF;
                 CreateOptions createOptions = CreateOptions.FILE_SYNCHRONOUS_IO_NONALERT | CreateOptions.FILE_DIRECTORY_FILE;
 
-                int attempts = 0;
-                int allowedRetrys = 3;
                 object handle;
+                var stopwatch = new Stopwatch();
 
+                stopwatch.Start();
                 do
                 {
-                    attempts++;
-
-                    _logger?.LogTrace($"Attempt {attempts} to CreateDirectory {path}");
+                    if (status == NTStatus.STATUS_PENDING)
+                        _logger.LogTrace($"STATUS_PENDING while trying to create directory {path}. {stopwatch.Elapsed.TotalSeconds}/{_smbFileSystemSettings.ClientSessionTimeout} seconds elapsed.");
 
                     status = fileStore.CreateFile(out handle, out FileStatus fileStatus, relativePath, accessMask, 0, shareAccess,
                     disposition, createOptions, null);
@@ -102,7 +105,8 @@ namespace SmbAbstraction
                         disposition, createOptions, null);
                     }
                 }
-                while (status == NTStatus.STATUS_PENDING && attempts < allowedRetrys);
+                while (status == NTStatus.STATUS_PENDING && stopwatch.Elapsed.TotalSeconds <= _smbFileSystemSettings.ClientSessionTimeout);
+                stopwatch.Stop();
 
                 status.HandleStatus();
 
@@ -174,20 +178,20 @@ namespace SmbAbstraction
                     CreateDisposition disposition = CreateDisposition.FILE_OPEN;
                     CreateOptions createOptions = CreateOptions.FILE_SYNCHRONOUS_IO_NONALERT | CreateOptions.FILE_DELETE_ON_CLOSE;
 
-                    int attempts = 0;
-                    int allowedRetrys = 3;
                     object handle;
+                    var stopwatch = new Stopwatch();
 
+                    stopwatch.Start();
                     do
                     {
-                        attempts++;
-
-                        _logger?.LogTrace($"Attempt {attempts} to Delete {path}");
+                        if (status == NTStatus.STATUS_PENDING)
+                            _logger.LogTrace($"STATUS_PENDING while trying to delete directory {path}. {stopwatch.Elapsed.TotalSeconds}/{_smbFileSystemSettings.ClientSessionTimeout} seconds elapsed.");
 
                         status = fileStore.CreateFile(out handle, out FileStatus fileStatus, relativePath, accessMask, 0, shareAccess,
                         disposition, createOptions, null);
                     }
-                    while (status == NTStatus.STATUS_PENDING && attempts < allowedRetrys);
+                    while (status == NTStatus.STATUS_PENDING && stopwatch.Elapsed.TotalSeconds <= _smbFileSystemSettings.ClientSessionTimeout);
+                    stopwatch.Stop();
 
                     status.HandleStatus();
 
@@ -251,20 +255,20 @@ namespace SmbAbstraction
                         CreateDisposition disposition = CreateDisposition.FILE_OPEN;
                         CreateOptions createOptions = CreateOptions.FILE_SYNCHRONOUS_IO_NONALERT | CreateOptions.FILE_DIRECTORY_FILE;
 
-                        int attempts = 0;
-                        int allowedRetrys = 3;
                         object handle;
+                        var stopwatch = new Stopwatch();
 
+                        stopwatch.Start();
                         do
                         {
-                            attempts++;
-
-                            _logger?.LogTrace($"Attempt {attempts} to Delete {path}");
+                            if (status == NTStatus.STATUS_PENDING)
+                                _logger.LogTrace($"STATUS_PENDING while trying to delete directory {path}. {stopwatch.Elapsed.TotalSeconds}/{_smbFileSystemSettings.ClientSessionTimeout} seconds elapsed.");
 
                             status = fileStore.CreateFile(out handle, out FileStatus fileStatus, relativePath, accessMask, 0, shareAccess,
                                 disposition, createOptions, null);
                         }
-                        while (status == NTStatus.STATUS_PENDING && attempts < allowedRetrys);
+                        while (status == NTStatus.STATUS_PENDING && stopwatch.Elapsed.TotalSeconds <= _smbFileSystemSettings.ClientSessionTimeout);
+                        stopwatch.Stop();
 
                         status.HandleStatus();
 
