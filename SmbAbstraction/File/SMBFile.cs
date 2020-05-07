@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
@@ -16,6 +17,7 @@ namespace SmbAbstraction
     public class SMBFile : FileWrapper, IFile
     {
         private readonly ILogger<SMBFile> _logger;
+        private readonly ISmbFileSystemSettings _smbFileSystemSettings;
         private readonly ISMBClientFactory _smbClientFactory;
         private readonly ISMBCredentialProvider _credentialProvider;
         private readonly IFileSystem _fileSystem;
@@ -25,9 +27,11 @@ namespace SmbAbstraction
         public SMBTransportType transport { get; set; }
 
         public SMBFile(ISMBClientFactory smbclientFactory, ISMBCredentialProvider credentialProvider,
-            IFileSystem fileSystem, uint maxBufferSize = 65536, ILoggerFactory loggerFactory = null) : base(new FileSystem())
+                       IFileSystem fileSystem, uint maxBufferSize = 65536, 
+                       ISmbFileSystemSettings smbFileSystemSettings = null, ILoggerFactory loggerFactory = null) : base(new FileSystem())
         {
             _logger = loggerFactory?.CreateLogger<SMBFile>();
+            _smbFileSystemSettings = smbFileSystemSettings ?? new SmbFileSystemSettings();
             _smbClientFactory = smbclientFactory;
             _credentialProvider = credentialProvider;
             _fileSystem = fileSystem;
@@ -258,21 +262,21 @@ namespace SmbAbstraction
                     CreateDisposition disposition = CreateDisposition.FILE_OPEN;
                     CreateOptions createOptions = CreateOptions.FILE_SYNCHRONOUS_IO_NONALERT | CreateOptions.FILE_DELETE_ON_CLOSE;
 
-                    int attempts = 0;
-                    int allowedRetrys = 3;
                     object handle;
+                    var stopwatch = new Stopwatch();
+                    stopwatch.Start();
 
                     do
                     {
-                        attempts++;
-
-                        _logger?.LogTrace($"Attempt {attempts} to Delete {path}");
+                        if(status == NTStatus.STATUS_PENDING)
+                            _logger.LogTrace($"STATUS_PENDING while trying to delete file {path}. {stopwatch.Elapsed.TotalSeconds}/{_smbFileSystemSettings.ClientSessionTimeout} seconds elapsed.");
 
                         status = fileStore.CreateFile(out handle, out FileStatus fileStatus, relativePath, accessMask, 0, shareAccess,
                             disposition, createOptions, null);
                     }
-                    while (status == NTStatus.STATUS_PENDING && attempts < allowedRetrys);
+                    while (status == NTStatus.STATUS_PENDING && stopwatch.Elapsed.TotalSeconds <= _smbFileSystemSettings.ClientSessionTimeout);
 
+                    stopwatch.Stop();
                     status.HandleStatus();
 
                     // There should be a seperate option to delete, but it doesn't seem to exsist in the library we are using, so this should work for now. Really hacky though.
@@ -616,37 +620,39 @@ namespace SmbAbstraction
                         break;
                 }
 
-                int getInfoAttempts = 0;
-                int getInfoAllowedRetrys = 5;
-
                 object handle;
-                FileInformation fileInfo;
-
+                var stopwatch = new Stopwatch();
+                
+                stopwatch.Start();
                 do
                 {
-                    getInfoAttempts++;
-                    int openAttempts = 0;
-                    int openAllowedRetrys = 5;
+                    if (status == NTStatus.STATUS_PENDING)
+                        _logger.LogTrace($"STATUS_PENDING while trying to open file {path}. {stopwatch.Elapsed.TotalSeconds}/{_smbFileSystemSettings.ClientSessionTimeout} seconds elapsed.");
 
-                    do
-                    {
-                        openAttempts++;
+                    status = fileStore.CreateFile(out handle, out FileStatus fileStatus, relativePath, accessMask, 0, shareAccess,
+                    disposition, createOptions, null);
+                }
+                while (status == NTStatus.STATUS_PENDING && stopwatch.Elapsed.TotalSeconds <= _smbFileSystemSettings.ClientSessionTimeout);
+                stopwatch.Stop();
 
-                        status = fileStore.CreateFile(out handle, out FileStatus fileStatus, relativePath, accessMask, 0, shareAccess,
-                        disposition, createOptions, null);
-                    }
-                    while (status == NTStatus.STATUS_PENDING && openAttempts < openAllowedRetrys);
+                status.HandleStatus();
 
-                    status.HandleStatus();
+                FileInformation fileInfo;
+                
+                stopwatch.Reset();
+                stopwatch.Start();
+                do
+                {
                     status = fileStore.GetFileInformation(out fileInfo, handle, FileInformationClass.FileStandardInformation);
                 }
-                while (status == NTStatus.STATUS_NETWORK_NAME_DELETED && getInfoAttempts < getInfoAllowedRetrys);
-
+                while (status == NTStatus.STATUS_NETWORK_NAME_DELETED && stopwatch.Elapsed.TotalSeconds <= _smbFileSystemSettings.ClientSessionTimeout);
+                stopwatch.Stop();
+                
                 status.HandleStatus();
 
                 var fileStandardInfo = (FileStandardInformation)fileInfo;
 
-                Stream s = new SMBStream(fileStore, handle, connection, fileStandardInfo.EndOfFile);
+                Stream s = new SMBStream(fileStore, handle, connection, fileStandardInfo.EndOfFile, _smbFileSystemSettings);
 
                 if (mode == FileMode.Append)
                 {
