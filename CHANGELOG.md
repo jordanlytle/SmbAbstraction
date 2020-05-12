@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project tries to adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.9] - 2020-05-07
+
+### Changed
+- Updated SmbLibraryLite to 1.4.2
+	- Version number is reflective of TalAloni/SMBLibrary changeset
+		- All NetBIOS and SMB Client code is up to date
+
+## [1.1.8] - 2020-05-06
+
+### Changed
+- Add `ISmbFileSystemSettings` and `SmbFileSystemSettings` to allow configuring `ClientSessionTimeout` which defaults to `45` seconds
+	- `ClientSessionTimeout` is used to set the max time to wait for a `STATUS_PENDING` status to clear. [As per spec, it seemed like the most appropriate timeout name to use.](https://docs.microsoft.com/en-us/archive/blogs/openspecification/cifs-and-smb-timeouts-in-windows)
+	- Replaced all old `STATUS_PENDING` (and others) retry logic to use the configured `ClientSessionTimeout`
+- Handle `STATUS_PENDING` in `SMBStream.Read()` 
+
+### Fixed
+- Return `SmbException` in `SMBStream.Read()`
+
 ## [1.1.7] - 2020-04-30
 
 ### Changed

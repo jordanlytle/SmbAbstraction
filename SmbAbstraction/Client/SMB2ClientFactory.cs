@@ -7,12 +7,7 @@ namespace SmbAbstraction
     {
         public ISMBClient CreateClient(uint maxBufferSize)
         {
-            var client = new SMB2Client
-            {
-                ClientMaxReadSize = maxBufferSize,
-                ClientMaxWriteSize = maxBufferSize,
-                ClientMaxTransactSize = maxBufferSize
-            };
+            var client = new SMB2Client();
             return client;
         }
     }
