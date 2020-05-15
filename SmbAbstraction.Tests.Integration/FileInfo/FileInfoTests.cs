@@ -239,5 +239,34 @@ namespace SmbAbstraction.Tests.Integration.FileInfo
 
             _fileSystem.File.Delete(originalFilePath);
         }
+
+        [Fact]
+        [Trait("Category", "Integration")]
+        public void TestCopyWithOverride()
+        {
+            var tempFileName = $"temp-copyto-override-{DateTime.Now.ToFileTimeUtc()}.txt";
+            var credentials = _fixture.ShareCredentials;
+            var testFilePath = _fileSystem.Path.Combine(_fixture.RootPath, _fixture.Files.First());
+            var tempFilePath = _fileSystem.Path.Combine(_fixture.RootPath, tempFileName);
+
+            using var credential = new SMBCredential(credentials.Domain, credentials.Username, credentials.Password, _fixture.RootPath, _fixture.SMBCredentialProvider);
+
+            if (!_fileSystem.File.Exists(tempFilePath))
+            {
+                var stream = _fileSystem.File.Create(tempFilePath);
+                stream.Close();
+            }
+
+            var testFileInfo = _fileSystem.FileInfo.FromFileName(testFilePath);
+
+            testFileInfo.CopyTo(tempFilePath, overwrite: true);
+
+
+            Assert.True(_fileSystem.File.Exists(tempFilePath));
+
+            _fileSystem.File.Delete(tempFilePath);
+        }
+
+
     }
 }

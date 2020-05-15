@@ -638,6 +638,9 @@ namespace SmbAbstraction
                 return base.Exists(path);
             }
 
+            ISMBFileStore fileStore = null;
+            object handle = null;
+
             try
             {
                 if (!path.TryResolveHostnameFromPath(out var ipAddress))
@@ -665,11 +668,11 @@ namespace SmbAbstraction
                     var parentPath = parentFullPath.RelativeSharePath();
                     var directoryName = path.GetLastPathSegment().RemoveLeadingAndTrailingSeperators();
 
-                    ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
+                    fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
                     status.HandleStatus();
 
-                    status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, parentPath, AccessMask.GENERIC_READ, 0, ShareAccess.Read,
+                    status = fileStore.CreateFile(out handle, out FileStatus fileStatus, parentPath, AccessMask.GENERIC_READ, 0, ShareAccess.Read,
                         CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
 
                     status.HandleStatus();
@@ -697,6 +700,12 @@ namespace SmbAbstraction
             catch (Exception ex)
             {
                 _logger?.LogTrace(ex, $"Failed to determine if {path} exists.");
+
+                if (fileStore != null && handle != null)
+                {
+                    fileStore.CloseFile(handle);
+                }
+
                 return false;
             }
         }
