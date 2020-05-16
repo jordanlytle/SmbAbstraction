@@ -297,6 +297,9 @@ namespace SmbAbstraction
                 return base.Exists(path);
             }
 
+            ISMBFileStore fileStore = null;
+            object handle = null;
+
             try
             {
                 if (!path.TryResolveHostnameFromPath(out var ipAddress))
@@ -316,7 +319,7 @@ namespace SmbAbstraction
 
                     _logger?.LogTrace($"Trying to determine if {{DirectoryPath: {directoryPath}}} {{FileName: {fileName}}} Exists for {{ShareName: {shareName}}}");
 
-                    ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
+                    fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
                     status.HandleStatus();
 
@@ -325,7 +328,7 @@ namespace SmbAbstraction
                     CreateDisposition disposition = CreateDisposition.FILE_OPEN;
                     CreateOptions createOptions = CreateOptions.FILE_SYNCHRONOUS_IO_NONALERT | CreateOptions.FILE_DIRECTORY_FILE;
 
-                    status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, directoryPath, accessMask, 0, shareAccess,
+                    status = fileStore.CreateFile(out handle, out FileStatus fileStatus, directoryPath, accessMask, 0, shareAccess,
                         disposition, createOptions, null);
 
                     status.HandleStatus();
@@ -339,7 +342,7 @@ namespace SmbAbstraction
                             FileDirectoryInformation fileDirectoryInformation = (FileDirectoryInformation)file;
                             if (fileDirectoryInformation.FileName == fileName)
                             {
-                                fileStore.CloseFile(handle);
+                                 fileStore.CloseFile(handle);
                                 return true;
                             }
                         }
@@ -353,6 +356,12 @@ namespace SmbAbstraction
             catch (Exception ex)
             {
                 _logger?.LogTrace(ex, $"Failed to determine if {path} exists.");
+
+                if (fileStore != null && handle != null)
+                {
+                    fileStore.CloseFile(handle);
+                }
+
                 return false;
             }
         }

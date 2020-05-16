@@ -141,7 +141,7 @@ namespace SmbAbstraction
 
         public static string RelativeSharePath(this string path)
         {
-            var relativePath = path.RemoveShareNameFromPath().RemoveLeadingSeperators().Replace("/", @"\");
+            var relativePath = path.RemoveShareNameFromPath().RemoveLeadingAndTrailingSeperators().Replace("/", @"\");
 
             return relativePath;
         }
@@ -162,7 +162,7 @@ namespace SmbAbstraction
 
         public static string RemoveLeadingAndTrailingSeperators(this string input)
         {
-            return input.RemoveLeadingSeperators().RemoveLeadingSeperators();
+            return input.RemoveLeadingSeperators().RemoveTrailingSeperators();
         }
 
         public static string RemoveLeadingSeperators(this string input)

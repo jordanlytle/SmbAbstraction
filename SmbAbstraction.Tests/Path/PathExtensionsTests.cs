@@ -195,7 +195,7 @@ namespace SmbAbstraction.Tests.Path
             foreach (var property in _smbUriTestData.GetType().GetProperties())
             {
                 var path = (string)property.GetValue(_smbUriTestData);
-                var relative = RemoveLeadingSeperator(ReplacePathSeperators(path.Replace(_smbUriTestData.Root, ""), @"\"));
+                var relative = RemoveTrailingSeperator(RemoveLeadingSeperator(ReplacePathSeperators(path.Replace(_smbUriTestData.Root, ""), @"\")));
                 var relativeSharePath = path.RelativeSharePath();
 
                 Assert.Equal(relative, relativeSharePath);
@@ -208,7 +208,7 @@ namespace SmbAbstraction.Tests.Path
             foreach (var property in _uncPathTestData.GetType().GetProperties())
             {
                 var path = (string)property.GetValue(_uncPathTestData);
-                var relative = RemoveLeadingSeperator(ReplacePathSeperators(path.Replace(_uncPathTestData.Root, ""), @"\"));
+                var relative = RemoveTrailingSeperator(RemoveLeadingSeperator(ReplacePathSeperators(path.Replace(_uncPathTestData.Root, ""), @"\")));
                 var relativeSharePath = path.RelativeSharePath();
 
                 Assert.Equal(relative, relativeSharePath);
@@ -236,6 +236,21 @@ namespace SmbAbstraction.Tests.Path
                 if (input.StartsWith(pathSeperator))
                 {
                     input = input.Remove(0, 1);
+                }
+            }
+
+            return input;
+        }
+
+        private string RemoveTrailingSeperator(string input)
+        {
+            string[] pathSeperators = { @"\", @"/" };
+
+            foreach (var pathSeperator in pathSeperators)
+            {
+                if (input.EndsWith(pathSeperator))
+                {
+                    input = input.Remove(input.LastIndexOf(pathSeperator), 1);
                 }
             }
 

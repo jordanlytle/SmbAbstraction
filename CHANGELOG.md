@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project tries to adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.10-alpha-01] 2020-05-15
+
+### Changed
+- Close any potential `fileStore` and `handles` in `SMBDirectory.Exists` and `SMBFile.Exists` when an exception is caught before returning false
+- Added `SMBDirectory` and `SMBDirectoryInfo` tests that check if operations succeed with trailing separators
+
+### Fixed
+- `PathExtensions.RemoveLeadingAndTrailingSeparators()` was calling `RemoveLeadingSeparators` twice and not calling `RemoveTrailingSeparators`
+
+
+## [1.1.10-alpha] 2020-05-12
+
+### Changed
+- Update SMBLibraryLite to 1.4.3-alpha
+	- Temporaily Fixes "Not enough credits" exception when reading large files
+
+
 ## [1.1.9] - 2020-05-07
 
 ### Changed

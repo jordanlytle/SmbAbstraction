@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -70,6 +71,6 @@ namespace SmbAbstraction.Tests.Integration.Fixtures
             }
         }
 
-        public override PathType PathType => throw new NotImplementedException();
+        public override PathType PathType => PathType.HostFileSystem;
     }
 }

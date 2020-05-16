@@ -36,6 +36,22 @@ namespace SmbAbstraction.Tests.Integration.DirectoryInfo
 
         [Fact]
         [Trait("Category", "Integration")]
+        public void CanCreateNewDirectoryInfo_WithTrailingSeparator()
+        {
+            var credentials = _fixture.ShareCredentials;
+
+            var trailingSeparator = (_fixture.PathType == PathType.SmbUri || !RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) ? '/' : '\\';
+            var directory = _fileSystem.Path.Combine(_fixture.RootPath, _fixture.Directories.First()) + trailingSeparator;
+
+            using var credential = new SMBCredential(credentials.Domain, credentials.Username, credentials.Password, directory, _fixture.SMBCredentialProvider);
+
+            var directoryInfo = _fileSystem.DirectoryInfo.FromDirectoryName(directory);
+
+            Assert.NotNull(directoryInfo);
+        }
+
+        [Fact]
+        [Trait("Category", "Integration")]
         public void CheckMoveDirectory()
         {
             var credentials = _fixture.ShareCredentials;
@@ -47,6 +63,28 @@ namespace SmbAbstraction.Tests.Integration.DirectoryInfo
             var createDirectoryPath = _fileSystem.Path.Combine(_fixture.RootPath, $"test-move-local-directory-{DateTime.Now.ToFileTimeUtc()}");
             var directoryInfo = _fileSystem.Directory.CreateDirectory(createDirectoryPath);
             
+            directoryInfo.MoveTo(newDirectory);
+
+            Assert.True(_fileSystem.Directory.Exists(newDirectory));
+
+            _fileSystem.Directory.Delete(newDirectory);
+        }
+
+        [Fact]
+        [Trait("Category", "Integration")]
+        public void CheckMoveDirectory_WithTrailingSeparator()
+        {
+            var credentials = _fixture.ShareCredentials;
+
+            var trailingSeparator = (_fixture.PathType == PathType.SmbUri || !RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) ? '/' : '\\';
+            var directory = _fileSystem.Path.Combine(_fixture.RootPath, _fixture.Directories.First()) + trailingSeparator;
+            var newDirectory = _fileSystem.Path.Combine(directory, $"{DateTime.Now.ToFileTimeUtc()}") + trailingSeparator;
+
+            using var credential = new SMBCredential(credentials.Domain, credentials.Username, credentials.Password, directory, _fixture.SMBCredentialProvider);
+
+            var createDirectoryPath = _fileSystem.Path.Combine(_fixture.RootPath, $"test-move-local-directory-{DateTime.Now.ToFileTimeUtc()}");
+            var directoryInfo = _fileSystem.Directory.CreateDirectory(createDirectoryPath);
+
             directoryInfo.MoveTo(newDirectory);
 
             Assert.True(_fileSystem.Directory.Exists(newDirectory));
