@@ -39,7 +39,9 @@ namespace SmbAbstraction.Tests.Integration.DirectoryInfo
         public void CanCreateNewDirectoryInfo_WithTrailingSeparator()
         {
             var credentials = _fixture.ShareCredentials;
-            var directory = _fileSystem.Path.Combine(_fixture.RootPath, _fixture.Directories.First()) + $"{(_fixture.PathType == PathType.SmbUri ? '/' : '\\')}";
+
+            var trailingSeparator = (_fixture.PathType == PathType.SmbUri || !RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) ? '/' : '\\';
+            var directory = _fileSystem.Path.Combine(_fixture.RootPath, _fixture.Directories.First()) + trailingSeparator;
 
             using var credential = new SMBCredential(credentials.Domain, credentials.Username, credentials.Password, directory, _fixture.SMBCredentialProvider);
 
@@ -73,8 +75,10 @@ namespace SmbAbstraction.Tests.Integration.DirectoryInfo
         public void CheckMoveDirectory_WithTrailingSeparator()
         {
             var credentials = _fixture.ShareCredentials;
-            var directory = _fileSystem.Path.Combine(_fixture.RootPath, _fixture.Directories.First()) + $"{(_fixture.PathType == PathType.SmbUri ? '/' : '\\')}";
-            var newDirectory = _fileSystem.Path.Combine(directory, $"{DateTime.Now.ToFileTimeUtc()}") + $"{(_fixture.PathType == PathType.SmbUri ? '/' : '\\')}";
+
+            var trailingSeparator = (_fixture.PathType == PathType.SmbUri || !RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) ? '/' : '\\';
+            var directory = _fileSystem.Path.Combine(_fixture.RootPath, _fixture.Directories.First()) + trailingSeparator;
+            var newDirectory = _fileSystem.Path.Combine(directory, $"{DateTime.Now.ToFileTimeUtc()}") + trailingSeparator;
 
             using var credential = new SMBCredential(credentials.Domain, credentials.Username, credentials.Password, directory, _fixture.SMBCredentialProvider);
 
