@@ -47,7 +47,8 @@ namespace SmbAbstraction.Tests.Integration
     public enum PathType 
     { 
         SmbUri,
-        UncPath
+        UncPath,
+        HostFileSystem
     }
 
     public static class IntegrationTestSettingsExtensions
