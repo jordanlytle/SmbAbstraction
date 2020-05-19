@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project tries to adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.10-beta] 2020-05-15
+
+### Changed
+- Update SMBLibraryLite to 1.4.3-beta
+	- Prevents STATUS_PENDING from being returned from SMB2Client.WaitOnCommand().
+
 ## [1.1.10-alpha-01] 2020-05-15
 
 ### Changed
