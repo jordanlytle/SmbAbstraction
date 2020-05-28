@@ -2,6 +2,7 @@
 using System.IO;
 using System.IO.Abstractions;
 using Microsoft.Extensions.Logging;
+using SmbAbstraction.Utilities;
 using SMBLibrary;
 using SMBLibrary.Client;
 
@@ -64,6 +65,9 @@ namespace SmbAbstraction
                 throw new SMBException($"Failed FromFileName for {path}", new InvalidCredentialException($"Unable to find credential for path: {path}"));
             }
 
+            ISMBFileStore fileStore = null;
+            object handle = null;
+
             try
             {
                 var shareName = path.ShareName();
@@ -73,7 +77,7 @@ namespace SmbAbstraction
 
                 using var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize);
 
-                ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
+                fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
                 status.HandleStatus();
 
@@ -82,7 +86,7 @@ namespace SmbAbstraction
                 CreateDisposition disposition = CreateDisposition.FILE_OPEN;
                 CreateOptions createOptions = CreateOptions.FILE_SYNCHRONOUS_IO_NONALERT | CreateOptions.FILE_NON_DIRECTORY_FILE;
 
-                status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativePath, accessMask, 0, shareAccess,
+                status = fileStore.CreateFile(out handle, out FileStatus fileStatus, relativePath, accessMask, 0, shareAccess,
                     disposition, createOptions, null);
 
                 status.HandleStatus();
@@ -92,13 +96,17 @@ namespace SmbAbstraction
                 status = fileStore.GetFileInformation(out FileInformation fileStandardInfo, handle, FileInformationClass.FileStandardInformation);
                 status.HandleStatus();
 
-                fileStore.CloseFile(handle);
+                FileStoreUtilities.CloseFile(fileStore, ref handle);
 
                 return new SMBFileInfo(path, _fileSystem, (FileBasicInformation)fileBasicInfo, (FileStandardInformation)fileStandardInfo, credential);
             }
             catch (Exception ex)
             {
                 throw new SMBException($"Failed FromFileName for {path}", ex);
+            }
+            finally
+            {
+                FileStoreUtilities.CloseFile(fileStore, ref handle);
             }
         }
 

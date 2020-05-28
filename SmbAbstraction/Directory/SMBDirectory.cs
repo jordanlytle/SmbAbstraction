@@ -6,6 +6,7 @@ using System.IO.Abstractions;
 using System.Linq;
 using System.Security.AccessControl;
 using Microsoft.Extensions.Logging;
+using SmbAbstraction.Utilities;
 using SMBLibrary;
 using SMBLibrary.Client;
 
@@ -68,6 +69,9 @@ namespace SmbAbstraction
                 return _directoryInfoFactory.FromDirectoryName(path);
             }
 
+            ISMBFileStore fileStore = null;
+            object handle = null;
+
             try
             {
                 var shareName = path.ShareName();
@@ -77,7 +81,7 @@ namespace SmbAbstraction
 
                 using var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize);
 
-                ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out var status);
+                fileStore = connection.SMBClient.TreeConnect(shareName, out var status);
 
                 status.HandleStatus();
 
@@ -86,7 +90,6 @@ namespace SmbAbstraction
                 CreateDisposition disposition = CreateDisposition.FILE_OPEN_IF;
                 CreateOptions createOptions = CreateOptions.FILE_SYNCHRONOUS_IO_NONALERT | CreateOptions.FILE_DIRECTORY_FILE;
 
-                object handle;
                 var stopwatch = new Stopwatch();
 
                 stopwatch.Start();
@@ -96,27 +99,31 @@ namespace SmbAbstraction
                         _logger.LogTrace($"STATUS_PENDING while trying to create directory {path}. {stopwatch.Elapsed.TotalSeconds}/{_smbFileSystemSettings.ClientSessionTimeout} seconds elapsed.");
 
                     status = fileStore.CreateFile(out handle, out FileStatus fileStatus, relativePath, accessMask, 0, shareAccess,
-                    disposition, createOptions, null);
+                        disposition, createOptions, null);
 
                     if (status == NTStatus.STATUS_OBJECT_PATH_NOT_FOUND)
                     {
                         CreateDirectory(path.GetParentPath(), credential);
                         status = fileStore.CreateFile(out handle, out fileStatus, relativePath, accessMask, 0, shareAccess,
-                        disposition, createOptions, null);
+                            disposition, createOptions, null);
                     }
-                }
-                while (status == NTStatus.STATUS_PENDING && stopwatch.Elapsed.TotalSeconds <= _smbFileSystemSettings.ClientSessionTimeout);
+                } while (status == NTStatus.STATUS_PENDING && stopwatch.Elapsed.TotalSeconds <= _smbFileSystemSettings.ClientSessionTimeout);
+
                 stopwatch.Stop();
 
                 status.HandleStatus();
 
-                fileStore.CloseFile(handle);
+                FileStoreUtilities.CloseFile(fileStore, ref handle);
 
                 return _directoryInfoFactory.FromDirectoryName(path, credential);
             }
             catch (Exception ex)
             {
                 throw new SMBException($"Failed to CreateDirectory {path}", ex);
+            }
+            finally
+            {
+                FileStoreUtilities.CloseFile(fileStore, ref handle);
             }
         }
 
@@ -160,6 +167,9 @@ namespace SmbAbstraction
                 throw new SMBException($"Failed to Delete {path}", new IOException("Cannot delete directory. Directory is not empty."));
             }
 
+            ISMBFileStore fileStore = null;
+            object handle = null;
+
             try
             {
                 var shareName = path.ShareName();
@@ -169,7 +179,7 @@ namespace SmbAbstraction
 
                 using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize))
                 {
-                    ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
+                    fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
                     status.HandleStatus();
 
@@ -178,7 +188,6 @@ namespace SmbAbstraction
                     CreateDisposition disposition = CreateDisposition.FILE_OPEN;
                     CreateOptions createOptions = CreateOptions.FILE_SYNCHRONOUS_IO_NONALERT | CreateOptions.FILE_DELETE_ON_CLOSE;
 
-                    object handle;
                     var stopwatch = new Stopwatch();
 
                     stopwatch.Start();
@@ -198,12 +207,16 @@ namespace SmbAbstraction
                     // This is the correct delete command, but it doesn't work for some reason. You have to use FILE_DELETE_ON_CLOSE
                     // fileStore.SetFileInformation(handle, new FileDispositionInformation());
 
-                    fileStore.CloseFile(handle);
+                    FileStoreUtilities.CloseFile(fileStore, ref handle);
                 }
             }
             catch (Exception ex)
             {
                 throw new SMBException($"Failed to Delete {path}", ex);
+            }
+            finally
+            {
+                FileStoreUtilities.CloseFile(fileStore, ref handle);
             }
         }
 
@@ -237,6 +250,9 @@ namespace SmbAbstraction
                     throw new SMBException($"Failed to Delete {path}", new InvalidCredentialException("Unable to find credential in SMBCredentialProvider for path: {path}"));
                 }
 
+                ISMBFileStore fileStore = null;
+                object handle = null;
+
                 try
                 {
                     var shareName = path.ShareName();
@@ -246,7 +262,7 @@ namespace SmbAbstraction
 
                     using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize))
                     {
-                        ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out var status);
+                        fileStore = connection.SMBClient.TreeConnect(shareName, out var status);
 
                         status.HandleStatus();
 
@@ -255,7 +271,6 @@ namespace SmbAbstraction
                         CreateDisposition disposition = CreateDisposition.FILE_OPEN;
                         CreateOptions createOptions = CreateOptions.FILE_SYNCHRONOUS_IO_NONALERT | CreateOptions.FILE_DIRECTORY_FILE;
 
-                        object handle;
                         var stopwatch = new Stopwatch();
 
                         stopwatch.Start();
@@ -266,8 +281,8 @@ namespace SmbAbstraction
 
                             status = fileStore.CreateFile(out handle, out FileStatus fileStatus, relativePath, accessMask, 0, shareAccess,
                                 disposition, createOptions, null);
-                        }
-                        while (status == NTStatus.STATUS_PENDING && stopwatch.Elapsed.TotalSeconds <= _smbFileSystemSettings.ClientSessionTimeout);
+                        } while (status == NTStatus.STATUS_PENDING && stopwatch.Elapsed.TotalSeconds <= _smbFileSystemSettings.ClientSessionTimeout);
+
                         stopwatch.Stop();
 
                         status.HandleStatus();
@@ -293,7 +308,8 @@ namespace SmbAbstraction
                                 _fileSystem.File.Delete(_fileSystem.Path.Combine(path, fileDirectoryInformation.FileName));
                             }
                         }
-                        fileStore.CloseFile(handle);
+
+                        FileStoreUtilities.CloseFile(fileStore, ref handle);
 
                         Delete(path, credential);
                     }
@@ -301,6 +317,10 @@ namespace SmbAbstraction
                 catch (Exception ex)
                 {
                     throw new SMBException($"Failed to Delete {path}", ex);
+                }
+                finally
+                {
+                    FileStoreUtilities.CloseFile(fileStore, ref handle);
                 }
             }
             else
@@ -358,6 +378,9 @@ namespace SmbAbstraction
                 throw new SMBException($"Failed to EnumerateDirectories for {path}", new InvalidCredentialException($"Unable to find credential in SMBCredentialProvider for path: {path}"));
             }
 
+            ISMBFileStore fileStore = null;
+            object handle = null;
+
             try
             {
                 var shareName = path.ShareName();
@@ -368,11 +391,11 @@ namespace SmbAbstraction
                 using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize))
                 {
 
-                    ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
+                    fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
                     status.HandleStatus();
 
-                    status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativePath, AccessMask.GENERIC_READ, 0, ShareAccess.Read,
+                    status = fileStore.CreateFile(out handle, out FileStatus fileStatus, relativePath, AccessMask.GENERIC_READ, 0, ShareAccess.Read,
                         CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
 
                     status.HandleStatus();
@@ -404,7 +427,7 @@ namespace SmbAbstraction
                             }
                         }
                     }
-                    fileStore.CloseFile(handle);
+                    FileStoreUtilities.CloseFile(fileStore, ref handle);
 
                     return files;
                 }
@@ -412,6 +435,10 @@ namespace SmbAbstraction
             catch (Exception ex)
             {
                 throw new SMBException($"Failed to EnumerateDirectories for {path}", ex);
+            }
+            finally
+            {
+                FileStoreUtilities.CloseFile(fileStore, ref handle);
             }
         }
 
@@ -464,6 +491,9 @@ namespace SmbAbstraction
                 throw new SMBException($"Failed to EnumerateFiles for {path}", new InvalidCredentialException($"Unable to find credential in SMBCredentialProvider for path: {path}"));
             }
 
+            ISMBFileStore fileStore = null;
+            object handle = null;
+
             try
             {
                 var shareName = path.ShareName();
@@ -473,11 +503,11 @@ namespace SmbAbstraction
 
                 using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize))
                 {
-                    ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
+                    fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
                     status.HandleStatus();
 
-                    status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativePath, AccessMask.GENERIC_READ, 0, ShareAccess.Read,
+                    status = fileStore.CreateFile(out handle, out FileStatus fileStatus, relativePath, AccessMask.GENERIC_READ, 0, ShareAccess.Read,
                         CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
 
                     status.HandleStatus();
@@ -513,7 +543,7 @@ namespace SmbAbstraction
                             }
                         }
                     }
-                    fileStore.CloseFile(handle);
+                    FileStoreUtilities.CloseFile(fileStore, ref handle);
 
                     return files;
                 }
@@ -521,6 +551,10 @@ namespace SmbAbstraction
             catch (Exception ex)
             {
                 throw new SMBException($"Failed to EnumerateFiles {path}", ex);
+            }
+            finally
+            {
+                FileStoreUtilities.CloseFile(fileStore, ref handle);
             }
         }
 
@@ -574,6 +608,9 @@ namespace SmbAbstraction
                 throw new SMBException($"Failed to EnumerateFileSystemEntries for {path}", new InvalidCredentialException($"Unable to find credential in SMBCredentialProvider for path: {path}"));
             }
 
+            ISMBFileStore fileStore = null;
+            object handle = null;
+
             try
             {
                 var shareName = path.ShareName();
@@ -583,11 +620,11 @@ namespace SmbAbstraction
 
                 using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize))
                 {
-                    ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
+                    fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
                     status.HandleStatus();
 
-                    status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativePath, AccessMask.GENERIC_READ, 0, ShareAccess.Read,
+                    status = fileStore.CreateFile(out handle, out FileStatus fileStatus, relativePath, AccessMask.GENERIC_READ, 0, ShareAccess.Read,
                         CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
 
                     status.HandleStatus();
@@ -620,7 +657,6 @@ namespace SmbAbstraction
                             files.Add(_fileSystem.Path.Combine(path, fileDirectoryInformation.FileName));
                         }
                     }
-                    fileStore.CloseFile(handle);
 
                     return files;
                 }
@@ -628,6 +664,10 @@ namespace SmbAbstraction
             catch (Exception ex)
             {
                 throw new SMBException($"Failed to EnumerateFileSystemEntries for {path}", ex);
+            }
+            finally
+            {
+                FileStoreUtilities.CloseFile(fileStore, ref handle);
             }
         }
 
@@ -657,7 +697,8 @@ namespace SmbAbstraction
                     var shareName = path.ShareName();
                     var relativePath = path.RelativeSharePath();
 
-                    _logger?.LogTrace($"Trying to determine if {{RelativePath: {relativePath}}} Exists for {{ShareName: {shareName}}}");
+                    _logger?.LogTrace(
+                        $"Trying to determine if {{RelativePath: {relativePath}}} Exists for {{ShareName: {shareName}}}");
 
                     if (string.IsNullOrEmpty(relativePath))
                     {
@@ -686,13 +727,10 @@ namespace SmbAbstraction
                             FileDirectoryInformation fileDirectoryInformation = (FileDirectoryInformation)file;
                             if (fileDirectoryInformation.FileName == directoryName)
                             {
-                                fileStore.CloseFile(handle);
                                 return true;
                             }
                         }
                     }
-
-                    fileStore.CloseFile(handle);
                 }
 
                 return false;
@@ -700,13 +738,11 @@ namespace SmbAbstraction
             catch (Exception ex)
             {
                 _logger?.LogTrace(ex, $"Failed to determine if {path} exists.");
-
-                if (fileStore != null && handle != null)
-                {
-                    fileStore.CloseFile(handle);
-                }
-
                 return false;
+            }
+            finally
+            {
+                FileStoreUtilities.CloseFile(fileStore, ref handle);
             }
         }
 
