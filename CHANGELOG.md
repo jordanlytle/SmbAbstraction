@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project tries to adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.10] 2020-05-29
+
+### Changed
+- Merge [Ensure File Closeure in Error Scenarios - by wgv-cwoods](https://github.com/jordanlytle/SmbAbstraction/pull/30)
+	- `FileStoreUtilities.CloseFile(ISMBFileStore, ref object)` added
+		- Now called where all `fileStore.CloseFile` were previously called and on `finally` of `try catch`
+- `InvalidCredentialException` and `SMBException` now have a default constructor and are now `Serializable`
+
+
 ## [1.1.10-beta] 2020-05-15
 
 ### Changed

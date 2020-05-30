@@ -2,6 +2,7 @@
 using System.IO;
 using System.IO.Abstractions;
 using Microsoft.Extensions.Logging;
+using SmbAbstraction.Utilities;
 using SMBLibrary;
 using SMBLibrary.Client;
 
@@ -66,6 +67,9 @@ namespace SmbAbstraction
                 throw new SMBException($"Failed FromDirectoryName for {path}", new InvalidCredentialException($"Unable to find credential for path: {path}"));
             }
 
+            ISMBFileStore fileStore = null;
+            object handle = null;
+
             try
             {
                 var shareName = path.ShareName();
@@ -75,11 +79,11 @@ namespace SmbAbstraction
 
                 using var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize);
                 
-                ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
+                fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
                 status.HandleStatus();
 
-                status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativePath, AccessMask.GENERIC_READ, 0, ShareAccess.Read,
+                status = fileStore.CreateFile(out handle, out FileStatus fileStatus, relativePath, AccessMask.GENERIC_READ, 0, ShareAccess.Read,
                         CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
 
                 status.HandleStatus();
@@ -96,6 +100,10 @@ namespace SmbAbstraction
             catch (Exception ex)
             {
                 throw new SMBException($"Failed FromDirectoryName for {path}", ex);
+            }
+            finally
+            {
+                FileStoreUtilities.CloseFile(fileStore, ref handle);
             }
         }
 
@@ -120,6 +128,9 @@ namespace SmbAbstraction
                 throw new SMBException($"Failed to SaveDirectoryInfo for {path}", new InvalidCredentialException($"Unable to find credential for path: {path}"));
             }
 
+            ISMBFileStore fileStore = null;
+            object handle = null;
+
             try
             {
                 var shareName = path.ShareName();
@@ -129,11 +140,11 @@ namespace SmbAbstraction
 
                 using var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize);
 
-                ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out status);
+                fileStore = connection.SMBClient.TreeConnect(shareName, out status);
 
                 status.HandleStatus();
 
-                status = fileStore.CreateFile(out object handle, out FileStatus fileStatus, relativePath, AccessMask.GENERIC_WRITE, 0, ShareAccess.Read,
+                status = fileStore.CreateFile(out handle, out FileStatus fileStatus, relativePath, AccessMask.GENERIC_WRITE, 0, ShareAccess.Read,
                         CreateDisposition.FILE_OPEN, CreateOptions.FILE_DIRECTORY_FILE, null);
 
                 status.HandleStatus();
@@ -146,6 +157,10 @@ namespace SmbAbstraction
             catch (Exception ex)
             {
                 throw new SMBException($"Failed to SaveDirectoryInfo for {path}", ex);
+            }
+            finally
+            {
+                FileStoreUtilities.CloseFile(fileStore, ref handle);
             }
         }
     }

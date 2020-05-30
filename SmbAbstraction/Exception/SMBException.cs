@@ -4,8 +4,14 @@ using System.Text;
 
 namespace SmbAbstraction
 {
+    [Serializable]
     public class SMBException : Exception
     {
+        public SMBException() : base()
+        {
+
+        }
+
         public SMBException(string message) : base(message)
         {
         }
