@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using SmbAbstraction.Utilities;
 using SMBLibrary;
 using SMBLibrary.Client;
 
@@ -244,6 +245,9 @@ namespace SmbAbstraction
                 throw new SMBException($"Failed to Delete {path}", new InvalidCredentialException($"Unable to find credential in SMBCredentialProvider for path: {path}"));
             }
 
+            ISMBFileStore fileStore = null;
+            object handle = null;
+
             try
             {
                 var shareName = path.ShareName();
@@ -253,7 +257,7 @@ namespace SmbAbstraction
 
                 using (var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize))
                 {
-                    ISMBFileStore fileStore = connection.SMBClient.TreeConnect(shareName, out var status);
+                    fileStore = connection.SMBClient.TreeConnect(shareName, out var status);
 
                     status.HandleStatus();
 
@@ -262,7 +266,6 @@ namespace SmbAbstraction
                     CreateDisposition disposition = CreateDisposition.FILE_OPEN;
                     CreateOptions createOptions = CreateOptions.FILE_SYNCHRONOUS_IO_NONALERT | CreateOptions.FILE_DELETE_ON_CLOSE;
 
-                    object handle;
                     var stopwatch = new Stopwatch();
                     stopwatch.Start();
 
@@ -280,12 +283,16 @@ namespace SmbAbstraction
                     status.HandleStatus();
 
                     // There should be a seperate option to delete, but it doesn't seem to exsist in the library we are using, so this should work for now. Really hacky though.
-                    fileStore.CloseFile(handle);
+                    FileStoreUtilities.CloseFile(fileStore, ref handle);
                 }
             }
             catch (Exception ex)
             {
                 throw new SMBException($"Failed to Delete {path}", ex);
+            }
+            finally
+            {
+                FileStoreUtilities.CloseFile(fileStore, ref handle);
             }
 
         }
@@ -342,13 +349,13 @@ namespace SmbAbstraction
                             FileDirectoryInformation fileDirectoryInformation = (FileDirectoryInformation)file;
                             if (fileDirectoryInformation.FileName == fileName)
                             {
-                                 fileStore.CloseFile(handle);
+                                FileStoreUtilities.CloseFile(fileStore, ref handle);
                                 return true;
                             }
                         }
                     }
 
-                    fileStore.CloseFile(handle);
+                    FileStoreUtilities.CloseFile(fileStore, ref handle);
                 }
 
                 return false;
@@ -356,13 +363,11 @@ namespace SmbAbstraction
             catch (Exception ex)
             {
                 _logger?.LogTrace(ex, $"Failed to determine if {path} exists.");
-
-                if (fileStore != null && handle != null)
-                {
-                    fileStore.CloseFile(handle);
-                }
-
                 return false;
+            }
+            finally
+            {
+                FileStoreUtilities.CloseFile(fileStore, ref handle);
             }
         }
 
