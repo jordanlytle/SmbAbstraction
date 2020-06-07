@@ -607,9 +607,10 @@ namespace SmbAbstraction
                 throw new SMBException($"Failed to Open {path}", new InvalidCredentialException($"Unable to find credential in SMBCredentialProvider for path: {path}"));
             }
 
+            SMBConnection connection = null;
             try
             {
-                var connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize);
+                connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize);
 
                 var shareName = path.ShareName();
                 var relativePath = path.RelativeSharePath();
@@ -677,6 +678,8 @@ namespace SmbAbstraction
             }
             catch (Exception ex)
             {
+                // Dispose connection if fail to open stream
+                connection?.Dispose();
                 throw new SMBException($"Failed to Open {path}", ex);
             }
         }
