@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project tries to adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.11] 2020-06-07
+
+### Changed 
+- Merge [Release unusable SMBConnection](https://github.com/jordanlytle/SmbAbstraction/pull/31)
+	- In `SMBConnection.CreateSMBConnection()`, check if client connection is still alive for the current thread, if not reestablish connection.
+- `SMBFile.Open()` dispose `SMBConnection` on failure
+- `SMBDriveInfo` null check on `AttributeInformation` for `SMBFileSystemInformation`
+
 ## [1.1.10] 2020-05-29
 
 ### Changed

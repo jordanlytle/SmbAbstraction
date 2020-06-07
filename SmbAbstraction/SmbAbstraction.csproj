@@ -12,7 +12,7 @@
     <PackageId>SmbAbstraction</PackageId>
     <RepositoryUrl>https://github.com/jordanlytle/SmbAbstraction</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageVersion>1.1.10</PackageVersion>
+    <PackageVersion>1.1.11</PackageVersion>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -20,7 +20,7 @@
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <Version>1.1.10</Version>
+    <Version>1.1.11</Version>
   </PropertyGroup>
   
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">

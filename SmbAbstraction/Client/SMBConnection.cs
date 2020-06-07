@@ -114,7 +114,6 @@ namespace SmbAbstraction
                     }
                     finally
                     {
-                        //instances.Remove(_address);
                         instances[_threadId].Remove(_address);
                         if (instances[_threadId].Count == 0)
                         {
