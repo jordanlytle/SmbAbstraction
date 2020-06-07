@@ -64,19 +64,31 @@ namespace SmbAbstraction
                     instances.Add(threadId, new Dictionary<IPAddress, SMBConnection>());
                 }
 
+                SMBConnection instance = null;
+
                 if (instances[threadId].ContainsKey(address))
                 {
-                    var instance = instances[threadId][address];
-                    instance._referenceCount += 1;
-                    return instance;
+                    instance = instances[threadId][address];
+                    if (instance.SMBClient.Connect(instance._address, instance._transport))
+                    {
+                        instance._referenceCount += 1;
+                        return instance;
+                    }
+
+                    // in case the connection is not connected, dispose it and recreate a new one
+                    instance.Dispose();
+                    if (!instances.ContainsKey(threadId))
+                    {
+                        instances.Add(threadId, new Dictionary<IPAddress, SMBConnection>());
+                    }
                 }
-                else
-                {
-                    var instance = new SMBConnection(smbClientFactory, address, transport, credential, threadId, maxBufferSize);
-                    instance.Connect();
-                    instances[threadId].Add(address, instance);
-                    return instance;
-                }
+
+                // Create new connection
+                instance = new SMBConnection(smbClientFactory, address, transport, credential, threadId,
+                    maxBufferSize);
+                instance.Connect();
+                instances[threadId].Add(address, instance);
+                return instance;
             }
         }
 
@@ -102,8 +114,9 @@ namespace SmbAbstraction
                     }
                     finally
                     {
+                        //instances.Remove(_address);
                         instances[_threadId].Remove(_address);
-                        if(instances[_threadId].Count == 0)
+                        if (instances[_threadId].Count == 0)
                         {
                             instances.Remove(_threadId);
                         }

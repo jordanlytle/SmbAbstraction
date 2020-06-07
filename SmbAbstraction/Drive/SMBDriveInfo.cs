@@ -13,7 +13,7 @@ namespace SmbAbstraction
         public SMBDriveInfo(string path, IFileSystem fileSystem, SMBFileSystemInformation smbFileSystemInformation, ISMBCredential credential)
         {
             FileSystem = fileSystem;
-            DriveFormat = smbFileSystemInformation.AttributeInformation.FileSystemName;
+            DriveFormat = smbFileSystemInformation.AttributeInformation?.FileSystemName;
             Name = path.ShareName();
             RootDirectory = _dirInfoFactory.FromDirectoryName(path, credential);
             var actualAvailableAllocationUnits = smbFileSystemInformation.SizeInformation.ActualAvailableAllocationUnits;
