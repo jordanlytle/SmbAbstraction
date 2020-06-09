@@ -70,7 +70,7 @@ namespace SmbAbstraction
                 }
             }
 
-            var path = credential.Path;
+            var path = credential.Path.SharePath();
             if (!path.TryResolveHostnameFromPath(out var ipAddress))
             {
                 throw new SMBException($"Failed FromDriveName for {shareName}", new ArgumentException($"Unable to resolve \"{path.Hostname()}\""));
