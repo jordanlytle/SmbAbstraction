@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project tries to adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.13] 2020-06-09
+
+### Changed
+- Update SMBLibraryLite to 1.4.3.1
+	- Check and set SMB2Client connection status based on client socket status when reusing a connection
+- Added tests for `IDriveInfo` for cases where a directory name and a file name are used.
+
+## Fixed 
+- `RootDirectory` in `SMBDriveInfo`
+- How credentials are retrieved if a share path is passed in for `SMBDriveInfoFactory.FromDriveName()`
+	
+
 ## [1.1.12] 2020-06-07
 
 ### Changed
@@ -16,7 +28,7 @@ and this project tries to adhere to [Semantic Versioning](https://semver.org/spe
 ## [1.1.11] 2020-06-07
 
 ### Changed 
-- Merge [Release unusable SMBConnection](https://github.com/jordanlytle/SmbAbstraction/pull/31)
+- Merge [Release unusable SMBConnection - by wgv-jxiao](https://github.com/jordanlytle/SmbAbstraction/pull/31)
 	- In `SMBConnection.CreateSMBConnection()`, check if client connection is still alive for the current thread, if not reestablish connection.
 - `SMBFile.Open()` dispose `SMBConnection` on failure
 - `SMBDriveInfo` null check on `AttributeInformation` for `SMBFileSystemInformation`

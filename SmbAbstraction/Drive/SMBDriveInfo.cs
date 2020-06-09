@@ -15,7 +15,8 @@ namespace SmbAbstraction
             FileSystem = fileSystem;
             DriveFormat = smbFileSystemInformation.AttributeInformation?.FileSystemName;
             Name = path.ShareName();
-            RootDirectory = _dirInfoFactory.FromDirectoryName(path, credential);
+            var rootPath = fileSystem.Path.GetPathRoot(path);
+            RootDirectory = _dirInfoFactory.FromDirectoryName(rootPath, credential);
             var actualAvailableAllocationUnits = smbFileSystemInformation.SizeInformation.ActualAvailableAllocationUnits;
             var sectorsPerUnit = smbFileSystemInformation.SizeInformation.SectorsPerAllocationUnit;
             var bytesPerSector = smbFileSystemInformation.SizeInformation.BytesPerSector;

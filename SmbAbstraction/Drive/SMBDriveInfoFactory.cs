@@ -55,7 +55,7 @@ namespace SmbAbstraction
             {
                 if(shareName.IsValidSharePath())
                 {
-                    credential = _smbCredentialProvider.GetSMBCredentials().Where(c => c.Path.SharePath().Equals(shareName)).FirstOrDefault();
+                    credential = _smbCredentialProvider.GetSMBCredential(shareName);
                     shareName = shareName.ShareName();
                 }
                 else
@@ -70,7 +70,7 @@ namespace SmbAbstraction
                 }
             }
 
-            var path = credential.Path.SharePath();
+            var path = credential.Path;
             if (!path.TryResolveHostnameFromPath(out var ipAddress))
             {
                 throw new SMBException($"Failed FromDriveName for {shareName}", new ArgumentException($"Unable to resolve \"{path.Hostname()}\""));
@@ -196,14 +196,10 @@ namespace SmbAbstraction
             return driveInfos.ToArray();
         }
 
-        private bool IsDriveLetter(string driveName)
-        {
-            return ((driveName.Length == 1 || driveName.EndsWith(@":\")) && Char.IsLetter(driveName, 0));
-        }
-
         private bool PossibleShareName(string input)
         {
-            return DriveInfo.GetDrives().All(d => (d.Name != input) && !IsDriveLetter(input));
+            var drives = DriveInfo.GetDrives();
+            return drives.All(d => !input.StartsWith(d.Name));
         }
     }
 }
