@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project tries to adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.14] 2020-06-13
+
+### Changed 
+- Merge [Create non-shared SMBConnection for SMBStream - by wgv-jxiao](https://github.com/jordanlytle/SmbAbstraction/pull/35)
+	- When opening a file stream create a new non-shared `SMBConnection` for `SMBStream` to avoid conflicts on the stream during read and write operations
+- Update SMBLibraryLite to 1.4.3.2
+	- Revert changes in SMB2Client and SMB2FileStore to not use tree identifier (TID) when calling `WaitOnCommand`
+
 ## [1.1.13] 2020-06-09
 
 ### Changed
