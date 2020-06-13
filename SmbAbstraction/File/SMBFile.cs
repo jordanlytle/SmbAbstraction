@@ -610,7 +610,7 @@ namespace SmbAbstraction
             SMBConnection connection = null;
             try
             {
-                connection = SMBConnection.CreateSMBConnection(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize);
+                connection = SMBConnection.CreateSMBConnectionForStream(_smbClientFactory, ipAddress, transport, credential, _maxBufferSize);
 
                 var shareName = path.ShareName();
                 var relativePath = path.RelativeSharePath();

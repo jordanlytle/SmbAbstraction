@@ -47,6 +47,21 @@ namespace SmbAbstraction
             status.HandleStatus();
         }
 
+        public static SMBConnection CreateSMBConnectionForStream(ISMBClientFactory smbClientFactory,
+            IPAddress address, SMBTransportType transport, ISMBCredential credential, uint maxBufferSize)
+        {
+            if (credential == null)
+            {
+                throw new ArgumentNullException(nameof(credential));
+            }
+
+            // Create new connection
+            var instance = new SMBConnection(smbClientFactory, address, transport, credential, -1,
+                maxBufferSize);
+            instance.Connect();
+            return instance;
+        }
+
         public static SMBConnection CreateSMBConnection(ISMBClientFactory smbClientFactory,
             IPAddress address, SMBTransportType transport, ISMBCredential credential, uint maxBufferSize)
         {
@@ -114,11 +129,15 @@ namespace SmbAbstraction
                     }
                     finally
                     {
-                        instances[_threadId].Remove(_address);
-                        if (instances[_threadId].Count == 0)
+                        if (_threadId != -1)
                         {
-                            instances.Remove(_threadId);
+                            instances[_threadId].Remove(_address);
+                            if (instances[_threadId].Count == 0)
+                            {
+                                instances.Remove(_threadId);
+                            }
                         }
+
                         _isDesposed = true;
                     }
                 }
