@@ -74,6 +74,18 @@ namespace SmbAbstraction.Tests.Integration.File
 
         [Fact]
         [Trait("Category", "Integration")]
+        public void TestExistsForDirectory()
+        {
+            var credentials = _fixture.ShareCredentials;
+            var filePath = _fileSystem.Path.Combine(_fixture.RootPath, _fixture.Directories.First());
+
+            using var credential = new SMBCredential(credentials.Domain, credentials.Username, credentials.Password, _fixture.RootPath, _fixture.SMBCredentialProvider);
+
+            Assert.False(_fileSystem.File.Exists(filePath));
+        }
+
+        [Fact]
+        [Trait("Category", "Integration")]
         public void TestMove()
         {
             var tempFileName = $"temp-{DateTime.Now.ToFileTimeUtc()}.txt";

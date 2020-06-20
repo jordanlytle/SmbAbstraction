@@ -200,6 +200,18 @@ namespace SmbAbstraction.Tests.Integration.Directory
 
         [Fact]
         [Trait("Category", "Integration")]
+        public void CheckDirectoryDoesNotExistWhenPathIsFile()
+        {
+            var credentials = _fixture.ShareCredentials;
+            var directory = _fileSystem.Path.Combine(_fixture.RootPath, _fixture.Files.First());
+
+            using var credential = new SMBCredential(credentials.Domain, credentials.Username, credentials.Password, _fixture.RootPath, _fixture.SMBCredentialProvider);
+
+            Assert.False(_fileSystem.Directory.Exists(directory));
+        }
+
+        [Fact]
+        [Trait("Category", "Integration")]
         public void CheckDirectoryExists_WithTrailingSeparator()
         {
             var credentials = _fixture.ShareCredentials;
