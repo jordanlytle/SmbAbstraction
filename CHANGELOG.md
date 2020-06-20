@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project tries to adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.15] 2020-06-19
+
+### Changed
+- Merge [Update SMBDirectory.Exists to call SMBFile.Exists - by jordanlytle](https://github.com/jordanlytle/SmbAbstraction/pull/38)
+    - Update SMBDirectory.Exists to call SMBFile.Exists. This fixes a bug where SMBDirectory.Exists returns true for both files
+and Directories.
+
 ## [1.1.14] 2020-06-13
 
 ### Changed 
