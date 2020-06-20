@@ -678,6 +678,13 @@ namespace SmbAbstraction
                 return base.Exists(path);
             }
 
+            // For some reason Directory.Exists is returning true if a file exists at that path. 
+            // File.Exists works properly so as long as we check it here we are fine.
+            if(_fileSystem.File.Exists(path))
+            {
+                return false;
+            }
+
             ISMBFileStore fileStore = null;
             object handle = null;
 
