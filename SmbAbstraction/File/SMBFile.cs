@@ -83,7 +83,7 @@ namespace SmbAbstraction
                 return base.AppendAllLinesAsync(path, contents, cancellationToken);
             }
 
-            return new Task(() => AppendAllLines(path, contents), cancellationToken);
+            return Task.Factory.StartNew(() => AppendAllLines(path, contents), cancellationToken);
         }
 
         public override Task AppendAllLinesAsync(string path, IEnumerable<string> contents, Encoding encoding, CancellationToken cancellationToken = default(CancellationToken))
@@ -93,7 +93,7 @@ namespace SmbAbstraction
                 return base.AppendAllLinesAsync(path, contents, encoding, cancellationToken);
             }
 
-            return new Task(() => AppendAllLines(path, contents, encoding), cancellationToken);
+            return Task.Factory.StartNew(() => AppendAllLines(path, contents, encoding), cancellationToken);
         }
 
         public override void AppendAllText(string path, string contents)
@@ -139,7 +139,7 @@ namespace SmbAbstraction
                 return base.AppendAllTextAsync(path, contents, cancellationToken);
             }
 
-            return new Task(() => AppendAllText(path, contents), cancellationToken);
+            return Task.Factory.StartNew(() => AppendAllText(path, contents), cancellationToken);
         }
 
         public override Task AppendAllTextAsync(string path, string contents, Encoding encoding, CancellationToken cancellationToken = default(CancellationToken))
@@ -149,7 +149,7 @@ namespace SmbAbstraction
                 return base.AppendAllTextAsync(path, contents, encoding, cancellationToken);
             }
 
-            return new Task(() => AppendAllText(path, contents, encoding), cancellationToken);
+            return Task.Factory.StartNew(() => AppendAllText(path, contents, encoding), cancellationToken);
         }
 
         public override StreamWriter AppendText(string path)
@@ -984,9 +984,9 @@ namespace SmbAbstraction
                 return;
             }
 
-            using (StreamWriter sr = new StreamWriter(OpenWrite(path)))
+            using (var stm = OpenWrite(path))
             {
-                sr.Write(bytes);
+                stm.Write(bytes, 0, bytes.Length);
             }
         }
 
@@ -997,7 +997,7 @@ namespace SmbAbstraction
                 return base.WriteAllBytesAsync(path, bytes, cancellationToken);
             }
 
-            return new Task(() => WriteAllBytes(path, bytes), cancellationToken);
+            return Task.Factory.StartNew(() => WriteAllBytes(path, bytes), cancellationToken);
         }
 
         public override void WriteAllLines(string path, IEnumerable<string> contents)
@@ -1057,7 +1057,7 @@ namespace SmbAbstraction
                 return base.WriteAllLinesAsync(path, contents, cancellationToken);
             }
 
-            return new Task(() => WriteAllLines(path, contents), cancellationToken);
+            return Task.Factory.StartNew(() => WriteAllLines(path, contents), cancellationToken);
         }
 
         public override Task WriteAllLinesAsync(string path, IEnumerable<string> contents, Encoding encoding, CancellationToken cancellationToken = default(CancellationToken))
@@ -1067,7 +1067,7 @@ namespace SmbAbstraction
                 return base.WriteAllLinesAsync(path, contents, encoding, cancellationToken);
             }
 
-            return new Task(() => WriteAllLines(path, contents, encoding), cancellationToken);
+            return Task.Factory.StartNew(() => WriteAllLines(path, contents, encoding), cancellationToken);
         }
 
         public override Task WriteAllLinesAsync(string path, string[] contents, CancellationToken cancellationToken = default(CancellationToken))
@@ -1077,7 +1077,7 @@ namespace SmbAbstraction
                 return base.WriteAllLinesAsync(path, contents, cancellationToken);
             }
 
-            return new Task(() => WriteAllLines(path, contents), cancellationToken);
+            return Task.Factory.StartNew(() => WriteAllLines(path, contents), cancellationToken);
         }
 
         public override Task WriteAllLinesAsync(string path, string[] contents, Encoding encoding, CancellationToken cancellationToken = default(CancellationToken))
@@ -1087,7 +1087,7 @@ namespace SmbAbstraction
                 return base.WriteAllLinesAsync(path, contents, encoding, cancellationToken);
             }
 
-            return new Task(() => WriteAllLines(path, contents, encoding), cancellationToken);
+            return Task.Factory.StartNew(() => WriteAllLines(path, contents, encoding), cancellationToken);
         }
 
         public override void WriteAllText(string path, string contents)
@@ -1125,7 +1125,7 @@ namespace SmbAbstraction
                 return base.WriteAllTextAsync(path, contents, cancellationToken);
             }
 
-            return new Task(() => WriteAllText(path, contents), cancellationToken);
+            return Task.Factory.StartNew(() => WriteAllText(path, contents), cancellationToken);
         }
 
         public override Task WriteAllTextAsync(string path, string contents, Encoding encoding, CancellationToken cancellationToken = default(CancellationToken))
@@ -1135,7 +1135,7 @@ namespace SmbAbstraction
                 return base.WriteAllTextAsync(path, contents, encoding, cancellationToken);
             }
 
-            return new Task(() => WriteAllText(path, contents, encoding), cancellationToken);
+            return Task.Factory.StartNew(() => WriteAllText(path, contents, encoding), cancellationToken);
         }
     }
 }
