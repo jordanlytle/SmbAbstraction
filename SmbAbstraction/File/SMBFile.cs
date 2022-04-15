@@ -984,9 +984,9 @@ namespace SmbAbstraction
                 return;
             }
 
-            using (StreamWriter sr = new StreamWriter(OpenWrite(path)))
+            using (var stm = OpenWrite(path))
             {
-                sr.Write(bytes);
+                stm.Write(bytes, 0, bytes.Length);
             }
         }
 
